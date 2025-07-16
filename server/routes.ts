@@ -86,6 +86,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stop processing demand
+  app.post("/api/demands/:id/stop", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+      
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      if (demand.status !== 'processing') {
+        return res.status(400).json({ error: "Demand is not being processed" });
+      }
+
+      aiSquadService.stopProcessing(id);
+      res.json({ message: "Stop request sent" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to stop processing" });
+    }
+  });
+
   // Download document
   app.get("/api/documents/:filename", async (req: Request, res: Response) => {
     try {
@@ -96,12 +117,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Document not found" });
       }
 
-      const content = fs.readFileSync(filepath, 'utf8');
+      const isWordDoc = filename.endsWith('.docx');
       const isPRD = filename.includes('PRD');
       
-      res.setHeader('Content-Type', 'text/plain');
-      res.setHeader('Content-Disposition', `attachment; filename="${isPRD ? 'PRD' : 'Tasks'}_${Date.now()}.txt"`);
-      res.send(content);
+      if (isWordDoc) {
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="${isPRD ? 'PRD' : 'Tasks'}_${Date.now()}.docx"`);
+        const buffer = fs.readFileSync(filepath);
+        res.send(buffer);
+      } else {
+        const content = fs.readFileSync(filepath, 'utf8');
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="${isPRD ? 'PRD' : 'Tasks'}_${Date.now()}.txt"`);
+        res.send(content);
+      }
     } catch (error) {
       res.status(500).json({ error: "Failed to download document" });
     }

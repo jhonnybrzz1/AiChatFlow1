@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Users, Settings, Circle } from "lucide-react";
 import { DemandForm } from "@/components/demand-form";
 import { ChatArea } from "@/components/chat-area";
@@ -5,13 +6,20 @@ import { HistorySidebar } from "@/components/history-sidebar";
 import { SquadMembers } from "@/components/squad-members";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { type Demand } from "@shared/schema";
 
 export default function Home() {
+  const [selectedDemand, setSelectedDemand] = useState<Demand | null>(null);
+  
   const { data: demands = [] } = useQuery({
     queryKey: ['/api/demands'],
     queryFn: () => api.demands.getAll(),
     refetchInterval: 5000,
   });
+
+  const handleSelectDemand = (demand: Demand) => {
+    setSelectedDemand(demand);
+  };
 
   return (
     <div className="font-sans bg-background min-h-screen">
@@ -47,12 +55,16 @@ export default function Home() {
           {/* Chat Area */}
           <div className="lg:col-span-2 space-y-6">
             <DemandForm />
-            <ChatArea />
+            <ChatArea selectedDemand={selectedDemand} />
           </div>
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            <HistorySidebar demands={demands} />
+            <HistorySidebar 
+              demands={demands} 
+              selectedDemand={selectedDemand}
+              onSelectDemand={handleSelectDemand}
+            />
             <SquadMembers />
           </div>
         </div>

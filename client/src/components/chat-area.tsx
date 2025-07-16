@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { MessageCircle, Bot, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { type Demand, type ChatMessage } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const agentIcons: Record<string, string> = {
   refinador: "🧠",
@@ -16,9 +19,25 @@ const agentIcons: Record<string, string> = {
   pm: "📋",
 };
 
-export function ChatArea() {
+const agentNames: Record<string, string> = {
+  refinador: "Refinador",
+  scrum_master: "Scrum Master",
+  qa: "QA",
+  ux: "UX Designer",
+  analista_de_dados: "Analista de Dados",
+  tech_lead: "Tech Lead",
+  pm: "Product Manager",
+};
+
+interface ChatAreaProps {
+  selectedDemand?: Demand | null;
+}
+
+export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) {
   const [selectedDemand, setSelectedDemand] = useState<Demand | null>(null);
   const [progress, setProgress] = useState(0);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: demands = [] } = useQuery({
     queryKey: ['/api/demands'],
@@ -26,10 +45,34 @@ export function ChatArea() {
     refetchInterval: 2000,
   });
 
-  // Get the most recent processing demand
+  // Get the most recent processing demand or use the selected one
   const processingDemand = demands.find(d => d.status === 'processing') || null;
 
+  // Stop processing mutation
+  const stopProcessingMutation = useMutation({
+    mutationFn: async (demandId: number) => {
+      return await apiRequest(`/api/demands/${demandId}/stop`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Refinamento interrompido",
+        description: "O processo foi interrompido com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao interromper",
+        description: "Não foi possível interromper o refinamento.",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
+    // If there's a processing demand, prioritize it
     if (processingDemand) {
       setSelectedDemand(processingDemand);
       
@@ -47,18 +90,51 @@ export function ChatArea() {
       
       return unsubscribe;
     }
-  }, [processingDemand?.id]);
+    // Otherwise use the selected demand from props
+    else if (propSelectedDemand) {
+      setSelectedDemand(propSelectedDemand);
+      const totalAgents = 7;
+      const completedMessages = propSelectedDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
+      setProgress((completedMessages / totalAgents) * 100);
+    }
+  }, [processingDemand?.id, propSelectedDemand?.id]);
 
   const chatMessages = selectedDemand?.chatMessages || [];
+
+  const handleDownloadDocument = (url: string) => {
+    window.open(url, '_blank');
+  };
 
   return (
     <>
       {/* Chat Messages Area */}
       <Card className="shadow-sm">
         <CardHeader className="border-b border-border">
-          <CardTitle className="flex items-center space-x-2">
-            <MessageCircle className="text-primary" size={20} />
-            <span>Refinamento em Andamento</span>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <MessageCircle className="text-primary" size={20} />
+              <span>
+                {selectedDemand?.status === 'processing' ? 'Refinamento em Andamento' : 
+                 selectedDemand?.status === 'completed' ? 'Refinamento Concluído' :
+                 selectedDemand?.status === 'stopped' ? 'Refinamento Interrompido' :
+                 'Squad de Refinamento'}
+              </span>
+            </div>
+            {selectedDemand?.status === 'processing' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => stopProcessingMutation.mutate(selectedDemand.id)}
+                disabled={stopProcessingMutation.isPending}
+              >
+                {stopProcessingMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <StopCircle className="w-4 h-4 mr-2" />
+                )}
+                Parar
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
@@ -82,17 +158,25 @@ export function ChatArea() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-sm font-medium text-foreground capitalize">
-                        {message.agent.replace('_', ' ')}
+                      <span className="text-sm font-medium text-foreground">
+                        {agentNames[message.agent] || message.agent}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(message.timestamp).toLocaleTimeString()}
+                        {new Date(message.timestamp).toLocaleTimeString('pt-BR')}
                       </span>
                       {message.type === 'processing' && (
                         <Loader2 className="w-3 h-3 animate-spin text-primary" />
                       )}
+                      {message.type === 'completed' && (
+                        <CheckCircle className="w-3 h-3 text-green-600" />
+                      )}
+                      {message.type === 'error' && (
+                        <XCircle className="w-3 h-3 text-red-600" />
+                      )}
                     </div>
-                    <p className="text-sm text-foreground">{message.message}</p>
+                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                      {message.message}
+                    </p>
                   </div>
                 </div>
               ))
@@ -110,7 +194,7 @@ export function ChatArea() {
               <div>
                 <p className="font-medium text-foreground">Processando Demanda</p>
                 <p className="text-sm text-muted-foreground">
-                  A squad está analisando sua solicitação...
+                  A squad está analisando sua solicitação: "{selectedDemand.title}"
                 </p>
               </div>
             </div>
@@ -120,6 +204,62 @@ export function ChatArea() {
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Completed Status with Download Buttons */}
+      {selectedDemand?.status === 'completed' && (
+        <Card className="shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="font-medium text-foreground">Refinamento Concluído</p>
+                <p className="text-sm text-muted-foreground">
+                  Documentos PRD e Tasks foram gerados com sucesso
+                </p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              {selectedDemand.prdUrl && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadDocument(selectedDemand.prdUrl!)}
+                  className="flex-1"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar PRD
+                </Button>
+              )}
+              {selectedDemand.tasksUrl && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadDocument(selectedDemand.tasksUrl!)}
+                  className="flex-1"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar Tasks
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stopped Status */}
+      {selectedDemand?.status === 'stopped' && (
+        <Card className="shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <XCircle className="w-8 h-8 text-orange-600" />
+              <div>
+                <p className="font-medium text-foreground">Refinamento Interrompido</p>
+                <p className="text-sm text-muted-foreground">
+                  O processo foi interrompido pelo usuário
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

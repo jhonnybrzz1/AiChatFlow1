@@ -1,15 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { History, RefreshCw, Download, CheckCircle, Clock, XCircle } from "lucide-react";
+import { History, RefreshCw, Download, CheckCircle, Clock, XCircle, StopCircle } from "lucide-react";
 import { type Demand } from "@shared/schema";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface HistorySidebarProps {
   demands: Demand[];
+  selectedDemand?: Demand | null;
+  onSelectDemand?: (demand: Demand) => void;
 }
 
-export function HistorySidebar({ demands }: HistorySidebarProps) {
+export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: HistorySidebarProps) {
   const { toast } = useToast();
 
   const handleDownload = (url: string | null, type: 'PRD' | 'Tasks') => {
@@ -22,18 +24,7 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
       return;
     }
 
-    try {
-      const filename = url.split('/').pop();
-      if (filename) {
-        api.documents.download(filename);
-      }
-    } catch (error) {
-      toast({
-        title: "Erro no download",
-        description: "Não foi possível baixar o documento.",
-        variant: "destructive",
-      });
-    }
+    window.open(url, '_blank');
   };
 
   const getStatusIcon = (status: string) => {
@@ -42,6 +33,8 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
         return <CheckCircle className="text-green-500" size={16} />;
       case 'processing':
         return <Clock className="text-yellow-500" size={16} />;
+      case 'stopped':
+        return <StopCircle className="text-orange-500" size={16} />;
       case 'error':
         return <XCircle className="text-red-500" size={16} />;
       default:
@@ -55,6 +48,8 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
         return 'Concluído';
       case 'processing':
         return 'Em processamento';
+      case 'stopped':
+        return 'Interrompido';
       case 'error':
         return 'Erro no processamento';
       default:
@@ -104,7 +99,10 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
             demands.map((demand) => (
               <div
                 key={demand.id}
-                className="p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors"
+                className={`p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer ${
+                  selectedDemand?.id === demand.id ? 'bg-primary/10 border-primary/50' : ''
+                }`}
+                onClick={() => onSelectDemand?.(demand)}
               >
                 <div className="flex items-start space-x-3">
                   <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
@@ -115,7 +113,10 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
                       {demand.title}
                     </h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {getStatusText(demand.status)} {getTimeAgo(demand.updatedAt!)}
+                      {getStatusText(demand.status)} • {getTimeAgo(demand.updatedAt!)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 capitalize">
+                      {demand.type.replace('_', ' ')} • {demand.priority}
                     </p>
                     
                     {demand.status === 'processing' && (
@@ -137,7 +138,10 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
                           variant="ghost"
                           size="sm"
                           className="h-auto p-0 text-xs text-primary hover:text-primary/80"
-                          onClick={() => handleDownload(demand.prdUrl, 'PRD')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(demand.prdUrl, 'PRD');
+                          }}
                         >
                           <Download size={12} className="mr-1" />
                           <span>PRD</span>
@@ -146,7 +150,10 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
                           variant="ghost"
                           size="sm"
                           className="h-auto p-0 text-xs text-primary hover:text-primary/80"
-                          onClick={() => handleDownload(demand.tasksUrl, 'Tasks')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(demand.tasksUrl, 'Tasks');
+                          }}
                         >
                           <Download size={12} className="mr-1" />
                           <span>Tasks</span>
@@ -159,6 +166,7 @@ export function HistorySidebar({ demands }: HistorySidebarProps) {
                         variant="ghost"
                         size="sm"
                         className="h-auto p-0 text-xs text-red-500 hover:text-red-600 mt-2"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <RefreshCw size={12} className="mr-1" />
                         <span>Tentar novamente</span>
