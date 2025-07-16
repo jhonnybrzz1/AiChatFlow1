@@ -1,0 +1,104 @@
+# Documento de Requisitos do Produto (PRD)
+
+## 1. Visão Geral
+
+### 1.1. Demanda
+Adicionar um campo obrigatório no aplicativo RFM para que o vendedor informe o número da placa do veículo no momento da venda.
+
+### 1.2. Descrição
+O campo deve validar o formato da placa (padrão Mercosul) e não permitir o avanço sem o preenchimento correto. Este dado deve aparecer no relatório de vendas gerado pelo sistema.
+
+### 1.3. Tipo
+Nova Funcionalidade
+
+### 1.4. Prioridade
+Alta
+
+## 2. Requisitos Funcionais
+
+### 2.1. Campo Obrigatório
+- O campo para o número da placa do veículo deve ser obrigatório no momento da venda.
+- O sistema não deve permitir o avanço do processo de venda sem o preenchimento correto do campo.
+
+### 2.2. Validação de Formato
+- O campo deve validar o formato da placa de acordo com o padrão Mercosul (ex: ABC1D23).
+- O sistema deve exibir uma mensagem de erro clara e descritiva caso o formato não seja respeitado.
+
+### 2.3. Integração com Relatório de Vendas
+- O número da placa informado deve aparecer no relatório de vendas gerado pelo sistema.
+
+## 3. Requisitos Técnicos
+
+### 3.1. Validação Back-end
+- Implementar lógica de validação no back-end para garantir que apenas placas no formato correto sejam aceitas.
+
+### 3.2. Validação Front-end
+- Adicionar máscaras e validação no front-end para guiar o usuário durante o preenchimento da placa.
+
+### 3.3. Atualização do Relatório
+- Modificar a estrutura do relatório de vendas para incluir o campo da placa do veículo.
+
+## 4. Considerações de UX/UI
+
+### 4.1. Posicionamento do Campo
+- O campo deve ser posicionado de forma intuitiva na tela de finalização da venda, preferencialmente próximo aos campos obrigatórios já existentes.
+
+### 4.2. Mensagens de Erro
+- As mensagens de erro devem ser claras, indicando o formato correto da placa e destacando que o campo é obrigatório.
+
+### 4.3. Feedback Visual
+- Oferecer feedback visual imediato para o usuário ao preencher o campo corretamente ou incorretamente (ex.: borda vermelha em caso de erro).
+
+## 5. Testes Necessários
+
+### 5.1. Testes de Unidade
+- Validar a lógica de validação de formato da placa.
+
+### 5.2. Testes de Integração
+- Garantir que o dado da placa seja corretamente integrado ao sistema de relatórios.
+
+### 5.3. Testes de Aceitação
+- Verificar a experiência do usuário ao preencher o campo e a consistência dos dados nos relatórios.
+
+## 6. Cronograma
+
+### 6.1. Desenvolvimento
+- 2 semanas
+
+### 6.2. Testes
+- 1 semana
+
+### 6.3. Lançamento
+- Após a fase de testes e correções, previsto para o final do próximo sprint.
+
+## 7. Comunicação
+
+### 7.1. Treinamento para Vendedores
+- Fornecer material de treinamento ou sessões de esclarecimento para os vendedores sobre a nova funcionalidade.
+
+### 7.2. Atualização de Documentação
+- Atualizar toda a documentação relacionada ao processo de vendas e geração de relatórios para incluir o novo campo de placa de veículo.
+
+## 8. Análise de Riscos
+
+### 8.1. Conformidade com o Padrão Mercosul
+- **Risco:** Implementar uma validação imprecisa.
+- **Mitigação:** Realizar um estudo completo do padrão de placas Mercosul.
+
+### 8.2. Integridade dos Dados
+- **Risco:** Erros na coleta ou armazenamento do número da placa.
+- **Mitigação:** Implementar testes rigorosos de unidade e integração.
+
+### 8.3. Experiência do Usuário
+- **Risco:** A obrigatoriedade do campo pode impactar negativamente a experiência do vendedor.
+- **Mitigação:** Desenvolver uma interface de usuário clara e intuitiva.
+
+## 9. Feedback e Iterações Futuras
+
+### 9.1. Coleta de Feedback
+- Haverá um processo para coletar feedback dos vendedores sobre a usabilidade dessa funcionalidade após a implementação.
+
+### 9.2. Melhorias Futuras
+- As melhorias serão priorizadas com base no feedback recebido e na análise de uso da funcionalidade.
+
+Este documento serve como guia para a implementação da nova funcionalidade, garantindo que todos os aspectos técnicos, funcionais e de experiência do usuário sejam considerados para uma entrega de sucesso.

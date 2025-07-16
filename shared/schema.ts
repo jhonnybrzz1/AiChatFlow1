@@ -8,7 +8,7 @@ export const demands = pgTable("demands", {
   description: text("description").notNull(),
   type: text("type").notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'outro'
   priority: text("priority").notNull(), // 'baixa', 'media', 'alta', 'critica'
-  status: text("status").notNull().default('processing'), // 'processing', 'completed', 'error'
+  status: text("status").notNull().default('processing'), // 'processing', 'completed', 'error', 'stopped'
   chatMessages: jsonb("chat_messages").$type<ChatMessage[]>().default([]),
   prdUrl: text("prd_url"),
   tasksUrl: text("tasks_url"),

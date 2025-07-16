@@ -1,0 +1,62 @@
+### Tasks/User Stories para Implementação da Funcionalidade de Placa de Veículo
+
+#### Backend (🔧)
+
+1. 🔧 **Adicionar Coluna no Banco de Dados**
+   - Criar uma nova coluna `placa_veiculo` na tabela de vendas para armazenar o número da placa.
+   - Garantir que a coluna aceite strings no formato Mercosul.
+
+2. 🔧 **Implementar Validação de Placa no Backend**
+   - Desenvolver uma função de validação para o formato Mercosul (AAA1A11).
+   - Integrar a validação nos endpoints de criação e atualização de vendas.
+
+3. 🔧 **Atualizar Lógica de Relatório de Vendas**
+   - Modificar o gerador de relatórios para incluir o número da placa do veículo.
+   - Garantir que o relatório mantenha a performance e a legibilidade.
+
+4. 🔧 **Testes de Unidade e Integração**
+   - Desenvolver testes de unidade para a validação de formato de placa.
+   - Realizar testes de integração para assegurar a correta captura e armazenamento dos dados.
+
+#### Frontend (🎨)
+
+1. 🎨 **Adicionar Campo de Placa na Interface de Venda**
+   - Inserir um campo de entrada de texto para a placa do veículo na tela de finalização da venda.
+   - Posicionar o campo de forma intuitiva, próximo a outros campos obrigatórios.
+
+2. 🎨 **Implementar Validação de Placa no Frontend**
+   - Adicionar máscara de entrada e validação em tempo real para o formato Mercosul.
+   - Exibir mensagens de erro claras e específicas para entradas inválidas.
+
+3. 🎨 **Feedback Visual e Mensagens de Erro**
+   - Utilizar cores e ícones para indicar erros ou validações bem-sucedidas.
+   - Garantir que as mensagens de erro sejam claras e orientem o usuário sobre o formato correto.
+
+4. 🎨 **Atualização da UI do Relatório de Vendas**
+   - Ajustar a interface do relatório para incluir o campo de placa de forma clara e organizada.
+
+#### Testes e Qualidade (🔧🎨)
+
+1. 🔧🎨 **Testes de Aceitação**
+   - Validar a experiência do usuário ao preencher o campo de placa e verificar a consistência dos dados nos relatórios.
+
+2. 🔧🎨 **Testes de Usabilidade**
+   - Conduzir testes com usuários reais para garantir que o novo campo seja intuitivo e que a validação funcione conforme esperado.
+
+#### Treinamento e Comunicação (🎨)
+
+1. 🎨 **Desenvolver Material de Treinamento**
+   - Criar documentação e tutoriais para auxiliar os vendedores na adaptação à nova funcionalidade.
+
+2. 🎨 **Sessões de Treinamento**
+   - Organizar sessões de esclarecimento para os vendedores sobre a importância e o uso correto do campo de placa.
+
+#### Monitoramento e Feedback (🔧🎨)
+
+1. 🔧🎨 **Implementar Monitoramento Pós-Deploy**
+   - Monitorar o uso do campo de placa e coletar feedback dos usuários para identificar possíveis melhorias.
+
+2. 🔧🎨 **Coleta de Feedback dos Usuários**
+   - Estabelecer um canal para receber feedback contínuo dos vendedores sobre a usabilidade da nova funcionalidade.
+
+Essas tasks devem ser seguidas para garantir uma implementação eficaz e atender aos requisitos de negócio e experiência do usuário.

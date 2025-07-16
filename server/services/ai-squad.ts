@@ -20,6 +20,12 @@ export class AISquadService {
     { name: "pm", icon: "📋", description: "Gerando PRD e Tasks baseado no refinamento..." }
   ];
 
+  private stopRequests = new Set<number>();
+
+  stopProcessing(demandId: number): void {
+    this.stopRequests.add(demandId);
+  }
+
   async processDemand(demandId: number, onProgress?: (message: ChatMessage) => void): Promise<void> {
     const demand = await storage.getDemand(demandId);
     if (!demand) throw new Error("Demand not found");
@@ -28,6 +34,13 @@ export class AISquadService {
     const messages: ChatMessage[] = [];
 
     for (let i = 0; i < this.agents.length; i++) {
+      // Check if processing was stopped
+      if (this.stopRequests.has(demandId)) {
+        this.stopRequests.delete(demandId);
+        await storage.updateDemand(demandId, { status: 'stopped' });
+        return;
+      }
+
       const agent = this.agents[i];
       const message: ChatMessage = {
         id: `${demandId}-${i}`,
@@ -45,7 +58,14 @@ export class AISquadService {
       }
 
       // Simulate processing time based on agent
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Check again if processing was stopped during wait
+      if (this.stopRequests.has(demandId)) {
+        this.stopRequests.delete(demandId);
+        await storage.updateDemand(demandId, { status: 'stopped' });
+        return;
+      }
 
       // Process with OpenAI for actual agent response
       const response = await this.processWithAgent(agent.name, demand, refinementLevels);
@@ -57,6 +77,13 @@ export class AISquadService {
       if (onProgress) {
         onProgress(message);
       }
+    }
+
+    // Check one more time before generating documents
+    if (this.stopRequests.has(demandId)) {
+      this.stopRequests.delete(demandId);
+      await storage.updateDemand(demandId, { status: 'stopped' });
+      return;
     }
 
     // Generate documents
@@ -192,11 +219,99 @@ export class AISquadService {
       fs.mkdirSync(documentsDir, { recursive: true });
     }
 
-    const filename = `${type}_${demandId}_${Date.now()}.txt`;
+    const filename = `${type}_${demandId}_${Date.now()}.docx`;
     const filepath = path.join(documentsDir, filename);
     
-    fs.writeFileSync(filepath, content, 'utf8');
-    return `/api/documents/${filename}`;
+    try {
+      const { Document, Paragraph, TextRun, HeadingLevel } = require('docx');
+      
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: this.parseContentToWordElements(content, type)
+        }]
+      });
+
+      const buffer = await doc.toBuffer();
+      fs.writeFileSync(filepath, buffer);
+      
+      return `/api/documents/${filename}`;
+    } catch (error) {
+      console.error('Error generating Word document:', error);
+      // Fallback to text file if Word generation fails
+      const textFilename = `${type}_${demandId}_${Date.now()}.txt`;
+      const textFilepath = path.join(documentsDir, textFilename);
+      fs.writeFileSync(textFilepath, content, 'utf8');
+      return `/api/documents/${textFilename}`;
+    }
+  }
+
+  private parseContentToWordElements(content: string, type: string): any[] {
+    const { Paragraph, TextRun, HeadingLevel } = require('docx');
+    const elements = [];
+    
+    // Add document title
+    elements.push(new Paragraph({
+      text: type === 'PRD' ? 'Product Requirements Document' : 'Tasks & User Stories',
+      heading: HeadingLevel.TITLE
+    }));
+    
+    const lines = content.split('\n');
+    let currentList = [];
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      // Check if it's a heading (starts with # or has keywords)
+      if (trimmed.startsWith('#') || this.isHeading(trimmed)) {
+        if (currentList.length > 0) {
+          elements.push(...currentList);
+          currentList = [];
+        }
+        
+        const headingText = trimmed.replace(/^#+\s*/, '');
+        elements.push(new Paragraph({
+          text: headingText,
+          heading: HeadingLevel.HEADING_1
+        }));
+      }
+      // Check if it's a list item
+      else if (trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith('* ')) {
+        elements.push(new Paragraph({
+          text: trimmed.substring(2),
+          bullet: { level: 0 }
+        }));
+      }
+      // Check if it's a numbered list or task
+      else if (trimmed.match(/^\d+\./) || trimmed.includes('[ ]') || trimmed.includes('[x]')) {
+        elements.push(new Paragraph({
+          text: trimmed,
+          bullet: { level: 0 }
+        }));
+      }
+      // Regular paragraph
+      else {
+        elements.push(new Paragraph({
+          children: [new TextRun(trimmed)]
+        }));
+      }
+    }
+    
+    return elements;
+  }
+
+  private isHeading(text: string): boolean {
+    const headingKeywords = [
+      'visão geral', 'cenário atual', 'problema', 'solução proposta',
+      'requisitos funcionais', 'casos de uso', 'fluxo', 'validações',
+      'dependências', 'resultados esperados', 'métricas', 'user story',
+      'critérios de aceite', 'backend', 'frontend', 'tasks'
+    ];
+    
+    const lowerText = text.toLowerCase();
+    return headingKeywords.some(keyword => lowerText.includes(keyword)) ||
+           text.includes('🔧') || text.includes('🎨') || text.includes('###');
   }
 }
 
