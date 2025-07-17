@@ -1,0 +1,81 @@
+# Documento de Requisitos do Produto (PRD)
+
+## 1. Visão Geral
+
+**Produto:** Sistema de Gestão de Pagamentos Redeflex POS  
+**Demanda:** Chamado problema de pagamento  
+**Tipo:** Bug  
+**Prioridade:** Alta  
+
+### Descrição do Problema
+
+O sistema está reativando automaticamente clientes bloqueados por suspeita de fraude após uma alteração de taxa Pix, sem autorização da análise de risco. Isso resulta na liberação indevida de valores que deveriam permanecer bloqueados.
+
+### Causa Identificada
+
+Há uma falha de integração entre as ações de bloqueio, geridas pela análise de risco, e a alteração de taxa, que está indevidamente alterando o status de pagamento dos clientes.
+
+### Impactos
+
+- **Risco Operacional:** Revogação não autorizada de bloqueios de pagamento.
+- **Risco Financeiro:** Prejuízo potencial devido à liberação indevida de valores.
+- **Risco de Reputação:** Perda de confiança dos clientes na capacidade do sistema de prevenir fraudes.
+- **Compliance e Regulatório:** Possíveis implicações legais por não cumprimento de requisitos de prevenção a fraudes.
+
+## 2. Objetivos
+
+- Corrigir a falha de integração para garantir que alterações de taxa não impactem o status de bloqueio.
+- Assegurar que qualquer alteração de status de bloqueio requer validação explícita da equipe de risco.
+- Implementar monitoramento e logs para detectar e registrar alterações de status de pagamento.
+
+## 3. Requisitos Funcionais
+
+### 3.1 Integração de Bloqueio e Alteração de Taxa
+
+- **RF1:** A alteração da taxa Pix não deve interferir no status de bloqueio imposto por análise de risco.
+- **RF2:** Implementar uma camada de validação para que alterações de status de bloqueio sejam autorizadas apenas pela equipe de risco.
+
+### 3.2 Registro e Notificação
+
+- **RF3:** Todas as alterações de status de pagamento devem ser registradas com logs claros.
+- **RF4:** Notificações automáticas devem ser enviadas para a equipe de risco em caso de alterações de status.
+
+## 4. Requisitos Não Funcionais
+
+- **RNF1:** O sistema deve ser capaz de processar alterações de taxa e status de bloqueio sem impacto no desempenho.
+- **RNF2:** Logs e auditorias devem ser armazenados de forma segura e acessível para auditorias futuras.
+
+## 5. Critérios de Aceite
+
+1. **Integração de Bloqueio e Alteração de Taxa**
+   - A alteração da taxa Pix não deve interferir no status de bloqueio imposto por análise de risco.
+
+2. **Manutenção de Status de Bloqueio**
+   - Um cliente bloqueado por suspeita de fraude deve permanecer com status de bloqueio mesmo após qualquer alteração de taxa.
+
+3. **Autorização Necessária para Desbloqueio**
+   - O sistema deve exigir autorização explícita da área de risco para reativar um cliente bloqueado.
+
+4. **Registro e Notificação**
+   - Todas as alterações de status de pagamento devem ser registradas com logs claros e notificações para a área de risco.
+
+## 6. Plano de Implementação
+
+### 6.1 Análise e Diagnóstico Inicial (1-2 dias)
+
+- Revisar logs e auditorias do sistema para identificar como a alteração de taxa impactou o status de bloqueio.
+- Confirmar se a integração entre o módulo de bloqueio e o de alteração de taxa tem falhas.
+
+### 6.2 Correção da Regra de Negócio (2-3 dias)
+
+- Alterar a lógica do sistema para garantir que qualquer alteração de status de bloqueio requer validação explícita da equipe de risco.
+- Implementar um bloqueio condicional que impede alterações de taxa de modificar o status de bloqueio.
+
+### 6.3 Testes e Validação (2 dias)
+
+- Executar testes unitários e de integração para assegurar que a correção não afeta outros processos.
+- Realizar testes de regressão para garantir a estabilidade do sistema.
+
+## 7. Considerações Finais
+
+Este PRD visa resolver um problema crítico no sistema de pagamentos, garantindo a segurança e a confiança dos clientes, além de mitigar riscos operacionais e financeiros. A implementação das soluções propostas deve ser realizada com urgência, dada a alta prioridade do bug.

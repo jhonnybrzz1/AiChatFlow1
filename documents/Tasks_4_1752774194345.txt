@@ -1,0 +1,51 @@
+Aqui está a lista de tasks/user stories estruturadas para resolver o bug identificado na fila "AGUARDANDO ANÁLISE REATIVAÇÃO":
+
+### Backend (🔧)
+
+1. **🔧 Revisão de Validações de Campos Obrigatórios**
+   - **Descrição:** Analisar e corrigir a lógica que permite que campos obrigatórios fiquem em branco.
+   - **Critérios de Aceite:** Todos os campos obrigatórios devem ser validados corretamente, exibindo mensagens de erro claras quando em branco.
+
+2. **🔧 Remoção da Exigência Indevida do "Endereço do Proprietário"**
+   - **Descrição:** Ajustar a lógica de backend para remover a exigência do campo "Endereço do Proprietário" na fila "AGUARDANDO ANÁLISE REATIVAÇÃO".
+   - **Critérios de Aceite:** O sistema deve permitir a continuação do processo sem exigir o preenchimento do campo "Endereço do Proprietário".
+
+3. **🔧 Análise de Regras de Negócio e Integrações**
+   - **Descrição:** Verificar as regras de negócio e integrações que determinam os campos obrigatórios e ajustar conforme necessário.
+   - **Critérios de Aceite:** As regras de negócio devem estar alinhadas com os requisitos reais do processo de reativação.
+
+### Frontend (🎨)
+
+1. **🎨 Indicação Visual de Campos Obrigatórios**
+   - **Descrição:** Implementar asteriscos ou outra forma visual para indicar campos obrigatórios na interface do usuário.
+   - **Critérios de Aceite:** Todos os campos obrigatórios devem ser claramente indicados na UI.
+
+2. **🎨 Mensagens de Erro Imediatas**
+   - **Descrição:** Implementar mensagens de erro em tempo real para campos obrigatórios não preenchidos.
+   - **Critérios de Aceite:** Usuários devem receber feedback imediato ao deixar campos obrigatórios em branco.
+
+3. **🎨 Ajuste na UI para Remover Campo "Endereço do Proprietário"**
+   - **Descrição:** Atualizar a interface para não exibir o campo "Endereço do Proprietário" como obrigatório na fila "AGUARDANDO ANÁLISE REATIVAÇÃO".
+   - **Critérios de Aceite:** O campo não deve ser exibido como obrigatório nesta etapa.
+
+### Testes e Validação
+
+1. **🔧🎨 Testes de Validação de Campos Obrigatórios**
+   - **Descrição:** Criar e executar casos de teste para garantir que a validação de campos obrigatórios funcione corretamente.
+   - **Critérios de Aceite:** Todos os testes devem passar sem erros, garantindo que os campos obrigatórios sejam devidamente validados.
+
+2. **🔧🎨 Testes de Fluxo sem "Endereço do Proprietário"**
+   - **Descrição:** Testar o fluxo de reativação para garantir que ele funcione corretamente sem a exigência do campo "Endereço do Proprietário".
+   - **Critérios de Aceite:** O fluxo deve ser concluído com sucesso sem exigir o campo "Endereço do Proprietário".
+
+### Documentação e Comunicação
+
+1. **🔧🎨 Atualização de Documentação**
+   - **Descrição:** Atualizar a documentação do sistema para refletir as mudanças nos requisitos de campos obrigatórios.
+   - **Critérios de Aceite:** A documentação deve estar completa e precisa, refletindo as alterações feitas.
+
+2. **🔧🎨 Comunicação com Stakeholders**
+   - **Descrição:** Informar os stakeholders sobre as mudanças implementadas e o impacto esperado.
+   - **Critérios de Aceite:** Todos os stakeholders devem estar cientes das alterações e do impacto no processo de reativação.
+
+Essas tasks devem ajudar a resolver o bug de forma eficaz, melhorando a experiência do usuário e garantindo a conformidade com os requisitos do processo de reativação.

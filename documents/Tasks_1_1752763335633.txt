@@ -1,0 +1,51 @@
+### Lista de Tasks/User Stories
+
+#### Backend (🔧)
+
+1. **Integração com Banco Arbi**
+   - 🔧 **Task**: Desenvolver módulo de integração com a API do Banco Arbi para envio de transações Pix.
+   - 🔧 **Task**: Implementar autenticação via OAuth2 utilizando Client ID e Client Secret.
+
+2. **Gerenciamento de Transações Pix**
+   - 🔧 **Task**: Implementar lógica para direcionar transações Pix para a conta designada.
+   - 🔧 **Task**: Criar serviço para processar notificações de WebHook e garantir idempotência.
+
+3. **Validação de Dados e Segurança**
+   - 🔧 **Task**: Implementar validações de dados das transações antes do envio.
+   - 🔧 **Task**: Garantir criptografia e armazenamento seguro de credenciais.
+
+4. **Processamento de Comprovantes**
+   - 🔧 **Task**: Desenvolver funcionalidade para gerar e validar comprovantes de pagamento.
+
+5. **Teste e Monitoramento**
+   - 🔧 **Task**: Configurar ambiente de homologação para testes extensivos.
+   - 🔧 **Task**: Implementar monitoramento e logging para rastreamento de transações.
+
+#### Frontend (🎨)
+
+1. **Interface de Usuário para Transações Pix**
+   - 🎨 **Task**: Criar interface intuitiva para iniciar e acompanhar transações Pix.
+   - 🎨 **Task**: Implementar feedback visual e auditivo para ações do usuário.
+
+2. **Confirmação e Comprovantes**
+   - 🎨 **Task**: Desenvolver tela de confirmação de dados antes de finalizar a transação.
+   - 🎨 **Task**: Criar layout para exibição e compartilhamento de comprovantes de transação.
+
+3. **Mensagens de Erro e Suporte**
+   - 🎨 **Task**: Implementar mensagens de erro claras e instrutivas para falhas de transação.
+   - 🎨 **Task**: Integrar função de suporte ao cliente na interface.
+
+4. **Teste de Usabilidade**
+   - 🎨 **Task**: Realizar testes de usabilidade para garantir que a interface atenda às necessidades dos usuários.
+
+### Critérios de Aceite
+
+- **Backend**: 
+  - Todas as transações Pix devem ser processadas corretamente e notificações de WebHook devem ser recebidas e tratadas.
+  - Comprovantes devem conter todas as informações necessárias e serem validados quanto à exatidão.
+
+- **Frontend**: 
+  - A interface deve ser intuitiva e fornecer feedback claro ao usuário.
+  - Mensagens de erro devem ser claras e fornecer instruções para resolução de problemas.
+
+Essas tasks devem ser executadas em colaboração entre as equipes de backend e frontend para garantir uma integração perfeita e uma experiência de usuário satisfatória.

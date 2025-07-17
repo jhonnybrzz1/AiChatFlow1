@@ -1,0 +1,56 @@
+### Lista de Tasks/User Stories para o Sistema SIGPRO
+
+#### 1. Validação de Dados Cadastrais do PDV
+
+🔧 **Backend:**
+- **Task:** Desenvolver integração com a API dos Correios para validação de endereços com base no CEP.
+- **Task:** Implementar lógica de fallback para casos de indisponibilidade do serviço dos Correios.
+- **Task:** Criar testes automatizados para garantir a precisão e desempenho da validação de endereços.
+
+🎨 **Frontend:**
+- **Task:** Atualizar a interface de cadastro/edição de PDVs para incluir validação de endereço em tempo real.
+- **Task:** Exibir mensagens de erro claras e sugestões de correção quando a validação falhar.
+
+#### 2. Força de Venda - Hierarquia
+
+🔧 **Backend:**
+- **Task:** Criar estrutura de banco de dados para suportar a hierarquia de força de vendas com até 4 níveis.
+- **Task:** Implementar API para gerenciamento de hierarquia de vendedores, supervisores e níveis superiores.
+
+🎨 **Frontend:**
+- **Task:** Desenvolver interface de usuário para visualização e edição da hierarquia de força de vendas.
+- **Task:** Implementar indicadores visuais para diferenciar níveis hierárquicos.
+
+#### 3. Registro de Visita
+
+🔧 **Backend:**
+- **Task:** Tornar o registro de visitas diárias obrigatório no sistema.
+- **Task:** Implementar validações para garantir a integridade dos dados de visitas.
+
+🎨 **Frontend:**
+- **Task:** Atualizar interface de registro de visitas para facilitar o preenchimento e garantir que todos os campos obrigatórios sejam preenchidos.
+- **Task:** Implementar notificações para lembrar os usuários de registrar suas visitas.
+
+#### 4. Programação da Visita
+
+🔧 **Backend:**
+- **Task:** Adicionar campo de planejamento de visita no modelo de dados do PDV.
+- **Task:** Implementar lógica de negócios para gerenciar a programação de visitas.
+
+🎨 **Frontend:**
+- **Task:** Atualizar formulários de cadastro/edição de PDVs para incluir o novo campo de planejamento de visitas.
+- **Task:** Integrar um calendário visual para facilitar o planejamento de visitas.
+
+#### 5. Share de Sellin e Recarga nos PDVs
+
+🔧 **Backend:**
+- **Task:** Criar estrutura de dados para armazenar o percentual de vendas de chip e recarga por PDV mensalmente.
+- **Task:** Implementar lógica para envio e verificação dos dados de vendas mensais.
+
+🎨 **Frontend:**
+- **Task:** Desenvolver interface para submissão mensal dos dados de vendas de chip e recarga.
+- **Task:** Implementar alertas para garantir que os dados sejam enviados dentro do prazo.
+
+### Considerações Finais
+- **Task:** Realizar sessões de treinamento para usuários finais sobre as novas funcionalidades e processos.
+- **Task:** Desenvolver documentação detalhada para cada nova funcionalidade implementada.

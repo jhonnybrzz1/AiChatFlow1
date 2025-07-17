@@ -1,0 +1,63 @@
+### Lista de Tasks/User Stories
+
+#### Backend (🔧)
+
+1. **🔧 Implementar Lógica de Suplência:**
+   - **Descrição:** Desenvolver a lógica que desconsidera a validação do cargo formal durante o período de suplência, validando apenas a posição hierárquica delegada.
+   - **Critérios de Aceite:** A lógica deve permitir que suplentes aprovem dentro do mesmo nível de alçada do titular.
+
+2. **🔧 Atualizar Modelo de Dados:**
+   - **Descrição:** Adicionar campos na tabela de usuários para gerenciar suplência (`is_suplente`, `data_inicio_suplencia`, `data_fim_suplencia`) e ajustar a tabela de hierarquia.
+   - **Critérios de Aceite:** As tabelas devem suportar a nova lógica de suplência sem impactar dados existentes.
+
+3. **🔧 Serviço de Autenticação e Autorização:**
+   - **Descrição:** Atualizar o serviço de autenticação para reconhecer suplentes e ajustar permissões de acordo com a hierarquia delegada.
+   - **Critérios de Aceite:** Suplentes devem ter acesso às mesmas permissões do titular durante a suplência.
+
+4. **🔧 Integração com Sistema de Notificações:**
+   - **Descrição:** Ajustar o sistema de notificações para que suplentes recebam alertas e mensagens direcionadas ao titular.
+   - **Critérios de Aceite:** Notificações devem ser enviadas corretamente para suplentes durante o período de suplência.
+
+5. **🔧 Log de Auditoria:**
+   - **Descrição:** Integrar a lógica de suplência ao sistema de auditoria para registrar ações realizadas por suplentes.
+   - **Critérios de Aceite:** Todas as aprovações feitas por suplentes devem ser registradas no log de auditoria.
+
+#### Frontend (🎨)
+
+1. **🎨 Interface de Gestão de Suplência:**
+   - **Descrição:** Desenvolver uma interface onde gestores possam designar e revisar suplentes, com opções para definir datas de início e término.
+   - **Critérios de Aceite:** A interface deve ser intuitiva e permitir a gestão eficaz de suplências.
+
+2. **🎨 Notificações e Feedback em Tempo Real:**
+   - **Descrição:** Implementar notificações claras e feedback em tempo real na interface de aprovação, informando sobre o status de suplência.
+   - **Critérios de Aceite:** Usuários devem ser informados sobre seu status de suplente e alçadas associadas.
+
+3. **🎨 Atualização da Interface de Aprovação:**
+   - **Descrição:** Ajustar a interface de aprovação para exibir informações relevantes sobre suplência, como datas e hierarquia delegada.
+   - **Critérios de Aceite:** A interface deve refletir corretamente o status de suplência e permitir aprovações sem bloqueios.
+
+4. **🎨 Testes de Usabilidade:**
+   - **Descrição:** Realizar testes de usabilidade para garantir que o novo fluxo de suplência é intuitivo e eficiente para os usuários.
+   - **Critérios de Aceite:** Feedback dos testes deve indicar que o fluxo é claro e funcional.
+
+#### Testes e Validação (QA)
+
+1. **🔧🎨 Cenários de Teste para Suplência:**
+   - **Descrição:** Desenvolver cenários de teste que garantam que o fluxo de aprovação funcione corretamente com suplentes.
+   - **Critérios de Aceite:** Todos os cenários de teste devem ser aprovados sem falhas.
+
+2. **🔧🎨 Teste de Integração:**
+   - **Descrição:** Realizar testes integrados para verificar o funcionamento do novo fluxo de aprovação em ambiente de teste.
+   - **Critérios de Aceite:** O sistema deve funcionar corretamente sem impactar outros módulos.
+
+#### Documentação e Treinamento
+
+1. **🎨 Atualização da Documentação:**
+   - **Descrição:** Atualizar a documentação do sistema com as novas regras de aprovação e gestão de suplência.
+   - **Critérios de Aceite:** Documentação deve ser clara e acessível para todos os usuários.
+
+2. **🎨 Preparação de Material de Treinamento:**
+   - **Descrição:** Preparar materiais de treinamento para usuários finais e equipe de suporte sobre as mudanças no fluxo de aprovação.
+   - **Critérios de Aceite:** Materiais devem ser compreensíveis e cobrir todas as novas funcionalidades.
+
+Essas tasks devem ser priorizadas e executadas conforme o cronograma definido para garantir que a melhoria seja implementada de forma eficaz e atenda às necessidades do negócio.
