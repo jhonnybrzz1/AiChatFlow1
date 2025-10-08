@@ -1,13 +1,10 @@
-import OpenAI from "openai";
 import { type Demand, type ChatMessage } from "@shared/schema";
 import { storage } from "../storage";
 import fs from "fs";
 import path from "path";
+import { mistralAIService } from "./mistral-ai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || "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"
-});
+// Using Mistral AI service instead of OpenAI
 
 export class AISquadService {
   private agents = [
@@ -124,23 +121,22 @@ export class AISquadService {
     };
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
-          },
-          {
-            role: "user",
-            content: prompts[agentName as keyof typeof prompts] || `Analise a demanda: ${demand.description}`
-          }
-        ],
-        max_tokens: intensityLevel === 'baixa' ? 300 : intensityLevel === 'media' ? 500 : 800,
-        temperature: 0.7
-      });
+      const systemPrompt = `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`;
+      const userPrompt = prompts[agentName as keyof typeof prompts] || `Analise a demanda: ${demand.description}`;
+      
+      // Set max tokens based on intensity level
+      const maxTokens = intensityLevel === 'baixa' ? 300 : intensityLevel === 'media' ? 500 : 800;
+      
+      const response = await mistralAIService.generateChatCompletion(
+        systemPrompt,
+        userPrompt,
+        {
+          temperature: 0.7,
+          maxTokens: maxTokens
+        }
+      );
 
-      return response.choices[0].message.content || `${agentName} processou a demanda com sucesso.`;
+      return response || `${agentName} processou a demanda com sucesso.`;
     } catch (error) {
       console.error(`Error processing with ${agentName}:`, error);
       return `${agentName} encontrou um erro durante o processamento, mas o fluxo continua.`;
@@ -168,41 +164,29 @@ export class AISquadService {
     `;
 
     try {
-      const prdResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "Você é um Product Manager experiente da squad Redeflex POS. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. Use formato profissional com seções bem definidas."
-          },
-          {
-            role: "user",
-            content: `Gere um PRD completo e estruturado para:\n${context}`
-          }
+      // Generate PRD using Mistral AI
+      const prdSystemPrompt = "Você é um Product Manager experiente da squad Redeflex POS. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. Use formato profissional com seções bem definidas.";
+      const prdUserPrompt = `Gere um PRD completo e estruturado para:\n${context}`;
+      
+      // Generate Tasks using Mistral AI
+      const tasksSystemPrompt = "Você é um Product Manager experiente da squad Redeflex POS. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas no contexto fornecido. Use formato com ícones 🔧 para Backend e 🎨 para Frontend.";
+      const tasksUserPrompt = `Gere tasks organizadas em Backend (🔧) e Frontend (🎨) para:\n${context}`;
+      
+      // Generate both documents in parallel
+      const [prdContent, tasksContent] = await mistralAIService.generateMultipleChatCompletions(
+        [
+          { systemPrompt: prdSystemPrompt, userPrompt: prdUserPrompt },
+          { systemPrompt: tasksSystemPrompt, userPrompt: tasksUserPrompt }
         ],
-        max_tokens: 1500,
-        temperature: 0.3
-      });
-
-      const tasksResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "Você é um Product Manager experiente da squad Redeflex POS. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas no contexto fornecido. Use formato com ícones 🔧 para Backend e 🎨 para Frontend."
-          },
-          {
-            role: "user",
-            content: `Gere tasks organizadas em Backend (🔧) e Frontend (🎨) para:\n${context}`
-          }
-        ],
-        max_tokens: 1500,
-        temperature: 0.3
-      });
+        {
+          maxTokens: 1500,
+          temperature: 0.3
+        }
+      );
 
       return {
-        prdContent: prdResponse.choices[0].message.content || "PRD gerado com sucesso",
-        tasksContent: tasksResponse.choices[0].message.content || "Tasks geradas com sucesso"
+        prdContent: prdContent || "PRD gerado com sucesso",
+        tasksContent: tasksContent || "Tasks geradas com sucesso"
       };
     } catch (error) {
       console.error("Error generating documents:", error);
