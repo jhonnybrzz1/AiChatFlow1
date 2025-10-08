@@ -1,21 +1,103 @@
+
 import { type Demand, type ChatMessage } from "@shared/schema";
 import { storage } from "../storage";
 import fs from "fs";
 import path from "path";
 import { mistralAIService } from "./mistral-ai";
+import yaml from "js-yaml";
 
 // Using Mistral AI service instead of OpenAI
 
 export class AISquadService {
-  private agents = [
-    { name: "refinador", icon: "🧠", description: "Iniciando refinamento da demanda..." },
-    { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
-    { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
-    { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
-    { name: "analista_de_dados", icon: "📈", description: "Verificando estrutura de dados e integrações necessárias..." },
-    { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." },
-    { name: "pm", icon: "📋", description: "Gerando PRD e Tasks baseado no refinamento..." }
-  ];
+  private agents: { name: string, icon: string, description: string }[] = [];
+  private agentConfigs: Record<string, { system_prompt: string, description: string }> = {};
+
+  constructor() {
+    this.loadAgentConfigurations();
+  }
+
+  private loadAgentConfigurations(): void {
+    const agentsDir = path.join(process.cwd(), 'agents');
+    if (!fs.existsSync(agentsDir)) {
+      console.warn('Agents directory not found, using default agents');
+      this.agents = [
+        { name: "refinador", icon: "🧠", description: "Iniciando refinamento da demanda..." },
+        { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
+        { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
+        { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
+        { name: "analista_de_dados", icon: "📈", description: "Verificando estrutura de dados e integrações necessárias..." },
+        { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." },
+        { name: "pm", icon: "📋", description: "Gerando PRD e Tasks baseado no refinamento..." }
+      ];
+      return;
+    }
+
+    try {
+      const files = fs.readdirSync(agentsDir);
+      const agentConfigs = files
+        .filter(file => file.endsWith('.yaml') || file.endsWith('.yml'))
+        .map(file => {
+          const filePath = path.join(agentsDir, file);
+          const content = fs.readFileSync(filePath, 'utf8');
+          return yaml.load(content) as { name: string, description: string, system_prompt: string };
+        });
+
+      // Map agent names to their configurations
+      agentConfigs.forEach(config => {
+        const agentName = config.name.toLowerCase().replace(' agent', '');
+        this.agentConfigs[agentName] = {
+          system_prompt: config.system_prompt,
+          description: config.description
+        };
+
+        // Add to agents list with appropriate icon
+        const icon = this.getIconForAgent(agentName);
+        this.agents.push({
+          name: agentName,
+          icon: icon,
+          description: config.description || `${agentName} processando...`
+        });
+      });
+
+      // Add refinador if not present (it's a special agent)
+      if (!this.agents.some(a => a.name === 'refinador')) {
+        this.agents.unshift({ name: "refinador", icon: "🧠", description: "Iniciando refinamento da demanda..." });
+      }
+
+      // Add pm if not present (it's a special agent)
+      if (!this.agents.some(a => a.name === 'pm')) {
+        this.agents.push({ name: "pm", icon: "📋", description: "Gerando PRD e Tasks baseado no refinamento..." });
+      }
+
+      console.log('Loaded agent configurations:', this.agents.map(a => a.name));
+
+    } catch (error) {
+      console.error('Error loading agent configurations:', error);
+      // Fallback to default agents
+      this.agents = [
+        { name: "refinador", icon: "🧠", description: "Iniciando refinamento da demanda..." },
+        { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
+        { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
+        { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
+        { name: "analista_de_dados", icon: "📈", description: "Verificando estrutura de dados e integrações necessárias..." },
+        { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." },
+        { name: "pm", icon: "📋", description: "Gerando PRD e Tasks baseado no refinamento..." }
+      ];
+    }
+  }
+
+  private getIconForAgent(agentName: string): string {
+    switch (agentName) {
+      case 'scrum_master': return "🧝";
+      case 'qa': return "✅";
+      case 'ux': return "🎨";
+      case 'analista_de_dados': return "📈";
+      case 'tech_lead': return "💧";
+      case 'product_manager': return "📋";
+      case 'refinador': return "🧠";
+      default: return "🤖";
+    }
+  }
 
   private stopRequests = new Set<number>();
 
@@ -49,7 +131,7 @@ export class AISquadService {
 
       messages.push(message);
       await storage.updateDemandChat(demandId, messages);
-      
+
       if (onProgress) {
         onProgress(message);
       }
@@ -66,11 +148,11 @@ export class AISquadService {
 
       // Process with OpenAI for actual agent response
       const response = await this.processWithAgent(agent.name, demand, refinementLevels);
-      
+
       message.message = response;
       message.type = 'completed';
       await storage.updateDemandChat(demandId, messages);
-      
+
       if (onProgress) {
         onProgress(message);
       }
@@ -85,7 +167,7 @@ export class AISquadService {
 
     // Generate documents
     const { prdContent, tasksContent } = await this.generateDocuments(demand, messages);
-    
+
     // Save documents
     const prdPath = await this.saveDocument(demandId, 'PRD', prdContent);
     const tasksPath = await this.saveDocument(demandId, 'Tasks', tasksContent);
@@ -109,24 +191,24 @@ export class AISquadService {
 
   private async processWithAgent(agentName: string, demand: Demand, refinementLevels: number): Promise<string> {
     const intensityLevel = this.getIntensityByType(demand.type);
-    
-    const prompts = {
-      refinador: `Você é o refinador de demandas da squad. Analise a seguinte ${demand.type} e faça perguntas estratégicas para refinamento com intensidade ${intensityLevel}: ${demand.description}`,
-      scrum_master: `Você é o Scrum Master da squad. Para esta ${demand.type}, analise os riscos de processo e sugira quebras de entrega considerando intensidade ${intensityLevel}: ${demand.description}`,
-      qa: `Você é o QA da squad. Para esta ${demand.type}, identifique critérios de aceite e cenários de teste com intensidade ${intensityLevel}: ${demand.description}`,
-      ux: `Você é o UX Designer da squad. Para esta ${demand.type}, avalie a experiência do usuário e sugira melhorias com intensidade ${intensityLevel}: ${demand.description}`,
-      analista_de_dados: `Você é o Analista de Dados da squad. Para esta ${demand.type}, verifique estrutura de dados e integrações necessárias com intensidade ${intensityLevel}: ${demand.description}`,
-      tech_lead: `Você é o Tech Lead da squad. Para esta ${demand.type}, avalie viabilidade técnica e sugira arquitetura com intensidade ${intensityLevel}: ${demand.description}`,
-      pm: `Você é o Product Manager da squad. Para esta ${demand.type}, organize as informações finais baseado no refinamento com intensidade ${intensityLevel}: ${demand.description}`
-    };
+
+    // Check if we have a custom configuration for this agent
+    const agentConfig = this.agentConfigs[agentName];
+
+    // Use the system prompt from the configuration if available
+    const systemPrompt = agentConfig?.system_prompt
+      ? `${agentConfig.system_prompt}\n\nContexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
+      : `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`;
+
+    // Generate a user prompt based on the agent type
+    const userPrompt = agentConfig?.description
+      ? `Para esta ${demand.type}, ${agentConfig.description.toLowerCase()}: ${demand.description}`
+      : `Analise a demanda: ${demand.description}`;
 
     try {
-      const systemPrompt = `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`;
-      const userPrompt = prompts[agentName as keyof typeof prompts] || `Analise a demanda: ${demand.description}`;
-      
       // Set max tokens based on intensity level
       const maxTokens = intensityLevel === 'baixa' ? 300 : intensityLevel === 'media' ? 500 : 800;
-      
+
       const response = await mistralAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
@@ -158,7 +240,7 @@ export class AISquadService {
     Descrição: ${demand.description}
     Tipo: ${demand.type}
     Prioridade: ${demand.priority}
-    
+
     Respostas dos agentes da squad:
     ${messages.map(msg => `${msg.agent}: ${msg.message}`).join('\n')}
     `;
@@ -167,11 +249,11 @@ export class AISquadService {
       // Generate PRD using Mistral AI
       const prdSystemPrompt = "Você é um Product Manager experiente da squad. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. Use formato profissional com seções bem definidas.";
       const prdUserPrompt = `Gere um PRD completo e estruturado para:\n${context}`;
-      
+
       // Generate Tasks using Mistral AI
       const tasksSystemPrompt = "Você é um Product Manager experiente da squad. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas no contexto fornecido. Use formato com ícones 🔧 para Backend e 🎨 para Frontend.";
       const tasksUserPrompt = `Gere tasks organizadas em Backend (🔧) e Frontend (🎨) para:\n${context}`;
-      
+
       // Generate both documents in parallel
       const [prdContent, tasksContent] = await mistralAIService.generateMultipleChatCompletions(
         [
@@ -205,10 +287,10 @@ export class AISquadService {
 
     const filename = `${type}_${demandId}_${Date.now()}.docx`;
     const filepath = path.join(documentsDir, filename);
-    
+
     try {
       const { Document, Paragraph, TextRun, HeadingLevel } = require('docx');
-      
+
       const doc = new Document({
         sections: [{
           properties: {},
@@ -218,7 +300,7 @@ export class AISquadService {
 
       const buffer = await doc.toBuffer();
       fs.writeFileSync(filepath, buffer);
-      
+
       return `/api/documents/${filename}`;
     } catch (error) {
       console.error('Error generating Word document:', error);
@@ -233,27 +315,27 @@ export class AISquadService {
   private parseContentToWordElements(content: string, type: string): any[] {
     const { Paragraph, TextRun, HeadingLevel } = require('docx');
     const elements = [];
-    
+
     // Add document title
     elements.push(new Paragraph({
       text: type === 'PRD' ? 'Product Requirements Document' : 'Tasks & User Stories',
       heading: HeadingLevel.TITLE
     }));
-    
+
     const lines = content.split('\n');
     let currentList = [];
-    
+
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
-      
+
       // Check if it's a heading (starts with # or has keywords)
       if (trimmed.startsWith('#') || this.isHeading(trimmed)) {
         if (currentList.length > 0) {
           elements.push(...currentList);
           currentList = [];
         }
-        
+
         const headingText = trimmed.replace(/^#+\s*/, '');
         elements.push(new Paragraph({
           text: headingText,
@@ -281,7 +363,7 @@ export class AISquadService {
         }));
       }
     }
-    
+
     return elements;
   }
 
@@ -292,7 +374,7 @@ export class AISquadService {
       'dependências', 'resultados esperados', 'métricas', 'user story',
       'critérios de aceite', 'backend', 'frontend', 'tasks'
     ];
-    
+
     const lowerText = text.toLowerCase();
     return headingKeywords.some(keyword => lowerText.includes(keyword)) ||
            text.includes('🔧') || text.includes('🎨') || text.includes('###');
