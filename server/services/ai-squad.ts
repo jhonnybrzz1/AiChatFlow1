@@ -111,13 +111,13 @@ export class AISquadService {
     const intensityLevel = this.getIntensityByType(demand.type);
     
     const prompts = {
-      refinador: `Você é o refinador de demandas da squad Redeflex POS. Analise a seguinte ${demand.type} e faça perguntas estratégicas para refinamento com intensidade ${intensityLevel}: ${demand.description}`,
-      scrum_master: `Você é o Scrum Master da squad Redeflex POS. Para esta ${demand.type}, analise os riscos de processo e sugira quebras de entrega considerando intensidade ${intensityLevel}: ${demand.description}`,
-      qa: `Você é o QA da squad Redeflex POS. Para esta ${demand.type}, identifique critérios de aceite e cenários de teste com intensidade ${intensityLevel}: ${demand.description}`,
-      ux: `Você é o UX Designer da squad Redeflex POS. Para esta ${demand.type}, avalie a experiência do usuário e sugira melhorias com intensidade ${intensityLevel}: ${demand.description}`,
-      analista_de_dados: `Você é o Analista de Dados da squad Redeflex POS. Para esta ${demand.type}, verifique estrutura de dados e integrações necessárias com intensidade ${intensityLevel}: ${demand.description}`,
-      tech_lead: `Você é o Tech Lead da squad Redeflex POS. Para esta ${demand.type}, avalie viabilidade técnica e sugira arquitetura com intensidade ${intensityLevel}: ${demand.description}`,
-      pm: `Você é o Product Manager da squad Redeflex POS. Para esta ${demand.type}, organize as informações finais baseado no refinamento com intensidade ${intensityLevel}: ${demand.description}`
+      refinador: `Você é o refinador de demandas da squad. Analise a seguinte ${demand.type} e faça perguntas estratégicas para refinamento com intensidade ${intensityLevel}: ${demand.description}`,
+      scrum_master: `Você é o Scrum Master da squad. Para esta ${demand.type}, analise os riscos de processo e sugira quebras de entrega considerando intensidade ${intensityLevel}: ${demand.description}`,
+      qa: `Você é o QA da squad. Para esta ${demand.type}, identifique critérios de aceite e cenários de teste com intensidade ${intensityLevel}: ${demand.description}`,
+      ux: `Você é o UX Designer da squad. Para esta ${demand.type}, avalie a experiência do usuário e sugira melhorias com intensidade ${intensityLevel}: ${demand.description}`,
+      analista_de_dados: `Você é o Analista de Dados da squad. Para esta ${demand.type}, verifique estrutura de dados e integrações necessárias com intensidade ${intensityLevel}: ${demand.description}`,
+      tech_lead: `Você é o Tech Lead da squad. Para esta ${demand.type}, avalie viabilidade técnica e sugira arquitetura com intensidade ${intensityLevel}: ${demand.description}`,
+      pm: `Você é o Product Manager da squad. Para esta ${demand.type}, organize as informações finais baseado no refinamento com intensidade ${intensityLevel}: ${demand.description}`
     };
 
     try {
@@ -165,11 +165,11 @@ export class AISquadService {
 
     try {
       // Generate PRD using Mistral AI
-      const prdSystemPrompt = "Você é um Product Manager experiente da squad Redeflex POS. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. Use formato profissional com seções bem definidas.";
+      const prdSystemPrompt = "Você é um Product Manager experiente da squad. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. Use formato profissional com seções bem definidas.";
       const prdUserPrompt = `Gere um PRD completo e estruturado para:\n${context}`;
       
       // Generate Tasks using Mistral AI
-      const tasksSystemPrompt = "Você é um Product Manager experiente da squad Redeflex POS. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas no contexto fornecido. Use formato com ícones 🔧 para Backend e 🎨 para Frontend.";
+      const tasksSystemPrompt = "Você é um Product Manager experiente da squad. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas no contexto fornecido. Use formato com ícones 🔧 para Backend e 🎨 para Frontend.";
       const tasksUserPrompt = `Gere tasks organizadas em Backend (🔧) e Frontend (🎨) para:\n${context}`;
       
       // Generate both documents in parallel
