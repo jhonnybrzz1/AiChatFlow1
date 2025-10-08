@@ -1,4 +1,4 @@
-import { MistralClient, ChatCompletionResponse } from '@mistralai/mistralai';
+import MistralClient from '@mistralai/mistralai';
 
 // Default model is mistral-large-latest, which is their most capable model
 const DEFAULT_MODEL = 'mistral-large-latest';
