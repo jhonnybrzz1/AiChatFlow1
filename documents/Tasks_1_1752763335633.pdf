@@ -1,0 +1,111 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(Tasks - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(### Lista de Tasks/User Stories) Tj
+100 646 Td
+(#### Backend \\(🔧\\)) Tj
+100 632 Td
+(1. **Integração com Banco Arbi**) Tj
+100 618 Td
+(   - 🔧 **Task**: Desenvolver módulo de integração com a API do Banco Arbi para envio de transações Pix.) Tj
+100 604 Td
+(   - 🔧 **Task**: Implementar autenticação via OAuth2 utilizando Client ID e Client Secret.) Tj
+100 590 Td
+(2. **Gerenciamento de Transações Pix**) Tj
+100 576 Td
+(   - 🔧 **Task**: Implementar lógica para direcionar transações Pix para a conta designada.) Tj
+100 562 Td
+(   - 🔧 **Task**: Criar serviço para processar notificações de WebHook e garantir idempotência.) Tj
+100 548 Td
+(3. **Validação de Dados e Segurança**) Tj
+100 534 Td
+(   - 🔧 **Task**: Implementar validações de dados das transações antes do envio.) Tj
+100 520 Td
+(   - 🔧 **Task**: Garantir criptografia e armazenamento seguro de credenciais.) Tj
+100 506 Td
+(4. **Processamento de Comprovantes**) Tj
+100 492 Td
+(   - 🔧 **Task**: Desenvolver funcionalidade para gerar e validar comprovantes de pagamento.) Tj
+100 478 Td
+(5. **Teste e Monitoramento**) Tj
+100 464 Td
+(   - 🔧 **Task**: Configurar ambiente de homologação para testes extensivos.) Tj
+100 450 Td
+(   - 🔧 **Task**: Implementar monitoramento e logging para rastreamento de transações.) Tj
+100 436 Td
+(#### Frontend \\(🎨\\)) Tj
+100 422 Td
+(1. **Interface de Usuário para Transações Pix**) Tj
+100 408 Td
+(   - 🎨 **Task**: Criar interface intuitiva para iniciar e acompanhar transações Pix.) Tj
+100 394 Td
+(   - 🎨 **Task**: Implementar feedback visual e auditivo para ações do usuário.) Tj
+100 380 Td
+(2. **Confirmação e Comprovantes**) Tj
+100 366 Td
+(   - 🎨 **Task**: Desenvolver tela de confirmação de dados antes de finalizar a transação.) Tj
+100 352 Td
+(   - 🎨 **Task**: Criar layout para exibição e compartilhamento de comprovantes de transação.) Tj
+100 338 Td
+(3. **Mensagens de Erro e Suporte**) Tj
+100 324 Td
+(   - 🎨 **Task**: Implementar mensagens de erro claras e instrutivas para falhas de transação.) Tj
+100 310 Td
+(   - 🎨 **Task**: Integrar função de suporte ao cliente na interface.) Tj
+100 296 Td
+(4. **Teste de Usabilidade**) Tj
+100 282 Td
+(   - 🎨 **Task**: Realizar testes de usabilidade para garantir que a interface atenda às necessidades dos usuários.) Tj
+100 268 Td
+(### Critérios de Aceite) Tj
+100 254 Td
+(- **Backend**: ) Tj
+100 240 Td
+(  - Todas as transações Pix devem ser processadas corretamente e notificações de WebHook devem ser recebidas e tratadas.) Tj
+100 226 Td
+(  - Comprovantes devem conter todas as informações necessárias e serem validados quanto à exatidão.) Tj
+100 212 Td
+(- **Frontend**: ) Tj
+100 198 Td
+(  - A interface deve ser intuitiva e fornecer feedback claro ao usuário.) Tj
+100 184 Td
+(  - Mensagens de erro devem ser claras e fornecer instruções para resolução de problemas.) Tj
+100 170 Td
+(Essas tasks devem ser executadas em colaboração entre as equipes de backend e frontend para garantir uma integração perfeita e uma experiência de usuário satisfatória.) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

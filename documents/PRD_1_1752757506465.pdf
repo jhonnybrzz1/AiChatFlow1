@@ -1,0 +1,127 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(PRD - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(# Documento de Requisitos de Produto \\(PRD\\)) Tj
+100 646 Td
+(## Projeto: Melhorias no Sistema SIGPRO - Redeflex POS) Tj
+100 632 Td
+(### Introdução) Tj
+100 618 Td
+(Este documento descreve as melhorias a serem implementadas no sistema SIGPRO, com foco em otimizar a precisão dos dados cadastrais, gerenciar a força de vendas, controlar visitas e reportar o share de sellin e recarga nos Pontos de Venda \\(PDVs\\). As mudanças são necessárias para atender às novas exigências operacionais e garantir a eficiência dos processos internos.) Tj
+100 604 Td
+(### Objetivos do Projeto) Tj
+100 590 Td
+(1. **Aprimorar a precisão dos dados cadastrais dos PDVs.**) Tj
+100 576 Td
+(2. **Implementar um sistema de hierarquia para a força de vendas.**) Tj
+100 562 Td
+(3. **Garantir o registro obrigatório das visitas diárias.**) Tj
+100 548 Td
+(4. **Facilitar o planejamento de visitas aos PDVs.**) Tj
+100 534 Td
+(5. **Assegurar o envio mensal do percentual de vendas de chip e recarga.**) Tj
+100 520 Td
+(### Escopo do Projeto) Tj
+100 506 Td
+(#### 1. Validação de Dados Cadastrais do PDV) Tj
+100 492 Td
+(- **Descrição:** Integração com a base dos Correios para validação de dados com base no CEP informado.) Tj
+100 478 Td
+(- **Benefícios:** Maior precisão nos dados cadastrais e redução do retrabalho.) Tj
+100 464 Td
+(- **Requisitos Funcionais:**) Tj
+100 450 Td
+(  - O sistema deve validar automaticamente os dados cadastrais ao inserir ou editar um PDV.) Tj
+100 436 Td
+(  - Exibir mensagens de erro claras quando o CEP não for encontrado.) Tj
+100 422 Td
+(#### 2. Força de Venda - Hierarquia) Tj
+100 408 Td
+(- **Descrição:** Implementação de um módulo para cadastrar e manter a força de venda com hierarquia de até 4 níveis.) Tj
+100 394 Td
+(- **Benefícios:** Melhor organização e gestão da equipe de vendas.) Tj
+100 380 Td
+(- **Requisitos Funcionais:**) Tj
+100 366 Td
+(  - Permitir o cadastro de vendedores, supervisores e dois níveis hierárquicos superiores.) Tj
+100 352 Td
+(  - Gerenciar permissões e acessos conforme o nível hierárquico.) Tj
+100 338 Td
+(#### 3. Registro de Visita) Tj
+100 324 Td
+(- **Descrição:** Registro obrigatório das visitas diárias realizadas pela equipe de vendas.) Tj
+100 310 Td
+(- **Benefícios:** Melhor controle e monitoramento das atividades de campo.) Tj
+100 296 Td
+(- **Requisitos Funcionais:**) Tj
+100 282 Td
+(  - O sistema deve exigir o registro das visitas diárias, incluindo data, hora e local.) Tj
+100 268 Td
+(  - Notificar os usuários caso tentem concluir o dia sem registrar visitas.) Tj
+100 254 Td
+(#### 4. Programação da Visita) Tj
+100 240 Td
+(- **Descrição:** Adição de um novo campo para planejamento de visita no cadastro/edição do PDV.) Tj
+100 226 Td
+(- **Benefícios:** Facilita o planejamento e organização das visitas.) Tj
+100 212 Td
+(- **Requisitos Funcionais:**) Tj
+100 198 Td
+(  - Permitir a inserção e edição do planejamento de visitas.) Tj
+100 184 Td
+(  - Sincronizar com calendários pessoais e dispositivos móveis.) Tj
+100 170 Td
+(#### 5. Share de Sellin e Recarga nos PDVs) Tj
+100 156 Td
+(- **Descrição:** Envio mensal obrigatório do percentual de vendas de chip e recarga por PDV.) Tj
+100 142 Td
+(- **Benefícios:** Melhor análise e controle das vendas.) Tj
+100 128 Td
+(- **Requisitos Funcionais:**) Tj
+100 114 Td
+(  - Implementar uma interface para submissão dos dados mensais.) Tj
+100 100 Td
+(  - Gerar relatórios para análise e tomada de decisão.) Tj
+100 86 Td
+(### Cronograma) Tj
+100 72 Td
+(- **Início do Projeto:** 01/09/2024) Tj
+100 58 Td
+(- **Data Limite para Implementação:** 01/08/2025) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

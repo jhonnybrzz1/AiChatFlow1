@@ -1,0 +1,105 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(Tasks - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(### Tasks/User Stories para o Projeto "Meta x Real") Tj
+100 646 Td
+(#### Backend \\(🔧\\)) Tj
+100 632 Td
+(1. **🔧 Criação de Estruturas de Dados no Intraflex**) Tj
+100 618 Td
+(   - Criar tabelas para armazenar módulos, indicadores, itens e métricas configuráveis.) Tj
+100 604 Td
+(   - Estabelecer relacionamentos entre indicadores e suas respectivas métricas e módulos.) Tj
+100 590 Td
+(2. **🔧 Implementação de Funcionalidade de Parametrização**) Tj
+100 576 Td
+(   - Desenvolver API para criação, edição, ativação/inativação de indicadores.) Tj
+100 562 Td
+(   - Implementar lógica de validação de dados para evitar configurações incorretas.) Tj
+100 548 Td
+(3. **🔧 Sincronização com RFM \\(Palm\\)**) Tj
+100 534 Td
+(   - Desenvolver integração para atualização automática e em tempo real das configurações no Palm.) Tj
+100 520 Td
+(   - Implementar sistema de mensageria para comunicação entre Intraflex e Palm.) Tj
+100 506 Td
+(4. **🔧 Registro de Histórico de Alterações**) Tj
+100 492 Td
+(   - Criar mecanismo para registrar alterações feitas no Intraflex, incluindo usuário, data/hora e detalhes das alterações.) Tj
+100 478 Td
+(5. **🔧 Gerenciamento de Permissões e Segurança**) Tj
+100 464 Td
+(   - Implementar controle de acesso para garantir que apenas usuários autorizados possam modificar indicadores.) Tj
+100 450 Td
+(#### Frontend \\(🎨\\)) Tj
+100 436 Td
+(1. **🎨 Desenvolvimento da Interface de Parametrização no Intraflex**) Tj
+100 422 Td
+(   - Criar interface amigável para criação e edição de indicadores, com feedback visual para ações realizadas.) Tj
+100 408 Td
+(   - Implementar assistente de configuração para guiar usuários na parametrização de novos indicadores.) Tj
+100 394 Td
+(2. **🎨 Visualização Personalizada e Flexível**) Tj
+100 380 Td
+(   - Desenvolver opções de filtragem e ordenação para visualização de indicadores no Palm.) Tj
+100 366 Td
+(   - Implementar interface para visualização personalizada por vendedor, operadora e tipo de produto.) Tj
+100 352 Td
+(3. **🎨 Exibição de Histórico de Alterações**) Tj
+100 338 Td
+(   - Criar interface para visualização do histórico de alterações, com opções de filtro por data e usuário.) Tj
+100 324 Td
+(4. **🎨 Indicadores de Sincronização no Palm**) Tj
+100 310 Td
+(   - Implementar feedback visual no Palm para indicar o status da sincronização de dados.) Tj
+100 296 Td
+(5. **🎨 Capacitação e Suporte ao Usuário**) Tj
+100 282 Td
+(   - Desenvolver tutoriais interativos e documentação acessível dentro do Intraflex.) Tj
+100 268 Td
+(   - Incluir dicas contextuais na interface para auxiliar usuários na configuração de indicadores.) Tj
+100 254 Td
+(### Considerações Finais) Tj
+100 240 Td
+(- **Iteração e Feedback**: Coletar feedback contínuo da equipe comercial para ajustes finos nas funcionalidades.) Tj
+100 226 Td
+(- **Monitoramento e Ajustes**: Monitorar o uso do sistema e ajustar conforme necessário para garantir desempenho e usabilidade.) Tj
+100 212 Td
+(- **Treinamento**: Realizar sessões de treinamento para garantir que a equipe comercial compreenda e utilize efetivamente as novas funcionalidades.) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

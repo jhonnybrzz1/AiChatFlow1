@@ -1,0 +1,127 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(PRD - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(# Documento de Requisitos do Produto \\(PRD\\)) Tj
+100 646 Td
+(## 1. Visão Geral) Tj
+100 632 Td
+(**Nome da Funcionalidade:** Reativação de Cadastro com Atualização Integrada e Geração de Novo ID de Transação) Tj
+100 618 Td
+(**Objetivo:** Permitir a reativação de cadastros no sistema, recuperando automaticamente os dados antigos, com a possibilidade de atualização de dados bancários, garantindo consistência nas informações dos sistemas envolvidos, e geração de um novo ID de transação.) Tj
+100 604 Td
+(**Tipo:** Nova Funcionalidade) Tj
+100 590 Td
+(**Prioridade:** Alta) Tj
+100 576 Td
+(## 2. Descrição Detalhada) Tj
+100 562 Td
+(### 2.1. Reativação de Cadastro) Tj
+100 548 Td
+(- Implementar um fluxo que permita ao usuário reativar cadastros desativados previamente.) Tj
+100 534 Td
+(- O sistema deve localizar o cadastro inativo e prepará-lo para reativação.) Tj
+100 520 Td
+(### 2.2. Recuperação Automática de Dados) Tj
+100 506 Td
+(- O sistema deve recuperar automaticamente todos os dados antigos associados ao cadastro.) Tj
+100 492 Td
+(- Os dados devem ser carregados no SGV \\(Sistema de Gestão de Vendas\\) para garantir que o cadastro seja reativado com as informações anteriores.) Tj
+100 478 Td
+(### 2.3. Atualização de Dados Bancários) Tj
+100 464 Td
+(- Permitir que o usuário atualize os dados bancários durante o processo de reativação.) Tj
+100 450 Td
+(- Garantir que os dados bancários atualizados sejam salvos corretamente no sistema.) Tj
+100 436 Td
+(### 2.4. Consistência de Informações) Tj
+100 422 Td
+(- Assegurar que todas as informações do cadastro reativado estejam consistentes entre todos os sistemas envolvidos.) Tj
+100 408 Td
+(- Implementar verificações ou sincronizações necessárias para manter a consistência dos dados.) Tj
+100 394 Td
+(### 2.5. Geração de Novo ID de Transação) Tj
+100 380 Td
+(- Cada reativação deve gerar um novo ID de transação para rastreamento e registro no sistema.) Tj
+100 366 Td
+(- O novo ID deve ser único e associado à ação de reativação específica.) Tj
+100 352 Td
+(## 3. Requisitos Funcionais) Tj
+100 338 Td
+(1. **Recuperação de Dados:**) Tj
+100 324 Td
+(   - Recuperar e exibir dados antigos durante a reativação.) Tj
+100 310 Td
+(   - Atualizar automaticamente no SGV.) Tj
+100 296 Td
+(2. **Atualização de Dados Bancários:**) Tj
+100 282 Td
+(   - Permitir edição e validação de dados bancários.) Tj
+100 268 Td
+(   - Garantir segurança e conformidade com normas.) Tj
+100 254 Td
+(3. **Geração de Novo ID de Transação:**) Tj
+100 240 Td
+(   - Gerar ID único para cada reativação.) Tj
+100 226 Td
+(   - Registrar ID para auditoria e rastreamento.) Tj
+100 212 Td
+(## 4. Requisitos Não Funcionais) Tj
+100 198 Td
+(- **Segurança:** Garantir que apenas usuários autorizados possam realizar a reativação de cadastros.) Tj
+100 184 Td
+(- **Performance:** O processo de reativação e atualização dos dados deve ser realizado de forma eficiente, sem degradação perceptível do desempenho do sistema.) Tj
+100 170 Td
+(- **Auditoria:** Manter um log detalhado das reativações realizadas, incluindo mudanças nos dados bancários e os IDs de transação gerados.) Tj
+100 156 Td
+(## 5. Dependências) Tj
+100 142 Td
+(- Integração com o SGV para recuperação e atualização de dados.) Tj
+100 128 Td
+(- Sistema de autenticação para controle de acesso e permissões.) Tj
+100 114 Td
+(## 6. Critérios de Aceitação) Tj
+100 100 Td
+(1. Usuário consegue reativar um cadastro previamente desativado.) Tj
+100 86 Td
+(2. Dados antigos são recuperados e mostrados ao usuário durante a reativação.) Tj
+100 72 Td
+(3. Usuário pode atualizar os dados bancários do cadastro.) Tj
+100 58 Td
+(4. Todas as informações são consistentes nos sistemas após a reativação.) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

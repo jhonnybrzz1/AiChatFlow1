@@ -1,0 +1,127 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(PRD - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(# Documento de Requisitos do Produto \\(PRD\\)) Tj
+100 646 Td
+(## 1. Visão Geral) Tj
+100 632 Td
+(**Nome do Projeto:** Redeflex POS - Correção de Erro na Reativação  ) Tj
+100 618 Td
+(**Data de Criação:** [Data Atual]  ) Tj
+100 604 Td
+(**Autor:** [Seu Nome]  ) Tj
+100 590 Td
+(**Versão:** 1.0  ) Tj
+100 576 Td
+(### 1.1. Resumo Executivo) Tj
+100 562 Td
+(Este documento detalha os requisitos para corrigir um bug identificado no processo de reativação de contas no sistema Redeflex POS. O bug em questão envolve campos obrigatórios que aparecem em branco e a exigência indevida do campo "Endereço do Proprietário" na fila "AGUARDANDO ANÁLISE REATIVAÇÃO". A correção deste bug é essencial para melhorar a experiência do usuário e garantir a conformidade com as regras de negócio.) Tj
+100 548 Td
+(## 2. Descrição do Problema) Tj
+100 534 Td
+(### 2.1. Contexto) Tj
+100 520 Td
+(Durante o processo de reativação de contas, os usuários enfrentam dificuldades devido a:) Tj
+100 506 Td
+(- Campos obrigatórios que não estão sendo validados corretamente, permitindo que sejam deixados em branco.) Tj
+100 492 Td
+(- Exigência indevida do campo "Endereço do Proprietário", que não é necessário na fila "AGUARDANDO ANÁLISE REATIVAÇÃO".) Tj
+100 478 Td
+(### 2.2. Impacto) Tj
+100 464 Td
+(- **Experiência do Usuário:** Frustração e atrasos no processo de reativação.) Tj
+100 450 Td
+(- **Conformidade:** Possíveis preocupações com privacidade e regulamentação devido à coleta desnecessária de dados.) Tj
+100 436 Td
+(- **Eficácia Operacional:** Aumento do tempo de processamento e redução da eficiência operacional.) Tj
+100 422 Td
+(## 3. Requisitos Funcionais) Tj
+100 408 Td
+(### 3.1. Comportamento Esperado) Tj
+100 394 Td
+(- **Validação de Campos:** Todos os campos obrigatórios devem ser identificados e validados corretamente antes da submissão.) Tj
+100 380 Td
+(- **Exigência do "Endereço do Proprietário":** O campo não deve ser exigido na fila "AGUARDANDO ANÁLISE REATIVAÇÃO".) Tj
+100 366 Td
+(### 3.2. Comportamento Atual) Tj
+100 352 Td
+(- Campos obrigatórios estão sendo deixados em branco sem validação adequada.) Tj
+100 338 Td
+(- O campo "Endereço do Proprietário" está sendo solicitado indevidamente.) Tj
+100 324 Td
+(## 4. Critérios de Aceite) Tj
+100 310 Td
+(### 4.1. Campos Obrigatórios) Tj
+100 296 Td
+(- O sistema deve exibir uma mensagem de erro clara quando campos obrigatórios estiverem em branco.) Tj
+100 282 Td
+(### 4.2. Endereço do Proprietário) Tj
+100 268 Td
+(- O campo "Endereço do Proprietário" não deve ser exigido na fila "AGUARDANDO ANÁLISE REATIVAÇÃO".) Tj
+100 254 Td
+(## 5. Cenários de Teste) Tj
+100 240 Td
+(### 5.1. Cenário 1: Validação de Campos Obrigatórios) Tj
+100 226 Td
+(- **Dado** que estou na tela de reativação) Tj
+100 212 Td
+(- **Quando** deixo um ou mais campos obrigatórios em branco) Tj
+100 198 Td
+(- **Então** o sistema deve exibir uma mensagem de erro indicando quais campos precisam ser preenchidos) Tj
+100 184 Td
+(### 5.2. Cenário 2: Exigência Indevida do Campo "Endereço do Proprietário") Tj
+100 170 Td
+(- **Dado** que estou analisando um item na fila "AGUARDANDO ANÁLISE REATIVAÇÃO") Tj
+100 156 Td
+(- **Quando** tento prosseguir sem preencher o campo "Endereço do Proprietário") Tj
+100 142 Td
+(- **Então** o sistema deve permitir a continuação sem exigir o preenchimento deste campo) Tj
+100 128 Td
+(## 6. Solução Técnica) Tj
+100 114 Td
+(### 6.1. Ajustes Necessários) Tj
+100 100 Td
+(- Revisar e corrigir a lógica de validação de campos no frontend e backend.) Tj
+100 86 Td
+(- Remover a exigência do campo "Endereço do Proprietário" na fila específica.) Tj
+100 72 Td
+(### 6.2. Testes e Validação) Tj
+100 58 Td
+(- Realizar testes unitários e de integração para garantir que as correções funcionem conforme esperado.) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

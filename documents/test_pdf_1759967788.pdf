@@ -1,0 +1,51 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(PRD - 2025-10-08 23:56:28)
+Tj
+100 680 Td
+100 660 Td
+(# Test PRD Document) Tj
+100 646 Td
+(## 1. Visão Geral) Tj
+100 632 Td
+(**Funcionalidade:** Test PDF Generation) Tj
+100 618 Td
+(**Tipo:** Test) Tj
+100 604 Td
+(**Prioridade:** High) Tj
+100 590 Td
+(This is a test document to verify PDF generation works correctly.) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

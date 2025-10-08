@@ -1,0 +1,111 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(Tasks - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(### Tasks/User Stories para Correção do Bug) Tj
+100 646 Td
+(#### 🔧 Backend) Tj
+100 632 Td
+(1. **Análise de Logs e Auditoria**) Tj
+100 618 Td
+(   - 🔧 Revisar logs e registros do sistema para identificar a sequência de ações que levaram à reativação indevida do cliente.) Tj
+100 604 Td
+(   - 🔧 Implementar logs detalhados para rastrear mudanças de status de pagamento e alterações de taxa Pix.) Tj
+100 590 Td
+(2. **Revisão e Correção de Regras de Negócio**) Tj
+100 576 Td
+(   - 🔧 Analisar e corrigir a lógica de negócios que permite a reativação automática de clientes após alteração de taxa Pix.) Tj
+100 562 Td
+(   - 🔧 Implementar uma regra que impeça a alteração do status de bloqueio sem autorização explícita da equipe de risco.) Tj
+100 548 Td
+(3. **Integração e Fluxo de Dados**) Tj
+100 534 Td
+(   - 🔧 Revisar a integração entre o sistema de análise de risco e o sistema de gestão de taxas Pix para identificar e corrigir falhas.) Tj
+100 520 Td
+(   - 🔧 Isolar a lógica de negócios para garantir que alterações de taxas não afetem o status de bloqueio de clientes.) Tj
+100 506 Td
+(4. **Implementação de Controles de Segurança**) Tj
+100 492 Td
+(   - 🔧 Adicionar validações adicionais para garantir que alterações de taxa não possam modificar o status de bloqueio sem autorização.) Tj
+100 478 Td
+(5. **Testes e Simulações**) Tj
+100 464 Td
+(   - 🔧 Criar e executar testes unitários e de integração para validar que a correção impede a reativação indevida de clientes.) Tj
+100 450 Td
+(#### 🎨 Frontend) Tj
+100 436 Td
+(1. **Interface de Notificações e Alertas**) Tj
+100 422 Td
+(   - 🎨 Desenvolver uma interface para notificar a equipe de risco sobre mudanças de status de pagamento.) Tj
+100 408 Td
+(   - 🎨 Implementar alertas visuais no dashboard para indicar quando um cliente bloqueado está sujeito a alterações de taxa.) Tj
+100 394 Td
+(2. **Confirmação de Ações Sensíveis**) Tj
+100 380 Td
+(   - 🎨 Criar uma camada de confirmação para ações que possam alterar o status de pagamento de um cliente, garantindo que alterações sejam revisadas pela equipe de risco.) Tj
+100 366 Td
+(3. **Exibição de Logs e Histórico de Alterações**) Tj
+100 352 Td
+(   - 🎨 Desenvolver uma interface para exibir logs e histórico de alterações de status de pagamento e taxas, facilitando a auditoria e o monitoramento.) Tj
+100 338 Td
+(#### 🧪 QA) Tj
+100 324 Td
+(1. **Definição de Cenários de Teste**) Tj
+100 310 Td
+(   - 🧪 Criar cenários de teste para verificar que a alteração de taxa Pix não interfere no status de bloqueio de clientes.) Tj
+100 296 Td
+(   - 🧪 Testar a funcionalidade de notificação e confirmação de ações sensíveis para garantir que a equipe de risco seja informada adequadamente.) Tj
+100 282 Td
+(2. **Critérios de Aceite**) Tj
+100 268 Td
+(   - 🧪 Validar que um cliente bloqueado permanece bloqueado após alterações de taxa, sem liberação indevida de valores.) Tj
+100 254 Td
+(   - 🧪 Confirmar que todas as alterações de status de pagamento são registradas e notificadas à equipe de risco.) Tj
+100 240 Td
+(#### 📊 Data Analysis) Tj
+100 226 Td
+(1. **Revisão da Estrutura de Dados**) Tj
+100 212 Td
+(   - 📊 Analisar como os dados de status de cliente e taxas Pix são armazenados e verificar possíveis dependências que possam causar alterações indevidas.) Tj
+100 198 Td
+(2. **Monitoramento e Relatórios**) Tj
+100 184 Td
+(   - 📊 Desenvolver relatórios para monitorar alterações de status de pagamento e taxas, identificando padrões ou anomalias que possam indicar falhas.) Tj
+100 170 Td
+(Essas tasks devem ser priorizadas e executadas com urgência para mitigar os riscos operacionais e financeiros associados ao bug identificado.) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

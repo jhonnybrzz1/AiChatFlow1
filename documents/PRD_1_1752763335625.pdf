@@ -1,0 +1,127 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 0 >>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(PRD - 2025-10-08 23:56:50)
+Tj
+100 680 Td
+100 660 Td
+(# Documento de Requisitos do Produto \\(PRD\\)) Tj
+100 646 Td
+(## 1. Visão Geral) Tj
+100 632 Td
+(### 1.1. Objetivo) Tj
+100 618 Td
+(O objetivo deste documento é detalhar os requisitos para a implementação da funcionalidade de transações Pix no modelo "uma perna" para a adquirente Solver, em parceria com o Banco Arbi. Esta funcionalidade permitirá que clientes da TAL Pagamentos recebam pagamentos via Pix, com o Banco Arbi atuando como provedor de pagamentos.) Tj
+100 604 Td
+(### 1.2. Escopo) Tj
+100 590 Td
+(O escopo deste projeto inclui a integração técnica com o Banco Arbi, a configuração de transações Pix, a implementação de um WebHook para notificações de transações e a geração de comprovantes de pagamento.) Tj
+100 576 Td
+(## 2. Contexto de Negócio) Tj
+100 562 Td
+(### 2.1. Situação Atual) Tj
+100 548 Td
+(Atualmente, a Solver é a adquirente da TAL Pagamentos para transações de crédito e débito. A funcionalidade Pix permitirá que os clientes da TAL recebam pagamentos de forma rápida e eficiente, utilizando o sistema Pix.) Tj
+100 534 Td
+(### 2.2. Provedor de Pagamentos) Tj
+100 520 Td
+(O Banco Arbi, participante direto do Banco Central, será o provedor de pagamentos Pix. A Solver será responsável por enviar as transações Pix para a conta designada \\(Cash In\\), enquanto o Banco Arbi realizará o pagamento aos estabelecimentos \\(Cash Out\\).) Tj
+100 506 Td
+(## 3. Requisitos Funcionais) Tj
+100 492 Td
+(### 3.1. Integração com o Banco Arbi) Tj
+100 478 Td
+(- **Requisito**: Desenvolver um módulo para integração segura com as APIs do Banco Arbi.) Tj
+100 464 Td
+(- **Detalhes**: Utilizar OAuth2 para autenticação com Client ID, Client Secret e Token de Usuário.) Tj
+100 450 Td
+(### 3.2. Direcionamento de Transações Pix) Tj
+100 436 Td
+(- **Requisito**: Direcionar transações Pix para a conta designada da TAL SOLUÇÕES EM PAGAMENTOS LTDA.) Tj
+100 422 Td
+(- **Detalhes**:) Tj
+100 408 Td
+(  - **Agência e Conta**: 00019/000030153-9) Tj
+100 394 Td
+(  - **Chave PIX aleatória**: ab67167b-2930-478f-91c2-2c44159d432b) Tj
+100 380 Td
+(### 3.3. WebHook de Notificação) Tj
+100 366 Td
+(- **Requisito**: Implementar um serviço de WebHook para receber notificações de transações.) Tj
+100 352 Td
+(- **Detalhes**: Configurar a URL de WebHook http://webhookarbi.solverpag.com.br:10413 para capturar eventos de sucesso ou falha nas transações.) Tj
+100 338 Td
+(### 3.4. Geração de Comprovantes) Tj
+100 324 Td
+(- **Requisito**: Gerar comprovantes de pagamento com informações completas e precisas.) Tj
+100 310 Td
+(- **Detalhes**: Incluir data, hora, valor, recebedor, chave Pix, identificador da transação e status.) Tj
+100 296 Td
+(## 4. Requisitos Não Funcionais) Tj
+100 282 Td
+(### 4.1. Segurança) Tj
+100 268 Td
+(- **Requisito**: Garantir a segurança das transações utilizando criptografia e autenticação forte.) Tj
+100 254 Td
+(- **Detalhes**: Implementar práticas de segurança como HTTPS e armazenamento seguro de credenciais.) Tj
+100 240 Td
+(### 4.2. Desempenho) Tj
+100 226 Td
+(- **Requisito**: Assegurar que o sistema suporte o volume esperado de transações sem degradação de desempenho.) Tj
+100 212 Td
+(- **Detalhes**: Realizar testes de carga para validar a escalabilidade do sistema.) Tj
+100 198 Td
+(### 4.3. Confiabilidade) Tj
+100 184 Td
+(- **Requisito**: Garantir a disponibilidade do serviço e a resiliência em caso de falhas.) Tj
+100 170 Td
+(- **Detalhes**: Implementar mecanismos de retry e monitoramento contínuo.) Tj
+100 156 Td
+(## 5. Critérios de Aceite) Tj
+100 142 Td
+(### 5.1. Validação de Informações no Comprovante) Tj
+100 128 Td
+(- **Critério**: Todos os dados relevantes da transação devem estar corretamente impressos no comprovante.) Tj
+100 114 Td
+(### 5.2. Testes de Integração) Tj
+100 100 Td
+(- **Critério**: Realizar testes de integração completos em ambiente de homologação para garantir o funcionamento correto das funcionalidades.) Tj
+100 86 Td
+(### 5.3. Testes de Segurança) Tj
+100 72 Td
+(- **Critério**: Assegurar que todas as integrações e trocas de dados estejam seguras e em conformidade com as normas de segurança de dados financeiras.) Tj
+100 58 Td
+(## 6. Plano de Implementação) Tj
+
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000010 00000 n
+0000000059 00000 n
+0000000118 00000 n
+0000000200 00000 n
+0000000300 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF
