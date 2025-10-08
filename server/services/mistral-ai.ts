@@ -1,10 +1,10 @@
-import MistralClient from '@mistralai/mistralai';
+import { Mistral } from '@mistralai/mistralai';
 
 // Default model is mistral-large-latest, which is their most capable model
 const DEFAULT_MODEL = 'mistral-large-latest';
 
 export class MistralAIService {
-  private client: MistralClient;
+  private client: Mistral;
   
   constructor(apiKey?: string) {
     // Check for API key in environment variables
@@ -14,9 +14,9 @@ export class MistralAIService {
       console.warn('No Mistral API key provided. Please set MISTRAL_API_KEY environment variable.');
     }
     
-    this.client = new MistralClient(
-      apiKey || envApiKey || ''
-    );
+    this.client = new Mistral({
+      apiKey: apiKey || envApiKey || ''
+    });
   }
 
   /**
@@ -36,7 +36,7 @@ export class MistralAIService {
     } = {}
   ): Promise<string> {
     try {
-      const response = await this.client.chat({
+      const response = await this.client.chat.complete({
         model: options.model || DEFAULT_MODEL,
         messages: [
           {
@@ -106,7 +106,7 @@ export class MistralAIService {
     } = {}
   ): Promise<any> {
     try {
-      const response = await this.client.chat({
+      const response = await this.client.chat.complete({
         model: options.model || DEFAULT_MODEL,
         messages: [
           {
