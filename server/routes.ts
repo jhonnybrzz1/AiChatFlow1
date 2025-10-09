@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertDemandSchema, insertFileSchema } from "@shared/schema";
 import { aiSquadService } from "./services/ai-squad";
+import { pdfGenerator } from "./services/pdf-generator";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -168,6 +169,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.on('close', () => {
       clearInterval(intervalId);
     });
+  });
+
+  // Test PDF generation endpoint
+  app.get("/api/test-pdf", async (req: Request, res: Response) => {
+    try {
+      const testContent = `
+# Test PRD Document
+
+## 1. Visão Geral
+
+**Funcionalidade:** Test PDF Generation
+**Tipo:** Test
+**Prioridade:** High
+
+This is a test document to verify PDF generation works correctly.
+
+## 2. Requisitos Funcionais
+
+- Implementar funcionalidade principal
+- Criar testes automatizados
+- Documentar solução
+
+## 3. Requisitos Não Funcionais
+
+- Performance: < 2s response time
+- Security: Data encryption
+`;
+
+      const tasksContent = `
+# Test Tasks Document
+
+## 🔧 Backend Tasks
+
+- [ ] Implementar API principal
+- [ ] Criar testes unitários
+- [ ] Configurar banco de dados
+
+## 🎨 Frontend Tasks
+
+- [ ] Criar interface de usuário
+- [ ] Implementar validação de formulário
+- [ ] Adicionar animações
+`;
+
+      // Generate test PDFs
+      const prdPdf = await pdfGenerator.generatePRDDocument(testContent, 999);
+      const tasksPdf = await pdfGenerator.generateTasksDocument(tasksContent, 999);
+
+      // Save to documents directory
+      const documentsDir = path.join(process.cwd(), 'documents');
+      if (!fs.existsSync(documentsDir)) {
+        fs.mkdirSync(documentsDir, { recursive: true });
+      }
+
+      const prdPath = path.join(documentsDir, 'test_prd.pdf');
+      const tasksPath = path.join(documentsDir, 'test_tasks.pdf');
+
+      fs.writeFileSync(prdPath, prdPdf);
+      fs.writeFileSync(tasksPath, tasksPdf);
+
+      res.json({
+        message: "PDF generation test completed successfully!",
+        prdUrl: `/api/documents/test_prd.pdf`,
+        tasksUrl: `/api/documents/test_tasks.pdf`
+      });
+    } catch (error) {
+      console.error('Error during PDF generation test:', error);
+      res.status(500).json({ error: "Failed to generate test PDFs" });
+    }
   });
 
   const httpServer = createServer(app);
