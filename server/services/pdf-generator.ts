@@ -69,6 +69,10 @@ export class PDFGenerator {
       return content;
     }
 
+    // Extract summarized content if available
+    const summaryMatch = content.match(/Resumo das discussões dos agentes:([\s\S]*?)Detalhes dos agentes:/);
+    const summaryContent = summaryMatch ? summaryMatch[1].trim() : '';
+
     // Format content into standard Tasks structure
     const formattedContent = `
 # Tasks Document
@@ -96,6 +100,10 @@ ${this.extractSection(content, 'dependencies', 'depends on')}
 - **Project Manager:** [Name]
 - **Tech Lead:** [Name]
 - **Stakeholders:** [Names]
+
+## 6. Summary of Agent Discussions
+
+${summaryContent || 'No summary available.'}
 `;
 
     return formattedContent.trim();
@@ -192,6 +200,10 @@ ${this.extractSection(content, 'dependencies', 'depends on')}
       return content;
     }
 
+    // Extract summarized content if available
+    const summaryMatch = content.match(/Resumo das discussões dos agentes:([\s\S]*?)Detalhes dos agentes:/);
+    const summaryContent = summaryMatch ? summaryMatch[1].trim() : '';
+
     // Format content into standard PRD structure
     const formattedContent = `
 # Product Requirements Document (PRD)
@@ -223,6 +235,10 @@ ${this.extractSection(content, 'timeline', 'schedule', 'milestones')}
 ## 7. Aprovações
 
 ${this.extractSection(content, 'approvals', 'stakeholders')}
+
+## 8. Resumo das Discussões dos Agentes
+
+${summaryContent || 'Nenhum resumo disponível.'}
 `;
 
     return formattedContent.trim();

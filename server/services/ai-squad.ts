@@ -236,13 +236,20 @@ export class AISquadService {
   }
 
   private async generateDocuments(demand: Demand, messages: ChatMessage[]): Promise<{ prdContent: string, tasksContent: string }> {
+    // Summarize agent discussions first
+    const summarizedContent = await this.summarizeAgentDiscussions(demand, messages);
+
+    // Create context with summarized information
     const context = `
     Demanda: ${demand.title}
     Descrição: ${demand.description}
     Tipo: ${demand.type}
     Prioridade: ${demand.priority}
 
-    Respostas dos agentes da squad:
+    Resumo das discussões dos agentes:
+    ${summarizedContent}
+
+    Detalhes dos agentes:
     ${messages.map(msg => `${msg.agent}: ${msg.message}`).join('\n')}
     `;
 
@@ -278,6 +285,82 @@ export class AISquadService {
         tasksContent: `Tasks para ${demand.title}\n\n- [ ] 🔧 Implementar funcionalidade principal\n- [ ] 🔧 Criar testes\n- [ ] 🎨 Documentar solução`
       };
     }
+  }
+
+  /**
+   * Summarize agent discussions to create a consolidated view
+   */
+  private async summarizeAgentDiscussions(demand: Demand, messages: ChatMessage[]): Promise<string> {
+    // Group messages by agent type for better organization
+    const agentsByType = this.groupAgentsByType(messages);
+
+    // Create a summary prompt
+    const summaryPrompt = `
+    Demanda: ${demand.title}
+    Descrição: ${demand.description}
+    Tipo: ${demand.type}
+    Prioridade: ${demand.priority}
+
+    Análises dos agentes:
+    ${Object.entries(agentsByType).map(([type, msgs]) => {
+      return `### ${type.charAt(0).toUpperCase() + type.slice(1)} Analysis\n${msgs.map(msg => `- ${msg.agent}: ${msg.message}`).join('\n')}`;
+    }).join('\n\n')}
+    `;
+
+    try {
+      // Use AI to summarize the discussions
+      const summarySystemPrompt = "Você é um Product Manager experiente. Resuma as análises dos agentes da squad em um formato estruturado e profissional. Destaque os pontos principais de cada área (técnica, UX, QA, etc.) e forneça uma visão consolidada.";
+      const summaryUserPrompt = `Resuma as análises dos agentes para a demanda:\n${summaryPrompt}`;
+
+      const summary = await mistralAIService.generateChatCompletion(
+        summarySystemPrompt,
+        summaryUserPrompt,
+        {
+          maxTokens: 800,
+          temperature: 0.5
+        }
+      );
+
+      return summary || "Resumo das discussões dos agentes não disponível.";
+    } catch (error) {
+      console.error("Error summarizing agent discussions:", error);
+      // Fallback to simple summary
+      return `Resumo das discussões dos agentes para ${demand.title}:\n\n${Object.entries(agentsByType).map(([type, msgs]) => {
+        return `${type}: ${msgs.length} análises`;
+      }).join(', ')}`;
+    }
+  }
+
+  /**
+   * Group agents by type for better organization
+   */
+  private groupAgentsByType(messages: ChatMessage[]): Record<string, ChatMessage[]> {
+    const result: Record<string, ChatMessage[]> = {
+      technical: [],
+      ux: [],
+      qa: [],
+      data: [],
+      process: [],
+      other: []
+    };
+
+    messages.forEach(msg => {
+      if (msg.agent.includes('tech_lead') || msg.agent.includes('backend') || msg.agent.includes('frontend')) {
+        result.technical.push(msg);
+      } else if (msg.agent.includes('ux') || msg.agent.includes('designer')) {
+        result.ux.push(msg);
+      } else if (msg.agent.includes('qa')) {
+        result.qa.push(msg);
+      } else if (msg.agent.includes('analista_de_dados') || msg.agent.includes('data')) {
+        result.data.push(msg);
+      } else if (msg.agent.includes('scrum') || msg.agent.includes('process')) {
+        result.process.push(msg);
+      } else {
+        result.other.push(msg);
+      }
+    });
+
+    return result;
   }
 
   private async saveDocument(demandId: number, type: string, content: string): Promise<string> {
