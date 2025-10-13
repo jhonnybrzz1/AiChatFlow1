@@ -110,8 +110,14 @@ export class AISquadService {
     const demand = await storage.getDemand(demandId);
     if (!demand) throw new Error("Demand not found");
 
+    // Update status to processing
+    await storage.updateDemand(demandId, { status: 'processing' });
+
     const refinementLevels = this.getRefinementLevels(demand.type);
     const messages: ChatMessage[] = [];
+
+    // Calculate progress per agent
+    const progressPerAgent = 100 / this.agents.length;
 
     for (let i = 0; i < this.agents.length; i++) {
       // Check if processing was stopped
@@ -127,11 +133,18 @@ export class AISquadService {
         agent: agent.name,
         message: agent.description,
         timestamp: new Date().toISOString(),
-        type: 'processing'
+        type: 'processing',
+        progress: Math.min(100, Math.round((i + 1) * progressPerAgent)) // Calculate progress
       };
 
       messages.push(message);
       await storage.updateDemandChat(demandId, messages);
+
+      // Update demand with current progress
+      await storage.updateDemand(demandId, {
+        status: 'processing',
+        progress: message.progress
+      });
 
       if (onProgress) {
         onProgress(message);
@@ -176,6 +189,7 @@ export class AISquadService {
     // Update demand with document paths
     await storage.updateDemand(demandId, {
       status: 'completed',
+      progress: 100,
       prdUrl: prdPath,
       tasksUrl: tasksPath
     });

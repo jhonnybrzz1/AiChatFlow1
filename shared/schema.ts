@@ -9,6 +9,7 @@ export const demands = pgTable("demands", {
   type: text("type").notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'outro'
   priority: text("priority").notNull(), // 'baixa', 'media', 'alta', 'critica'
   status: text("status").notNull().default('processing'), // 'processing', 'completed', 'error', 'stopped'
+  progress: serial("progress").notNull().default(0), // Progress percentage 0-100
   chatMessages: jsonb("chat_messages").$type<ChatMessage[]>().default([]),
   prdUrl: text("prd_url"),
   tasksUrl: text("tasks_url"),
@@ -39,6 +40,7 @@ export type ChatMessage = {
   message: string;
   timestamp: string;
   type: 'processing' | 'completed' | 'error';
+  progress?: number; // Progress percentage 0-100
 };
 
 export const insertDemandSchema = createInsertSchema(demands).omit({
@@ -49,6 +51,7 @@ export const insertDemandSchema = createInsertSchema(demands).omit({
   prdUrl: true,
   tasksUrl: true,
   status: true,
+  progress: true,
 });
 
 export const insertFileSchema = createInsertSchema(files).omit({

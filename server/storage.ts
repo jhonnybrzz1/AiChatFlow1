@@ -57,6 +57,7 @@ export class MemStorage implements IStorage {
       ...insertDemand,
       id,
       status: 'processing',
+      progress: 0, // Initial progress
       chatMessages: [],
       prdUrl: null,
       tasksUrl: null,

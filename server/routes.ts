@@ -62,8 +62,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Start processing in background
-      aiSquadService.processDemand(demand.id).catch(error => {
+      // Start processing in background with progress callback
+      aiSquadService.processDemand(demand.id, async (message) => {
+        // Update demand with progress
+        await storage.updateDemand(demand.id, {
+          status: 'processing',
+          progress: message.progress || 0
+        });
+      }).catch(error => {
         console.error(`Error processing demand ${demand.id}:`, error);
         storage.updateDemand(demand.id, { status: 'error' });
       });
