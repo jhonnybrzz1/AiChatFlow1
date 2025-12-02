@@ -4,6 +4,16 @@ import fs from 'fs';
 import path from 'path';
 
 export class PDFGenerator {
+  /**
+   * Remove emojis and other non-WinAnsi characters from text
+   * WinAnsi (used by Helvetica) only supports basic Latin characters
+   */
+  private removeEmojis(text: string): string {
+    // Remove emojis and other Unicode characters outside the WinAnsi range
+    // WinAnsi supports characters from 0x0020 to 0x00FF
+    return text.replace(/[^\x20-\x7E\xA0-\xFF]/g, '');
+  }
+
   async generatePRDDocument(content: string, demandId: number): Promise<Buffer> {
     // Format content to follow standard PRD structure
     const formattedContent = this.formatPRDContent(content);
@@ -15,17 +25,8 @@ export class PDFGenerator {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Add a page to the document
-    const page = pdfDoc.addPage([612, 792]); // Letter size: 8.5" x 11" (612 x 792 points)
-
-    // Draw header
-    this.drawHeader(page, helveticaBoldFont, demandId, 'Product Requirements Document (PRD)');
-
-    // Draw content
-    this.drawContent(page, helveticaFont, helveticaBoldFont, formattedContent);
-
-    // Draw footer
-    this.drawFooter(page, helveticaFont);
+    // Draw content across multiple pages
+    await this.drawMultiPageContent(pdfDoc, helveticaFont, helveticaBoldFont, formattedContent, demandId, 'Product Requirements Document (PRD)');
 
     // Serialize the PDFDocument to bytes
     const pdfBytes = await pdfDoc.save();
@@ -43,17 +44,8 @@ export class PDFGenerator {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Add a page to the document
-    const page = pdfDoc.addPage([612, 792]); // Letter size: 8.5" x 11" (612 x 792 points)
-
-    // Draw header
-    this.drawHeader(page, helveticaBoldFont, demandId, 'Tasks');
-
-    // Draw content
-    this.drawContent(page, helveticaFont, helveticaBoldFont, formattedContent);
-
-    // Draw footer
-    this.drawFooter(page, helveticaFont);
+    // Draw content across multiple pages
+    await this.drawMultiPageContent(pdfDoc, helveticaFont, helveticaBoldFont, formattedContent, demandId, 'Tasks');
 
     // Serialize the PDFDocument to bytes
     const pdfBytes = await pdfDoc.save();
@@ -260,6 +252,98 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     return resultLines.length > 0 ? resultLines.join('\n') : '- [Content not provided]';
   }
 
+  /**
+   * Draw content across multiple pages
+   */
+  private async drawMultiPageContent(
+    pdfDoc: any,
+    font: any,
+    boldFont: any,
+    content: string,
+    demandId: number,
+    docType: string
+  ): Promise<void> {
+    const pageWidth = 612;
+    const pageHeight = 792;
+    const margin = 50;
+    const maxWidth = pageWidth - (margin * 2);
+    const lineHeight = 14;
+    const headerHeight = 180;
+    const footerHeight = 70;
+    const contentAreaHeight = pageHeight - headerHeight - footerHeight;
+
+    // Remove emojis from content
+    const cleanContent = this.removeEmojis(content);
+    const lines = cleanContent.split('\n');
+
+    // Create first page
+    let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+    let pageNumber = 1;
+    this.drawHeader(currentPage, boldFont, demandId, docType);
+    let yPosition = pageHeight - headerHeight;
+
+    for (const line of lines) {
+      if (line.trim() === '') {
+        yPosition -= 8;
+        continue;
+      }
+
+      let wrappedLines: string[] = [];
+      let fontSize = 12;
+      let currentFont = font;
+      let color = rgb(0, 0, 0);
+      let indent = 0;
+
+      // Check line type and set properties
+      if (line.trim().startsWith('#')) {
+        const headingText = line.replace(/^#+\s*/, '').trim();
+        wrappedLines = this.wrapText(headingText, maxWidth, boldFont, 16);
+        fontSize = 16;
+        currentFont = boldFont;
+        color = rgb(0.2, 0.4, 0.6);
+      } else if (line.trim().match(/^- \[ \]/)) {
+        const taskText = line.replace(/^- \[ \]\s*/, '').trim();
+        wrappedLines = this.wrapText('• ' + taskText, maxWidth - 20, font, 12);
+        indent = 10;
+      } else if (line.trim().startsWith('-')) {
+        const listText = line.replace(/^-\s*/, '').trim();
+        wrappedLines = this.wrapText('• ' + listText, maxWidth - 20, font, 12);
+        indent = 10;
+      } else {
+        wrappedLines = this.wrapText(line, maxWidth, font, 12);
+      }
+
+      // Draw each wrapped line
+      for (const wrappedLine of wrappedLines) {
+        // Check if we need a new page
+        if (yPosition < footerHeight + 20) {
+          // Draw footer on current page
+          this.drawFooter(currentPage, font, pageNumber);
+
+          // Create new page
+          pageNumber++;
+          currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          this.drawHeader(currentPage, boldFont, demandId, docType);
+          yPosition = pageHeight - headerHeight;
+        }
+
+        // Draw the line
+        currentPage.drawText(wrappedLine, {
+          x: margin + indent,
+          y: yPosition,
+          size: fontSize,
+          font: currentFont,
+          color: color,
+        });
+
+        yPosition -= (fontSize === 16 ? 20 : lineHeight);
+      }
+    }
+
+    // Draw footer on last page
+    this.drawFooter(currentPage, font, pageNumber);
+  }
+
   private drawHeader(page: any, font: any, demandId: number, docType: string = 'PRD') {
     const { width, height } = page.getSize();
 
@@ -321,77 +405,131 @@ ${summaryContent || 'Nenhum resumo disponível.'}
   private drawContent(page: any, font: any, boldFont: any, content: string) {
     const { width, height } = page.getSize();
     const margin = 50;
+    const maxWidth = width - (margin * 2);
     const lineHeight = 14;
     let yPosition = height - 200; // Start below the header
 
+    // Remove emojis from content before processing
+    const cleanContent = this.removeEmojis(content);
+
     // Split content into lines
-    const lines = content.split('\n');
+    const lines = cleanContent.split('\n');
 
     for (const line of lines) {
       if (line.trim() === '') {
-        // Skip empty lines
+        // Add space for empty lines
+        yPosition -= 8;
         continue;
       }
 
       // Check if this is a heading (starts with #)
       if (line.trim().startsWith('#')) {
         const headingText = line.replace(/^#+\s*/, '').trim();
-        page.drawText(headingText, {
-          x: margin,
-          y: yPosition,
-          size: 16,
-          font: boldFont,
-          color: rgb(0.2, 0.4, 0.6),
-        });
-        yPosition -= 20;
+        const wrappedLines = this.wrapText(headingText, maxWidth, boldFont, 16);
+
+        for (const wrappedLine of wrappedLines) {
+          if (yPosition < margin + 50) break;
+
+          page.drawText(wrappedLine, {
+            x: margin,
+            y: yPosition,
+            size: 16,
+            font: boldFont,
+            color: rgb(0.2, 0.4, 0.6),
+          });
+          yPosition -= 20;
+        }
       }
       // Check if this is a task item (starts with - [ ] or similar)
       else if (line.trim().match(/^- \[ \]/)) {
         const taskText = line.replace(/^- \[ \]\s*/, '').trim();
-        page.drawText('• ' + taskText, {
-          x: margin,
-          y: yPosition,
-          size: 12,
-          font: font,
-          color: rgb(0, 0, 0),
-        });
-        yPosition -= lineHeight;
+        const wrappedLines = this.wrapText('• ' + taskText, maxWidth - 20, font, 12);
+
+        for (const wrappedLine of wrappedLines) {
+          if (yPosition < margin + 50) break;
+
+          page.drawText(wrappedLine, {
+            x: margin + 10,
+            y: yPosition,
+            size: 12,
+            font: font,
+            color: rgb(0, 0, 0),
+          });
+          yPosition -= lineHeight;
+        }
       }
-      // Check if this is a section header (contains 🔧 or 🎨)
-      else if (line.match(/🔧|🎨/)) {
-        const sectionText = line.trim();
-        page.drawText(sectionText, {
-          x: margin,
-          y: yPosition,
-          size: 14,
-          font: boldFont,
-          color: rgb(0.2, 0.6, 0.2),
-        });
-        yPosition -= 18;
+      // Check if this is a list item (starts with -)
+      else if (line.trim().startsWith('-')) {
+        const listText = line.replace(/^-\s*/, '').trim();
+        const wrappedLines = this.wrapText('• ' + listText, maxWidth - 20, font, 12);
+
+        for (const wrappedLine of wrappedLines) {
+          if (yPosition < margin + 50) break;
+
+          page.drawText(wrappedLine, {
+            x: margin + 10,
+            y: yPosition,
+            size: 12,
+            font: font,
+            color: rgb(0, 0, 0),
+          });
+          yPosition -= lineHeight;
+        }
       }
       else {
-        // Regular text
-        page.drawText(line, {
-          x: margin,
-          y: yPosition,
-          size: 12,
-          font: font,
-          color: rgb(0, 0, 0),
-        });
-        yPosition -= lineHeight;
+        // Regular text - wrap if needed
+        const wrappedLines = this.wrapText(line, maxWidth, font, 12);
+
+        for (const wrappedLine of wrappedLines) {
+          if (yPosition < margin + 50) break;
+
+          page.drawText(wrappedLine, {
+            x: margin,
+            y: yPosition,
+            size: 12,
+            font: font,
+            color: rgb(0, 0, 0),
+          });
+          yPosition -= lineHeight;
+        }
       }
 
       // Check if we need a new page
-      if (yPosition < margin) {
-        // Add a new page if we run out of space
-        // Note: In a real implementation, we would add a new page and continue
-        // For simplicity, we'll just break here
+      if (yPosition < margin + 50) {
+        // For now, just break - in production, would add new pages
         break;
       }
     }
   }
 
-  private drawFooter(page: any, font: any) {
+  /**
+   * Wrap text to fit within a specific width
+   */
+  private wrapText(text: string, maxWidth: number, font: any, fontSize: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+      if (testWidth > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.length > 0 ? lines : [''];
+  }
+
+  private drawFooter(page: any, font: any, pageNumber: number = 1) {
     const { width, height } = page.getSize();
 
     // Draw footer line
@@ -412,7 +550,7 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     });
 
     // Draw page number
-    page.drawText('Page 1', {
+    page.drawText(`Page ${pageNumber}`, {
       x: width - 100,
       y: 30,
       size: 10,
