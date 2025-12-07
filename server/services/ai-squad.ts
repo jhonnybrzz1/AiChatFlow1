@@ -289,107 +289,41 @@ export class AISquadService {
       console.log("Conteúdo do PRD gerado pela IA:", prdContent);
       console.log("Conteúdo das Tasks gerado pela IA:", tasksContent);
 
-      // Ensure we have valid content
-      const finalPrdContent = prdContent && prdContent.trim() !== '' ? prdContent : `# Product Requirements Document (PRD)
+      // Process the AI-generated content to ensure it contains actual agent information
+      let processedPrdContent = prdContent || '';
+      if (!processedPrdContent || processedPrdContent.trim() === '') {
+        // If AI failed to generate content, build from agent messages
+        processedPrdContent = this.buildPRDFromAgentMessages(demand, messages, summarizedContent);
+      } else {
+        // Ensure the generated content includes actual agent discussions
+        if (!processedPrdContent.includes(demand.title) && !processedPrdContent.includes(demand.description)) {
+          processedPrdContent = this.buildPRDFromAgentMessages(demand, messages, summarizedContent) + '\n\n' + processedPrdContent;
+        }
+      }
 
-## 1. Visão Geral
-**Demanda:** ${demand.title}
-**Descrição:** ${demand.description}
-**Tipo:** ${demand.type}
-**Prioridade:** ${demand.priority}
+      let processedTasksContent = tasksContent || '';
+      if (!processedTasksContent || processedTasksContent.trim() === '') {
+        // If AI failed to generate content, build from agent messages
+        processedTasksContent = this.buildTasksFromAgentMessages(demand, messages);
+      } else {
+        // Ensure the generated content includes actual agent discussions
+        if (!processedTasksContent.includes('Backend Tasks') && !processedTasksContent.includes('Frontend Tasks')) {
+          processedTasksContent = this.buildTasksFromAgentMessages(demand, messages) + '\n\n' + processedTasksContent;
+        }
+      }
 
-## 2. Análise Detalhada
-${summarizedContent || 'Nenhum resumo disponível.'}
-
-## 3. Requisitos Funcionais
-- Implementar funcionalidade principal
-- Criar testes automatizados
-- Documentar solução
-
-## 4. Requisitos Não Funcionais
-- Performance: < 2s response time
-- Security: Data encryption
-
-## 5. Critérios de Aceitação
-- Funcionalidade deve passar em todos os testes
-- Documentação completa
-`;
-      const finalTasksContent = tasksContent && tasksContent.trim() !== '' ? tasksContent : `# Tasks Document
-
-## 1. Project Overview
-**Project Name:** ${demand.title}
-**Date:** ${new Date().toLocaleDateString()}
-**Version:** 1.0
-
-## 2. Task Categories
-### 2.1 Backend Tasks (🔧)
-${this.extractTasksFromAgentMessages(messages, 'backend')}
-
-### 2.2 Frontend Tasks (🎨)
-${this.extractTasksFromAgentMessages(messages, 'frontend')}
-
-### 2.3 QA Tasks (✅)
-${this.extractTasksFromAgentMessages(messages, 'qa')}
-
-## 3. Additional Notes
-${summarizedContent || 'Nenhuma análise adicional disponível.'}
-`;
-
-      console.log("Conteúdo final do PRD:", finalPrdContent);
-      console.log("Conteúdo final das Tasks:", finalTasksContent);
+      console.log("Conteúdo final do PRD:", processedPrdContent);
+      console.log("Conteúdo final das Tasks:", processedTasksContent);
 
       return {
-        prdContent: finalPrdContent,
-        tasksContent: finalTasksContent
+        prdContent: processedPrdContent,
+        tasksContent: processedTasksContent
       };
     } catch (error) {
       console.error("Error generating documents:", error);
-      // Return properly formatted fallback content with actual agent data
-      const fallbackPrd = `# Product Requirements Document (PRD)
-
-## 1. Visão Geral
-**Demanda:** ${demand.title}
-**Descrição:** ${demand.description}
-**Tipo:** ${demand.type}
-**Prioridade:** ${demand.priority}
-
-## 2. Análise dos Agentes
-${summarizedContent || messages.map(msg => `**${msg.agent}**: ${msg.message}`).join('\n\n')}
-
-## 3. Requisitos Funcionais
-- Implementar funcionalidade principal
-- Criar testes automatizados
-- Documentar solução
-
-## 4. Requisitos Não Funcionais
-- Performance: < 2s response time
-- Security: Data encryption
-
-## 5. Critérios de Aceitação
-- Funcionalidade deve passar em todos os testes
-- Documentação completa
-`;
-
-      const fallbackTasks = `# Tasks Document
-
-## 1. Project Overview
-**Project Name:** ${demand.title}
-**Date:** ${new Date().toLocaleDateString()}
-**Version:** 1.0
-
-## 2. Task Categories
-### 2.1 Backend Tasks (🔧)
-${this.extractTasksFromAgentMessages(messages, 'backend', true)}
-
-### 2.2 Frontend Tasks (🎨)
-${this.extractTasksFromAgentMessages(messages, 'frontend', true)}
-
-### 2.3 QA Tasks (✅)
-${this.extractTasksFromAgentMessages(messages, 'qa', true)}
-
-## 3. Agent Discussions Summary
-${summarizedContent || 'Nenhuma análise adicional disponível.'}
-`;
+      // Return properly formatted fallback content that always includes actual agent data
+      const fallbackPrd = this.buildPRDFromAgentMessages(demand, messages, summarizedContent);
+      const fallbackTasks = this.buildTasksFromAgentMessages(demand, messages);
 
       return {
         prdContent: fallbackPrd,
@@ -443,13 +377,135 @@ ${summarizedContent || 'Nenhuma análise adicional disponível.'}
   }
 
   /**
+   * Build a PRD document from agent messages
+   */
+  private buildPRDFromAgentMessages(demand: Demand, messages: ChatMessage[], summarizedContent: string): string {
+    return `# Product Requirements Document (PRD)
+
+## 1. Visão Geral
+**Demanda:** ${demand.title}
+**Descrição:** ${demand.description}
+**Tipo:** ${demand.type}
+**Prioridade:** ${demand.priority}
+
+## 2. Análise Detalhada
+${summarizedContent || 'Nenhuma análise consolidada disponível.'}
+
+## 3. Discussões dos Agentes
+${messages.map(msg => `### ${msg.agent.charAt(0).toUpperCase() + msg.agent.slice(1)}
+${msg.message}`).join('\n\n')}
+
+## 4. Requisitos Funcionais
+${this.extractRequirementsFromMessages(messages, 'funcional')}
+
+## 5. Requisitos Não Funcionais
+${this.extractRequirementsFromMessages(messages, 'nao-funcional')}
+
+## 6. Critérios de Aceitação
+${this.extractAcceptanceCriteriaFromMessages(messages)}
+
+## 7. Riscos e Dependências
+${this.extractRisksAndDependenciesFromMessages(messages)}
+`;
+  }
+
+  /**
+   * Build a Tasks document from agent messages
+   */
+  private buildTasksFromAgentMessages(demand: Demand, messages: ChatMessage[]): string {
+    return `# Tasks Document
+
+## 1. Project Overview
+**Project Name:** ${demand.title}
+**Date:** ${new Date().toLocaleDateString()}
+**Version:** 1.0
+
+## 2. Task Categories
+
+### 2.1 Backend Tasks (🔧)
+${this.extractTasksFromAgentMessages(messages, 'backend', true)}
+
+### 2.2 Frontend Tasks (🎨)
+${this.extractTasksFromAgentMessages(messages, 'frontend', true)}
+
+### 2.3 QA Tasks (✅)
+${this.extractTasksFromAgentMessages(messages, 'qa', true)}
+
+### 2.4 Other Tasks
+${this.extractTasksFromAgentMessages(messages, 'other', true)}
+
+## 3. Agent Discussions Summary
+${messages.map(msg => `**${msg.agent}**: ${msg.message.substring(0, 200)}${msg.message.length > 200 ? '...' : ''}`).join('\n\n')}
+`;
+  }
+
+  /**
+   * Extract requirements from agent messages based on type
+   */
+  private extractRequirementsFromMessages(messages: ChatMessage[], type: 'funcional' | 'nao-funcional'): string {
+    const relevantMessages = messages.filter(msg =>
+      (type === 'funcional' &&
+        (msg.message.toLowerCase().includes('funcional') ||
+         msg.message.toLowerCase().includes('requisito') ||
+         msg.message.toLowerCase().includes('lógica'))) ||
+      (type === 'nao-funcional' &&
+        (msg.message.toLowerCase().includes('desempenho') ||
+         msg.message.toLowerCase().includes('segurança') ||
+         msg.message.toLowerCase().includes('performance')))
+    );
+
+    if (relevantMessages.length > 0) {
+      return relevantMessages.map(msg => `- ${msg.agent}: ${msg.message.substring(0, 150)}...`).join('\n');
+    }
+
+    return `- Nenhum requisito ${type === 'funcional' ? 'funcional' : 'não funcional'} específico identificado nos dados dos agentes`;
+  }
+
+  /**
+   * Extract acceptance criteria from agent messages
+   */
+  private extractAcceptanceCriteriaFromMessages(messages: ChatMessage[]): string {
+    const criteriaMessages = messages.filter(msg =>
+      msg.message.toLowerCase().includes('critério') ||
+      msg.message.toLowerCase().includes('aceitação') ||
+      msg.message.toLowerCase().includes('teste') ||
+      msg.message.toLowerCase().includes('validar')
+    );
+
+    if (criteriaMessages.length > 0) {
+      return criteriaMessages.map(msg => `- ${msg.agent}: ${msg.message.substring(0, 150)}...`).join('\n');
+    }
+
+    return '- Nenhum critério de aceitação específico identificado nos dados dos agentes';
+  }
+
+  /**
+   * Extract risks and dependencies from agent messages
+   */
+  private extractRisksAndDependenciesFromMessages(messages: ChatMessage[]): string {
+    const riskMessages = messages.filter(msg =>
+      msg.message.toLowerCase().includes('risco') ||
+      msg.message.toLowerCase().includes('dependência') ||
+      msg.message.toLowerCase().includes('bloqueador') ||
+      msg.message.toLowerCase().includes('impedimento')
+    );
+
+    if (riskMessages.length > 0) {
+      return riskMessages.map(msg => `- ${msg.agent}: ${msg.message.substring(0, 150)}...`).join('\n');
+    }
+
+    return '- Nenhum risco ou dependência específica identificada nos dados dos agentes';
+  }
+
+  /**
    * Extract tasks from agent messages based on category
    */
   private extractTasksFromAgentMessages(messages: ChatMessage[], category: string, useFallback: boolean = false): string {
     const categoryAgents: Record<string, string[]> = {
       backend: ['tech_lead', 'backend', 'analista_de_dados'],
       frontend: ['ux', 'frontend'],
-      qa: ['qa']
+      qa: ['qa'],
+      other: ['scrum_master', 'refinador', 'pm', 'product_manager']
     };
 
     const relevantMessages = messages.filter(msg => {
@@ -459,20 +515,23 @@ ${summarizedContent || 'Nenhuma análise adicional disponível.'}
         return categoryAgents.frontend.some(agent => msg.agent.includes(agent));
       } else if (category === 'qa') {
         return categoryAgents.qa.some(agent => msg.agent.includes(agent));
+      } else if (category === 'other') {
+        return categoryAgents.other.some(agent => msg.agent.includes(agent));
       }
       return false;
     });
 
     if (relevantMessages.length > 0) {
-      return relevantMessages.map(msg => `- [ ] 🔧 ${msg.agent}: ${msg.message.substring(0, 100)}...`).join('\n');
+      return relevantMessages.map(msg => `- [ ] ${category === 'frontend' ? '🎨' : category === 'backend' ? '🔧' : '✅'} ${msg.agent}: ${msg.message.substring(0, 100)}...`).join('\n');
     }
 
     if (useFallback) {
       // If no specific messages found, create generic tasks
       const genericTasks: Record<string, string> = {
-        backend: "- [ ] Implementar lógica de backend\n- [ ] Configurar banco de dados\n- [ ] Criar testes unitários",
-        frontend: "- [ ] Criar interface de usuário\n- [ ] Implementar validação de formulário\n- [ ] Adicionar animações",
-        qa: "- [ ] Definir critérios de aceitação\n- [ ] Criar casos de teste\n- [ ] Realizar testes exploratórios"
+        backend: "- [ ] 🔧 Implementar lógica de backend\n- [ ] 🔧 Configurar banco de dados\n- [ ] 🔧 Criar testes unitários",
+        frontend: "- [ ] 🎨 Criar interface de usuário\n- [ ] 🎨 Implementar validação de formulário\n- [ ] 🎨 Adicionar animações",
+        qa: "- [ ] ✅ Definir critérios de aceitação\n- [ ] ✅ Criar casos de teste\n- [ ] ✅ Realizar testes exploratórios",
+        other: "- [ ] 📋 Planejar etapas de implementação\n- [ ] 📋 Definir critérios de sucesso\n- [ ] 📋 Criar documentação de processo"
       };
       return genericTasks[category] || "- [ ] Tarefa não especificada";
     }
