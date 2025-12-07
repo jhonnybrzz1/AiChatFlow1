@@ -221,7 +221,7 @@ export class AISquadService {
 
     try {
       // Set max tokens based on intensity level
-      const maxTokens = intensityLevel === 'baixa' ? 300 : intensityLevel === 'media' ? 500 : 800;
+      const maxTokens = intensityLevel === 'baixa' ? 800 : intensityLevel === 'media' ? 1500 : 2500;
       const model = agentConfig?.model || undefined; // Use agent's model or default
 
       const response = await mistralAIService.generateChatCompletion(
@@ -284,7 +284,7 @@ export class AISquadService {
           { systemPrompt: tasksSystemPrompt, userPrompt: tasksUserPrompt }
         ],
         {
-          maxTokens: 2000,
+          maxTokens: 4000,
           temperature: 0.3
         }
       );
