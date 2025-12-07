@@ -288,9 +288,15 @@ export class AISquadService {
         }
       );
 
+      console.log("Conteúdo do PRD gerado pela IA:", prdContent);
+      console.log("Conteúdo das Tasks gerado pela IA:", tasksContent);
+
       // Ensure we have valid content
       const finalPrdContent = prdContent && prdContent.trim() !== '' ? prdContent : `PRD para ${demand.title}\n\nDescrição: ${demand.description}\n\nDocumento gerado automaticamente.`;
       const finalTasksContent = tasksContent && tasksContent.trim() !== '' ? tasksContent : `Tasks para ${demand.title}\n\n- [ ] 🔧 Implementar funcionalidade principal\n- [ ] 🔧 Criar testes\n- [ ] 🎨 Documentar solução`;
+
+      console.log("Conteúdo final do PRD:", finalPrdContent);
+      console.log("Conteúdo final das Tasks:", finalTasksContent);
 
       return {
         prdContent: finalPrdContent,
@@ -303,91 +309,42 @@ export class AISquadService {
         prdContent: `# Product Requirements Document (PRD)
 
 ## 1. Visão Geral
-
 **Demanda:** ${demand.title}
 **Descrição:** ${demand.description}
 **Tipo:** ${demand.type}
 **Prioridade:** ${demand.priority}
+**Resumo:** ${summarizedContent || 'Nenhum resumo disponível.'}
 
 ## 2. Requisitos Funcionais
-
 - Implementar funcionalidade principal
 - Criar testes automatizados
 - Documentar solução
 
 ## 3. Requisitos Não Funcionais
-
 - Performance: < 2s response time
 - Security: Data encryption
 
 ## 4. Critérios de Aceitação
-
 - Funcionalidade deve passar em todos os testes
 - Documentação completa
-
-## 5. Dependências e Riscos
-
-- Dependências: Nenhuma conhecida
-- Riscos: Nenhum identificado
-
-## 6. Cronograma
-
-- Início: ${new Date().toLocaleDateString()}
-- Previsão de conclusão: ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-
-## 7. Aprovações
-
-- **Project Manager:** [Name]
-- **Tech Lead:** [Name]
-- **Stakeholders:** [Names]
-
-## 8. Resumo das Discussões dos Agentes
-
-${summarizedContent || 'Nenhum resumo disponível.'}
 `,
         tasksContent: `# Tasks Document
 
 ## 1. Project Overview
-
 **Project Name:** ${demand.title}
 **Date:** ${new Date().toLocaleDateString()}
 **Version:** 1.0
 
 ## 2. Task Categories
-
 ### 2.1 Backend Tasks
-
 - [ ] 🔧 Implementar funcionalidade principal
 - [ ] 🔧 Criar testes unitários
 - [ ] 🔧 Configurar banco de dados
 
 ### 2.2 Frontend Tasks
-
 - [ ] 🎨 Criar interface de usuário
 - [ ] 🎨 Implementar validação de formulário
 - [ ] 🎨 Adicionar animações
-
-## 3. Task Priorities
-
-| Task ID | Task Name | Priority | Assigned To | Due Date | Status |
-|--------|-----------|----------|-------------|----------|--------|
-| T1 | Implement main API | High | [Developer] | [Date] | Not Started |
-| T2 | Design UI | Medium | [Designer] | [Date] | Not Started |
-| T3 | Write tests | High | [QA] | [Date] | Not Started |
-
-## 4. Dependencies
-
-- Nenhuma dependência conhecida
-
-## 5. Approvals
-
-- **Project Manager:** [Name]
-- **Tech Lead:** [Name]
-- **Stakeholders:** [Names]
-
-## 6. Summary of Agent Discussions
-
-${summarizedContent || 'No summary available.'}
 `
       };
     }
