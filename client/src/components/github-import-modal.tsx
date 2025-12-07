@@ -9,6 +9,7 @@ import { Loader2, Github, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { FaCheck, FaSpinner } from 'react-icons/fa'; // Import react-icons
 
 interface GitHubImportModalProps {
   onImportSuccess: (indexedContent: string, analysisResult: string) => void;
@@ -19,14 +20,16 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [repoSearch, setRepoSearch] = useState('');
-  const [showGenericWarning, setShowGenericWarning] = useState(false); // New state for warning
+  const [showGenericWarning, setShowGenericWarning] = useState(false);
+  const [isIndexed, setIsIndexed] = useState(false); // New state
+  const [indexedRepoName, setIndexedRepoName] = useState<string | null>(null); // New state
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: repos, isLoading: isLoadingRepos, isError: isErrorRepos } = useQuery({
     queryKey: ['github/repos'],
     queryFn: () => api.github.listRepos(),
-    enabled: isOpen, // Only fetch when modal is open
+    enabled: isOpen,
   });
 
   const indexRepoMutation = useMutation({
@@ -38,6 +41,8 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
         description: "O conteúdo do repositório foi carregado para análise.",
       });
       onImportSuccess(data.content, data.analysisResult);
+      setIsIndexed(true);
+      setIndexedRepoName(data.repoName); // Set repo name from API response
       setIsOpen(false);
       setSelectedRepo(null);
       setRepoSearch('');
@@ -48,13 +53,15 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
         description: error.message,
         variant: "destructive",
       });
+      setIsIndexed(false);
+      setIndexedRepoName(null);
     },
   });
 
   const handleIndexRepo = () => {
     if (selectedRepo) {
       if (!demandDescription || demandDescription.trim() === '') {
-        setShowGenericWarning(true); // Show warning if no demand description
+        setShowGenericWarning(true);
       } else {
         setShowGenericWarning(false);
       }
@@ -70,9 +77,25 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center space-x-2">
-          <Github size={16} />
-          <span>Importar do GitHub</span>
+        <Button
+          variant="outline"
+          className={cn("flex items-center space-x-2", isIndexed && "bg-green-100 text-green-700 hover:bg-green-200")}
+          disabled={indexRepoMutation.isPending}
+        >
+          {indexRepoMutation.isPending ? (
+            <FaSpinner className="mr-2 h-4 w-4 animate-spin" />
+          ) : isIndexed ? (
+            <FaCheck className="mr-2 h-4 w-4" />
+          ) : (
+            <Github size={16} />
+          )}
+          <span>
+            {indexRepoMutation.isPending
+              ? "Indexando..."
+              : isIndexed && indexedRepoName
+              ? `Indexado: ${indexedRepoName}`
+              : "Importar do GitHub"}
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl">

@@ -55,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const analysisResult = await codeAnalysisService.analyzeRepo(indexedContent, demandDescription || '', userPrompt);
       
-      res.json({ content: indexedContent, analysisResult: analysisResult, demandDescription: demandDescription || null });
+      res.json({ content: indexedContent, analysisResult: analysisResult, demandDescription: demandDescription || null, repoName: `${owner}/${repo}` });
     } catch (error) {
       res.status(500).json({ error: "Failed to index repository or analyze code" });
     }
