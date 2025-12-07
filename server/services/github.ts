@@ -4,6 +4,10 @@ import simpleGit, { SimpleGit } from 'simple-git';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Aproximadamente 200 mil tokens para deixar uma margem de segurança
+// para o prompt do modelo (256k tokens total)
+const MAX_INDEX_TOKENS = 200000; 
+
 export class GitHubService {
   private client: Octokit;
   private git: SimpleGit;
@@ -56,10 +60,7 @@ export class GitHubService {
     const githubToken = process.env.GITHUB_TOKEN;
 
     if (!githubToken) {
-        // Fallback to clone if no token is provided for API access, assuming it's a public repo
-        // or the clone method handles authentication differently (e.g., SSH keys)
-        // For now, we throw as the clone method also relies on this token for private repos
-        throw new Error('GITHUB_TOKEN environment variable is not set. Cannot index private repositories directly via API or clone.');
+        throw new Error('GITHUB_TOKEN environment variable is not set. Cannot index private repositories directly via API or clone (requires token).');
     }
 
     try {
@@ -102,6 +103,7 @@ export class GitHubService {
   private async fetchRepoContentsFromApi(owner: string, repo: string, githubToken: string): Promise<string | null> {
     const octokit = new Octokit({ auth: githubToken });
     let indexedContent = '';
+    let currentTokens = 0;
 
     try {
       // Get the default branch of the repository
@@ -123,7 +125,13 @@ export class GitHubService {
         !this.isBinaryExtension(item.path) // Ignore binary files
       );
 
+      // Sort files by size or relevance if needed, for now just process as is
       for (const file of filesToProcess) {
+        if (currentTokens >= MAX_INDEX_TOKENS) {
+            console.warn(`Token limit (${MAX_INDEX_TOKENS}) reached for ${owner}/${repo}. Skipping remaining files.`);
+            break;
+        }
+
         if (file.sha) {
           try {
             const { data: fileContent } = await octokit.git.getBlob({
@@ -133,7 +141,18 @@ export class GitHubService {
             });
             // The content is base64 encoded
             const decodedContent = Buffer.from(fileContent.content, 'base64').toString('utf8');
+            
+            // Estimate tokens (simple character count for now, real tokenizers are more complex)
+            const fileTokens = decodedContent.length / 4; // Rough estimate: 1 token ~ 4 characters
+
+            if (currentTokens + fileTokens >= MAX_INDEX_TOKENS) {
+                console.warn(`Adding ${file.path} would exceed token limit. Skipping.`);
+                break;
+            }
+
             indexedContent += `--- FILE: ${file.path} ---\n\n${decodedContent}\n\n`;
+            currentTokens += fileTokens;
+
           } catch (contentError) {
             console.warn(`Could not fetch content for ${file.path}: ${contentError.message}`);
           }
@@ -148,7 +167,7 @@ export class GitHubService {
   }
 
   private isIgnoredPath(filePath: string): boolean {
-    const ignoredFolders = ['node_modules', 'dist', 'build', '.git', '.github', '.vscode', '.idea'];
+    const ignoredFolders = ['node_modules', 'dist', 'build', '.git', '.github', '.vscode', '.idea', 'temp', 'uploads', 'documents'];
     return ignoredFolders.some(folder => filePath.includes(`/${folder}/`) || filePath.startsWith(`${folder}/`));
   }
 
@@ -156,12 +175,28 @@ export class GitHubService {
     const binaryExtensions = [
       '.png', '.jpg', '.jpeg', '.gif', '.pdf', '.zip', '.tar.gz', '.tgz', '.mp4', '.avi', '.mov', '.mp3',
       '.wav', '.ogg', '.exe', '.dll', '.bin', '.obj', '.class', '.jar', '.war', '.ear', '.svg', '.ico',
-      '.webp', '.bmp', '.woff', '.woff2', '.ttf', '.eot', '.db', '.sqlite', '.bak', '.log', '.lock',
-      '.pnp', '.yarn', '.gradle', '.jar', '.log', '.md', '.markdown', // Consider markdown as text, but can be ignored if too noisy
+      '.webp', '.bmp', '.woff', '.woff2', '.ttf', '.eot', '.db', '.sqlite', '.bak', '.log', '.pnp',
+      // Added more common binary/irrelevant extensions
+      '.lock', '.cache', '.pak', '.dat', '.db', '.DS_Store', '.log', '.bin', '.tmp', '.temp',
+      '.sublime-workspace', '.vscode-workspace', '.project', '.classpath', '.settings', '.iml',
+      '.pyd', '.so', '.dylib', '.a', '.lib', '.o', '.out', '.elf', '.d', '.suo', '.user', '.pdb',
+      '.vs', '.psd', '.ai', '.eps', '.sketch', '.fig', '.xd', '.ase', '.gpl', '.blend', '.obj', '.fbx',
+      '.mtl', '.stl', '.dae', '.3ds', '.max', '.maya', '.c4d', '.unity', '.upk', '.udk', '.pak',
+      '.uasset', '.umap', '.unitypackage', '.asset', '.prefab', '.controller', '.mat', '.anim',
+      '.mesh', '.fbx', '.obj', '.gltf', '.glb', '.vox', '.vdb', '.hdr', '.exr', '.tga', '.dds', '.pvr',
+      '.ktx', '.basis', '.astc', '.crn', '.vtf', '.vpk', '.wad', '.bsp', '.mdl', '.vmf', '.vmt',
+      '.cfg', '.ini', '.json', // JSON is text, but often config files are too noisy. Can be reconsidered.
+      '.txt' // Text files are usually important, but might contain very large logs. Handle with care.
     ];
     // Remove query parameters or hash from path if present
     const cleanPath = filePath.split('?')[0].split('#')[0];
     const extension = path.extname(cleanPath).toLowerCase();
+    
+    // Explicitly do NOT ignore markdown files, as they often contain valuable context.
+    if (extension === '.md' || extension === '.markdown') {
+        return false;
+    }
+
     return binaryExtensions.includes(extension);
   }
 
@@ -171,14 +206,13 @@ export class GitHubService {
       const res = path.resolve(dir, dirent.name);
       if (dirent.isDirectory()) {
         // Ignore common unnecessary directories
-        if (['.git', 'node_modules', 'dist', 'build'].includes(dirent.name)) {
+        if (['.git', 'node_modules', 'dist', 'build', 'temp', 'uploads', 'documents'].includes(dirent.name)) {
           return [];
         }
         return this.readFilesRecursively(res);
       } else {
         // Ignore binary files
-        const binaryExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.pdf', '.zip', '.tar.gz'];
-        if (binaryExtensions.some(ext => dirent.name.endsWith(ext))) {
+        if (this.isBinaryExtension(res)) { // Use the more comprehensive check
           return [];
         }
         return [res];
