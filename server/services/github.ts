@@ -17,7 +17,7 @@ export class GitHubService {
     console.log('------------------------------------');
 
     if (!apiKey && !envApiKey) {
-      console.warn('No GitHub API key provided. Please set GITHUB_API_TOKEN environment variable.');
+      console.warn('No GitHub API key provided. Please set GITHUB_TOKEN environment variable.');
     } else {
       console.log('GitHub API Key loaded (first 5 chars):', (apiKey || envApiKey || '').substring(0, 5) + '...');
     }
@@ -53,12 +53,18 @@ export class GitHubService {
   }
 
   async indexRepo(owner: string, repo: string): Promise<string> {
-    const repoUrl = `https://github.com/${owner}/${repo}.git`;
+    const githubToken = process.env.GITHUB_TOKEN;
+
+    if (!githubToken) {
+        throw new Error('GITHUB_TOKEN environment variable is not set. Cannot clone private repositories.');
+    }
+
+    const authenticatedRepoUrl = `https://${githubToken}:x-oauth-basic@github.com/${owner}/${repo}.git`;
     const tempDir = path.join(process.cwd(), 'temp', repo);
 
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
-      await this.git.clone(repoUrl, tempDir);
+      await this.git.clone(authenticatedRepoUrl, tempDir);
 
       let indexedContent = '';
       const files = await this.readFilesRecursively(tempDir);
