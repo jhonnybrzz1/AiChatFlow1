@@ -116,8 +116,8 @@ export class AISquadService {
     const refinementLevels = this.getRefinementLevels(demand.type);
     const messages: ChatMessage[] = [];
 
-    // Calculate progress per agent
-    const progressPerAgent = 100 / this.agents.length;
+    // Calculate progress per agent (90% for agents, 10% for document generation)
+    const progressPerAgent = 90 / this.agents.length;
 
     for (let i = 0; i < this.agents.length; i++) {
       // Check if processing was stopped
@@ -134,7 +134,7 @@ export class AISquadService {
         message: agent.description,
         timestamp: new Date().toISOString(),
         type: 'processing',
-        progress: Math.min(100, Math.round((i + 1) * progressPerAgent)) // Calculate progress
+        progress: Math.min(90, Math.round((i + 1) * progressPerAgent)) // Calculate progress (max 90% for agents)
       };
 
       messages.push(message);
@@ -150,27 +150,25 @@ export class AISquadService {
         onProgress(message);
       }
 
-      // Simulate processing time based on agent
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Check again if processing was stopped during wait
-      if (this.stopRequests.has(demandId)) {
-        this.stopRequests.delete(demandId);
-        await storage.updateDemand(demandId, { status: 'stopped' });
-        return;
-      }
-
       // Process with OpenAI for actual agent response
       const response = await this.processWithAgent(agent.name, demand, refinementLevels);
 
       message.message = response;
       message.type = 'completed';
+
+      // Update with actual agent response
       await storage.updateDemandChat(demandId, messages);
 
       if (onProgress) {
         onProgress(message);
       }
     }
+
+    // Update progress to 95% before document generation
+    await storage.updateDemand(demandId, {
+      status: 'processing',
+      progress: 95
+    });
 
     // Check one more time before generating documents
     if (this.stopRequests.has(demandId)) {
@@ -179,14 +177,14 @@ export class AISquadService {
       return;
     }
 
-    // Generate documents
+    // Generate documents with refined content from agent discussions
     const { prdContent, tasksContent } = await this.generateDocuments(demand, messages);
 
     // Save documents
     const prdPath = await this.saveDocument(demandId, 'PRD', prdContent);
     const tasksPath = await this.saveDocument(demandId, 'Tasks', tasksContent);
 
-    // Update demand with document paths
+    // Update demand with document paths and final progress
     await storage.updateDemand(demandId, {
       status: 'completed',
       progress: 100,
@@ -255,26 +253,26 @@ export class AISquadService {
 
     // Create context with summarized information
     const context = `
-    Demanda: ${demand.title}
-    Descrição: ${demand.description}
+    Demanda original: ${demand.title}
+    Descrição original: ${demand.description}
     Tipo: ${demand.type}
     Prioridade: ${demand.priority}
 
     Resumo das discussões dos agentes:
     ${summarizedContent}
 
-    Detalhes dos agentes:
-    ${messages.map(msg => `${msg.agent}: ${msg.message}`).join('\n')}
+    Detalhes das respostas dos agentes:
+    ${messages.map(msg => `${msg.agent}: ${msg.message}`).join('\n\n')}
     `;
 
     try {
-      // Generate PRD using Mistral AI
-      const prdSystemPrompt = "Você é um Product Manager experiente da squad. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. Use formato profissional com seções bem definidas.";
-      const prdUserPrompt = `Gere um PRD completo e estruturado para:\n${context}`;
+      // Generate PRD using Mistral AI based on actual agent discussions
+      const prdSystemPrompt = `Você é um Product Manager experiente da squad. Gere um PRD (Product Requirements Document) estruturado em português brasileiro baseado no contexto fornecido. O PRD deve refletir fielmente as discussões e decisões dos agentes durante o refinamento da demanda, não o conteúdo genérico do AiChatFlow. Use formato profissional com seções bem definidas e informações específicas extraídas das respostas dos agentes.`;
+      const prdUserPrompt = `Gere um PRD completo e estruturado para a seguinte demanda, com base nas discussões dos agentes:\n\n${context}`;
 
-      // Generate Tasks using Mistral AI
-      const tasksSystemPrompt = "Você é um Product Manager experiente da squad. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas no contexto fornecido. Use formato com ícones 🔧 para Backend e 🎨 para Frontend.";
-      const tasksUserPrompt = `Gere tasks organizadas em Backend (🔧) e Frontend (🎨) para:\n${context}`;
+      // Generate Tasks using Mistral AI based on actual agent discussions
+      const tasksSystemPrompt = `Você é um Product Manager experiente da squad. Gere uma lista de tasks/user stories estruturadas em português brasileiro baseadas nas discussões específicas dos agentes sobre a demanda original, não sobre o AiChatFlow. Use formato com ícones 🔧 para Backend e 🎨 para Frontend e inclua detalhes específicos mencionados nas respostas dos agentes.`;
+      const tasksUserPrompt = `Gere tasks organizadas em Backend (🔧) e Frontend (🎨) para a seguinte demanda, com base nas discussões dos agentes:\n\n${context}`;
 
       // Generate both documents in parallel
       const [prdContent, tasksContent] = await mistralAIService.generateMultipleChatCompletions(
@@ -283,7 +281,7 @@ export class AISquadService {
           { systemPrompt: tasksSystemPrompt, userPrompt: tasksUserPrompt }
         ],
         {
-          maxTokens: 1500,
+          maxTokens: 2000,
           temperature: 0.3
         }
       );
@@ -292,8 +290,50 @@ export class AISquadService {
       console.log("Conteúdo das Tasks gerado pela IA:", tasksContent);
 
       // Ensure we have valid content
-      const finalPrdContent = prdContent && prdContent.trim() !== '' ? prdContent : `PRD para ${demand.title}\n\nDescrição: ${demand.description}\n\nDocumento gerado automaticamente.`;
-      const finalTasksContent = tasksContent && tasksContent.trim() !== '' ? tasksContent : `Tasks para ${demand.title}\n\n- [ ] 🔧 Implementar funcionalidade principal\n- [ ] 🔧 Criar testes\n- [ ] 🎨 Documentar solução`;
+      const finalPrdContent = prdContent && prdContent.trim() !== '' ? prdContent : `# Product Requirements Document (PRD)
+
+## 1. Visão Geral
+**Demanda:** ${demand.title}
+**Descrição:** ${demand.description}
+**Tipo:** ${demand.type}
+**Prioridade:** ${demand.priority}
+
+## 2. Análise Detalhada
+${summarizedContent || 'Nenhum resumo disponível.'}
+
+## 3. Requisitos Funcionais
+- Implementar funcionalidade principal
+- Criar testes automatizados
+- Documentar solução
+
+## 4. Requisitos Não Funcionais
+- Performance: < 2s response time
+- Security: Data encryption
+
+## 5. Critérios de Aceitação
+- Funcionalidade deve passar em todos os testes
+- Documentação completa
+`;
+      const finalTasksContent = tasksContent && tasksContent.trim() !== '' ? tasksContent : `# Tasks Document
+
+## 1. Project Overview
+**Project Name:** ${demand.title}
+**Date:** ${new Date().toLocaleDateString()}
+**Version:** 1.0
+
+## 2. Task Categories
+### 2.1 Backend Tasks (🔧)
+${this.extractTasksFromAgentMessages(messages, 'backend')}
+
+### 2.2 Frontend Tasks (🎨)
+${this.extractTasksFromAgentMessages(messages, 'frontend')}
+
+### 2.3 QA Tasks (✅)
+${this.extractTasksFromAgentMessages(messages, 'qa')}
+
+## 3. Additional Notes
+${summarizedContent || 'Nenhuma análise adicional disponível.'}
+`;
 
       console.log("Conteúdo final do PRD:", finalPrdContent);
       console.log("Conteúdo final das Tasks:", finalTasksContent);
@@ -304,31 +344,33 @@ export class AISquadService {
       };
     } catch (error) {
       console.error("Error generating documents:", error);
-      // Return properly formatted fallback content
-      return {
-        prdContent: `# Product Requirements Document (PRD)
+      // Return properly formatted fallback content with actual agent data
+      const fallbackPrd = `# Product Requirements Document (PRD)
 
 ## 1. Visão Geral
 **Demanda:** ${demand.title}
 **Descrição:** ${demand.description}
 **Tipo:** ${demand.type}
 **Prioridade:** ${demand.priority}
-**Resumo:** ${summarizedContent || 'Nenhum resumo disponível.'}
 
-## 2. Requisitos Funcionais
+## 2. Análise dos Agentes
+${summarizedContent || messages.map(msg => `**${msg.agent}**: ${msg.message}`).join('\n\n')}
+
+## 3. Requisitos Funcionais
 - Implementar funcionalidade principal
 - Criar testes automatizados
 - Documentar solução
 
-## 3. Requisitos Não Funcionais
+## 4. Requisitos Não Funcionais
 - Performance: < 2s response time
 - Security: Data encryption
 
-## 4. Critérios de Aceitação
+## 5. Critérios de Aceitação
 - Funcionalidade deve passar em todos os testes
 - Documentação completa
-`,
-        tasksContent: `# Tasks Document
+`;
+
+      const fallbackTasks = `# Tasks Document
 
 ## 1. Project Overview
 **Project Name:** ${demand.title}
@@ -336,16 +378,22 @@ export class AISquadService {
 **Version:** 1.0
 
 ## 2. Task Categories
-### 2.1 Backend Tasks
-- [ ] 🔧 Implementar funcionalidade principal
-- [ ] 🔧 Criar testes unitários
-- [ ] 🔧 Configurar banco de dados
+### 2.1 Backend Tasks (🔧)
+${this.extractTasksFromAgentMessages(messages, 'backend', true)}
 
-### 2.2 Frontend Tasks
-- [ ] 🎨 Criar interface de usuário
-- [ ] 🎨 Implementar validação de formulário
-- [ ] 🎨 Adicionar animações
-`
+### 2.2 Frontend Tasks (🎨)
+${this.extractTasksFromAgentMessages(messages, 'frontend', true)}
+
+### 2.3 QA Tasks (✅)
+${this.extractTasksFromAgentMessages(messages, 'qa', true)}
+
+## 3. Agent Discussions Summary
+${summarizedContent || 'Nenhuma análise adicional disponível.'}
+`;
+
+      return {
+        prdContent: fallbackPrd,
+        tasksContent: fallbackTasks
       };
     }
   }
@@ -392,6 +440,44 @@ export class AISquadService {
         return `${type}: ${msgs.length} análises`;
       }).join(', ')}`;
     }
+  }
+
+  /**
+   * Extract tasks from agent messages based on category
+   */
+  private extractTasksFromAgentMessages(messages: ChatMessage[], category: string, useFallback: boolean = false): string {
+    const categoryAgents: Record<string, string[]> = {
+      backend: ['tech_lead', 'backend', 'analista_de_dados'],
+      frontend: ['ux', 'frontend'],
+      qa: ['qa']
+    };
+
+    const relevantMessages = messages.filter(msg => {
+      if (category === 'backend') {
+        return categoryAgents.backend.some(agent => msg.agent.includes(agent));
+      } else if (category === 'frontend') {
+        return categoryAgents.frontend.some(agent => msg.agent.includes(agent));
+      } else if (category === 'qa') {
+        return categoryAgents.qa.some(agent => msg.agent.includes(agent));
+      }
+      return false;
+    });
+
+    if (relevantMessages.length > 0) {
+      return relevantMessages.map(msg => `- [ ] 🔧 ${msg.agent}: ${msg.message.substring(0, 100)}...`).join('\n');
+    }
+
+    if (useFallback) {
+      // If no specific messages found, create generic tasks
+      const genericTasks: Record<string, string> = {
+        backend: "- [ ] Implementar lógica de backend\n- [ ] Configurar banco de dados\n- [ ] Criar testes unitários",
+        frontend: "- [ ] Criar interface de usuário\n- [ ] Implementar validação de formulário\n- [ ] Adicionar animações",
+        qa: "- [ ] Definir critérios de aceitação\n- [ ] Criar casos de teste\n- [ ] Realizar testes exploratórios"
+      };
+      return genericTasks[category] || "- [ ] Tarefa não especificada";
+    }
+
+    return "- [ ] Nenhuma tarefa específica identificada";
   }
 
   /**
