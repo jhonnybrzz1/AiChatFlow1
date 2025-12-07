@@ -9,10 +9,17 @@ export class GitHubService {
   private git: SimpleGit;
 
   constructor(apiKey?: string) {
-    const envApiKey = process.env.GITHUB_API_TOKEN;
+    const envApiKey = process.env.GITHUB_TOKEN;
+    
+    console.log('--- GitHubService Initialization ---');
+    console.log('process.env.GITHUB_TOKEN:', process.env.GITHUB_TOKEN ? (process.env.GITHUB_TOKEN.substring(0, 5) + '...') : 'undefined');
+    console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
+    console.log('------------------------------------');
 
     if (!apiKey && !envApiKey) {
       console.warn('No GitHub API key provided. Please set GITHUB_API_TOKEN environment variable.');
+    } else {
+      console.log('GitHub API Key loaded (first 5 chars):', (apiKey || envApiKey || '').substring(0, 5) + '...');
     }
 
     this.client = new Octokit({
