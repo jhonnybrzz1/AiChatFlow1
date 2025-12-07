@@ -56,9 +56,25 @@ export class GitHubService {
     const githubToken = process.env.GITHUB_TOKEN;
 
     if (!githubToken) {
-        throw new Error('GITHUB_TOKEN environment variable is not set. Cannot clone private repositories.');
+        // Fallback to clone if no token is provided for API access, assuming it's a public repo
+        // or the clone method handles authentication differently (e.g., SSH keys)
+        // For now, we throw as the clone method also relies on this token for private repos
+        throw new Error('GITHUB_TOKEN environment variable is not set. Cannot index private repositories directly via API or clone.');
     }
 
+    try {
+      // Attempt to fetch contents directly from GitHub API first
+      const apiIndexedContent = await this.fetchRepoContentsFromApi(owner, repo, githubToken);
+      if (apiIndexedContent) {
+        console.log(`Repository ${owner}/${repo} indexed successfully via GitHub API.`);
+        return apiIndexedContent;
+      }
+    } catch (apiError) {
+      console.warn(`Failed to index repository ${owner}/${repo} via GitHub API (Error: ${apiError.message}). Falling back to cloning.`);
+      // Fall through to cloning if API indexing fails
+    }
+
+    // Fallback to cloning if API indexing fails or is not preferred for some reason
     const authenticatedRepoUrl = `https://${githubToken}:x-oauth-basic@github.com/${owner}/${repo}.git`;
     const tempDir = path.join(process.cwd(), 'temp', repo);
 
@@ -75,11 +91,78 @@ export class GitHubService {
       }
 
       await fs.rm(tempDir, { recursive: true, force: true });
+      console.log(`Repository ${owner}/${repo} indexed successfully via cloning.`);
       return indexedContent;
-    } catch (error) {
-      console.error(`Error indexing repository ${owner}/${repo}:`, error);
-      throw new Error(`Failed to index repository: ${error}`);
+    } catch (cloneError) {
+      console.error(`Error indexing repository ${owner}/${repo} via cloning:`, cloneError);
+      throw new Error(`Failed to index repository: ${cloneError.message}`);
     }
+  }
+
+  private async fetchRepoContentsFromApi(owner: string, repo: string, githubToken: string): Promise<string | null> {
+    const octokit = new Octokit({ auth: githubToken });
+    let indexedContent = '';
+
+    try {
+      // Get the default branch of the repository
+      const { data: repoInfo } = await octokit.repos.get({ owner, repo });
+      const defaultBranch = repoInfo.default_branch;
+
+      // Get the tree of the default branch, recursively
+      const { data: tree } = await octokit.git.getTree({
+        owner,
+        repo,
+        tree_sha: defaultBranch,
+        recursive: 'true',
+      });
+
+      const filesToProcess = tree.tree.filter(item =>
+        item.type === 'blob' && // Only files
+        item.path &&
+        !this.isIgnoredPath(item.path) && // Ignore heavy/irrelevant folders
+        !this.isBinaryExtension(item.path) // Ignore binary files
+      );
+
+      for (const file of filesToProcess) {
+        if (file.sha) {
+          try {
+            const { data: fileContent } = await octokit.git.getBlob({
+              owner,
+              repo,
+              file_sha: file.sha,
+            });
+            // The content is base64 encoded
+            const decodedContent = Buffer.from(fileContent.content, 'base64').toString('utf8');
+            indexedContent += `--- FILE: ${file.path} ---\n\n${decodedContent}\n\n`;
+          } catch (contentError) {
+            console.warn(`Could not fetch content for ${file.path}: ${contentError.message}`);
+          }
+        }
+      }
+      return indexedContent;
+
+    } catch (error) {
+      console.error(`Failed to fetch repository contents from GitHub API for ${owner}/${repo}: ${error.message}`);
+      return null; // Return null to trigger fallback to cloning
+    }
+  }
+
+  private isIgnoredPath(filePath: string): boolean {
+    const ignoredFolders = ['node_modules', 'dist', 'build', '.git', '.github', '.vscode', '.idea'];
+    return ignoredFolders.some(folder => filePath.includes(`/${folder}/`) || filePath.startsWith(`${folder}/`));
+  }
+
+  private isBinaryExtension(filePath: string): boolean {
+    const binaryExtensions = [
+      '.png', '.jpg', '.jpeg', '.gif', '.pdf', '.zip', '.tar.gz', '.tgz', '.mp4', '.avi', '.mov', '.mp3',
+      '.wav', '.ogg', '.exe', '.dll', '.bin', '.obj', '.class', '.jar', '.war', '.ear', '.svg', '.ico',
+      '.webp', '.bmp', '.woff', '.woff2', '.ttf', '.eot', '.db', '.sqlite', '.bak', '.log', '.lock',
+      '.pnp', '.yarn', '.gradle', '.jar', '.log', '.md', '.markdown', // Consider markdown as text, but can be ignored if too noisy
+    ];
+    // Remove query parameters or hash from path if present
+    const cleanPath = filePath.split('?')[0].split('#')[0];
+    const extension = path.extname(cleanPath).toLowerCase();
+    return binaryExtensions.includes(extension);
   }
 
   private async readFilesRecursively(dir: string): Promise<string[]> {
