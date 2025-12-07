@@ -73,8 +73,8 @@ export const api = {
       const response = await apiRequest("GET", "/api/github/repos");
       return response.json();
     },
-    indexRepo: async (owner: string, repo: string): Promise<{ content: string }> => {
-      const response = await apiRequest("POST", `/api/github/repos/${owner}/${repo}/index`);
+    indexRepo: async (owner: string, repo: string, demandDescription?: string): Promise<{ content: string; demandDescription: string | null }> => {
+      const response = await apiRequest("POST", `/api/github/repos/${owner}/${repo}/index`, { demandDescription });
       return response.json();
     },
     getRepoContent: async (owner: string, repo: string, path: string = ''): Promise<any> => {

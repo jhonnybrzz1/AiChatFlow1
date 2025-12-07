@@ -2,8 +2,10 @@
 import { mistralAIService } from './mistral-ai';
 
 class CodeAnalysisService {
-  async analyzeRepo(indexedContent: string, userPrompt: string): Promise<string> {
-    const systemPrompt = `You are an expert code reviewer. Analyze the following code from a GitHub repository and provide insights based on the user's request.
+  async analyzeRepo(indexedContent: string, demandDescription: string, userPrompt: string): Promise<string> {
+    const systemPrompt = `You are an expert code reviewer. Analyze the following code from a GitHub repository focusing on the user's demand.
+
+User's Demand: ${demandDescription}
 
 Here is the repository content:
 ${indexedContent}`;

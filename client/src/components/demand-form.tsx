@@ -75,9 +75,14 @@ export function DemandForm() {
     setSelectedFiles(event.target.files);
   };
 
-  const handleGitHubImport = (indexedContent: string) => {
-    form.setValue('description', indexedContent);
-    form.setValue('title', 'Análise de Repositório GitHub'); // Pre-fill title
+  const handleGitHubImport = (indexedContent: string, analysisResult: string) => {
+    form.setValue('description', analysisResult || indexedContent); // Use analysisResult if available, otherwise indexedContent
+    form.setValue(
+      'title',
+      analysisResult
+        ? 'Análise de Repositório GitHub (Contextualizada)'
+        : 'Análise de Repositório GitHub (Discovery)'
+    );
     toast({
       title: "Conteúdo do GitHub carregado",
       description: "A descrição da demanda foi preenchida com o conteúdo do repositório.",
@@ -229,7 +234,10 @@ export function DemandForm() {
 
             {/* Action Buttons */}
             <div className="flex justify-between items-center pt-2">
-              <GitHubImportModal onImportSuccess={handleGitHubImport} />
+              <GitHubImportModal
+                onImportSuccess={handleGitHubImport}
+                demandDescription={form.watch('description')} // Pass the current demand description
+              />
               <Button
                 type="submit"
                 disabled={createDemandMutation.isPending}

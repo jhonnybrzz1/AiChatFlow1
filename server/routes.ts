@@ -6,6 +6,7 @@ import { insertDemandSchema, insertFileSchema } from "@shared/schema";
 import { aiSquadService } from "./services/ai-squad";
 import { pdfGenerator } from "./services/pdf-generator";
 import { gitHubService } from './services/github';
+import { codeAnalysisService } from './services/codeAnalysis'; // Import the new service
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -41,10 +42,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/github/repos/:owner/:repo/index", async (req: Request, res: Response) => {
     try {
       const { owner, repo } = req.params;
+      const { demandDescription } = req.body; // Extract demandDescription from body
+
       const indexedContent = await gitHubService.indexRepo(owner, repo);
-      res.json({ content: indexedContent });
+
+      let userPrompt = '';
+      if (demandDescription && demandDescription.trim() !== '') {
+        userPrompt = `Analise este repositório focando na seguinte demanda: "${demandDescription}". Forneça um resumo dos aspectos relevantes para esta demanda, identifique possíveis soluções ou desafios e sugira os próximos passos.`;
+      } else {
+        userPrompt = `Realize uma análise geral deste repositório para identificar possíveis funcionalidades, estrutura, e desafios. Considere que este é um modo de descoberta (discovery).`;
+      }
+
+      const analysisResult = await codeAnalysisService.analyzeRepo(indexedContent, demandDescription || '', userPrompt);
+      
+      res.json({ content: indexedContent, analysisResult: analysisResult, demandDescription: demandDescription || null });
     } catch (error) {
-      res.status(500).json({ error: "Failed to index repository" });
+      res.status(500).json({ error: "Failed to index repository or analyze code" });
     }
   });
 

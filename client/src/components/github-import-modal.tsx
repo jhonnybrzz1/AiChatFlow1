@@ -11,13 +11,15 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface GitHubImportModalProps {
-  onImportSuccess: (indexedContent: string) => void;
+  onImportSuccess: (indexedContent: string, analysisResult: string) => void;
+  demandDescription?: string;
 }
 
-export function GitHubImportModal({ onImportSuccess }: GitHubImportModalProps) {
+export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHubImportModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [repoSearch, setRepoSearch] = useState('');
+  const [showGenericWarning, setShowGenericWarning] = useState(false); // New state for warning
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -28,14 +30,14 @@ export function GitHubImportModal({ onImportSuccess }: GitHubImportModalProps) {
   });
 
   const indexRepoMutation = useMutation({
-    mutationFn: ({ owner, repo }: { owner: string; repo: string }) =>
-      api.github.indexRepo(owner, repo),
+    mutationFn: ({ owner, repo, demandDescription }: { owner: string; repo: string; demandDescription?: string }) =>
+      api.github.indexRepo(owner, repo, demandDescription),
     onSuccess: (data) => {
       toast({
         title: "Repositório indexado com sucesso!",
         description: "O conteúdo do repositório foi carregado para análise.",
       });
-      onImportSuccess(data.content);
+      onImportSuccess(data.content, data.analysisResult);
       setIsOpen(false);
       setSelectedRepo(null);
       setRepoSearch('');
@@ -51,8 +53,13 @@ export function GitHubImportModal({ onImportSuccess }: GitHubImportModalProps) {
 
   const handleIndexRepo = () => {
     if (selectedRepo) {
+      if (!demandDescription || demandDescription.trim() === '') {
+        setShowGenericWarning(true); // Show warning if no demand description
+      } else {
+        setShowGenericWarning(false);
+      }
       const [owner, repo] = selectedRepo.split('/');
-      indexRepoMutation.mutate({ owner, repo });
+      indexRepoMutation.mutate({ owner, repo, demandDescription });
     }
   };
 
@@ -82,6 +89,13 @@ export function GitHubImportModal({ onImportSuccess }: GitHubImportModalProps) {
             value={repoSearch} 
             onChange={(e) => setRepoSearch(e.target.value)} 
           />
+
+          {showGenericWarning && (
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+              <p className="font-bold">Modo genérico ativado!</p>
+              <p>A análise pode gerar sugestões fora do escopo atual, pois nenhuma demanda específica foi fornecida.</p>
+            </div>
+          )}
 
           {isLoadingRepos && (
             <div className="flex items-center justify-center p-4">
