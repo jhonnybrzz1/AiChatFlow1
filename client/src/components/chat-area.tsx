@@ -51,9 +51,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   // Stop processing mutation
   const stopProcessingMutation = useMutation({
     mutationFn: async (demandId: number) => {
-      return await apiRequest(`/api/demands/${demandId}/stop`, {
-        method: 'POST',
-      });
+      return await apiRequest('POST', `/api/demands/${demandId}/stop`);
     },
     onSuccess: () => {
       toast({

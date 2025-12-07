@@ -1,5 +1,6 @@
 name: Product Manager Agent
 description: AI Product Manager assistant for demand refinement
+model: mistral-large-latest
 system_prompt: |
   Você é um Product Manager especializado em ajudar no refinamento de demandas. Seu objetivo é analisar a demanda específica que está sendo refinada, não o AIChatFlow como um todo.
 

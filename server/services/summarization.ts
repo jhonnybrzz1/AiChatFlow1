@@ -98,13 +98,16 @@ export class SummarizationService {
 
       // Check if this is a heading (starts with #)
       if (line.trim().startsWith('#')) {
-        const headingText = line.replace(/^#+
-      size: 16,
-      font: boldFont,
-      color: rgb(0.2, 0.4, 0.6),
-    });
-    yPosition -= 20;
-  }
+        const headingText = line.replace(/^#+\s*/, '').trim();
+        page.drawText(headingText, {
+          x: margin,
+          y: yPosition,
+          size: 16,
+          font: boldFont,
+          color: rgb(0.2, 0.4, 0.6),
+        });
+        yPosition -= 20;
+      }
   // Check if this is a task item (starts with - [ ] or similar)
   else if (line.trim().match(/^- \[ \]/)) {
     const taskText = line.replace(/^- \[ \]\s*/, '').trim();

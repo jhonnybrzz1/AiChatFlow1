@@ -50,10 +50,11 @@ export class MistralAIService {
           }
         ],
         temperature: options.temperature,
-        max_tokens: options.maxTokens
+        maxTokens: options.maxTokens
       });
 
-      return response.choices[0].message.content;
+      const content = response.choices[0].message.content;
+      return typeof content === 'string' ? content : '';
     } catch (error) {
       console.error('Error generating chat completion:', error);
       throw new Error(`Failed to generate chat completion: ${error}`);
@@ -75,20 +76,7 @@ export class MistralAIService {
     } = {}
   ): Promise<string[]> {
     try {
-      // Check if API key is available
-      if (!this.client.apiKey) {
-        console.warn('Mistral API key not available, using fallback content');
-        // Return fallback content for each prompt
-        return prompts.map(prompt => {
-          if (prompt.systemPrompt.includes('PRD')) {
-            return `PRD gerado com sucesso\n\n${prompt.userPrompt.substring(0, 200)}...`;
-          } else if (prompt.systemPrompt.includes('Tasks')) {
-            return `Tasks geradas com sucesso\n\n- [ ] 🔧 Implementar funcionalidade principal\n- [ ] 🔧 Criar testes\n- [ ] 🎨 Documentar solução`;
-          } else {
-            return `Conteúdo gerado com sucesso para: ${prompt.systemPrompt}`;
-          }
-        });
-      }
+
 
       const promises = prompts.map(prompt =>
         this.generateChatCompletion(
@@ -144,12 +132,12 @@ export class MistralAIService {
           }
         ],
         temperature: options.temperature || 0.3,
-        max_tokens: options.maxTokens,
-        response_format: { type: 'json_object' }
+        maxTokens: options.maxTokens,
+        responseFormat: { type: 'json_object' }
       });
 
       const content = response.choices[0].message.content;
-      return JSON.parse(content);
+      return JSON.parse(typeof content === 'string' ? content : '{}');
     } catch (error) {
       console.error('Error generating JSON response:', error);
       throw new Error(`Failed to generate JSON response: ${error}`);

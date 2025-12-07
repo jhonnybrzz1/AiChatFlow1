@@ -1,11 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Plus, TrendingUp, Bug, MoreHorizontal, CloudUpload, Send } from "lucide-react";
+import { Plus, TrendingUp, Bug, MoreHorizontal, CloudUpload, Send, Github } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertDemandSchema } from "@shared/schema";
@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { GitHubImportModal } from "./github-import-modal"; // Import the new modal
 
 const demandTypes = [
   { value: "nova_funcionalidade", label: "Nova Funcionalidade", icon: Plus },
@@ -46,7 +47,7 @@ export function DemandForm() {
   });
 
   const createDemandMutation = useMutation({
-    mutationFn: ({ demand, files }: { demand: typeof form.getValues, files?: FileList }) => 
+    mutationFn: ({ demand, files }: { demand: typeof insertDemandSchema._type, files?: FileList }) =>
       api.demands.create(demand, files),
     onSuccess: () => {
       toast({
@@ -66,12 +67,21 @@ export function DemandForm() {
     },
   });
 
-  const onSubmit = (data: typeof form.getValues) => {
+  const onSubmit = (data: typeof insertDemandSchema._type) => {
     createDemandMutation.mutate({ demand: data, files: selectedFiles || undefined });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(event.target.files);
+  };
+
+  const handleGitHubImport = (indexedContent: string) => {
+    form.setValue('description', indexedContent);
+    form.setValue('title', 'Análise de Repositório GitHub'); // Pre-fill title
+    toast({
+      title: "Conteúdo do GitHub carregado",
+      description: "A descrição da demanda foi preenchida com o conteúdo do repositório.",
+    });
   };
 
   return (
@@ -217,8 +227,9 @@ export function DemandForm() {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end pt-2">
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center pt-2">
+              <GitHubImportModal onImportSuccess={handleGitHubImport} />
               <Button
                 type="submit"
                 disabled={createDemandMutation.isPending}

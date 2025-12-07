@@ -11,7 +11,7 @@ import { pdfGenerator } from "./pdf-generator";
 
 export class AISquadService {
   private agents: { name: string, icon: string, description: string }[] = [];
-  private agentConfigs: Record<string, { system_prompt: string, description: string }> = {};
+  private agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }> = {};
 
   constructor() {
     this.loadAgentConfigurations();
@@ -40,7 +40,7 @@ export class AISquadService {
         .map(file => {
           const filePath = path.join(agentsDir, file);
           const content = fs.readFileSync(filePath, 'utf8');
-          return yaml.load(content) as { name: string, description: string, system_prompt: string };
+          return yaml.load(content) as { name: string, description: string, system_prompt: string, model?: string };
         });
 
       // Map agent names to their configurations
@@ -48,7 +48,8 @@ export class AISquadService {
         const agentName = config.name.toLowerCase().replace(' agent', '');
         this.agentConfigs[agentName] = {
           system_prompt: config.system_prompt,
-          description: config.description
+          description: config.description,
+          model: config.model
         };
 
         // Add to agents list with appropriate icon
@@ -221,13 +222,15 @@ export class AISquadService {
     try {
       // Set max tokens based on intensity level
       const maxTokens = intensityLevel === 'baixa' ? 300 : intensityLevel === 'media' ? 500 : 800;
+      const model = agentConfig?.model || undefined; // Use agent's model or default
 
       const response = await mistralAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.7,
-          maxTokens: maxTokens
+          maxTokens: maxTokens,
+          model: model
         }
       );
 

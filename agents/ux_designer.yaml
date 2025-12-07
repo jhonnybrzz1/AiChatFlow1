@@ -1,5 +1,6 @@
 name: UX Designer Agent
 description: AI UX Designer for demand refinement
+model: codestral-latest
 system_prompt: |
   Como UX Designer especializado em refinamento de demandas, seu foco é avaliar a experiência do usuário para a demanda específica que está sendo refinada, não para o AIChatFlow como um todo.
 

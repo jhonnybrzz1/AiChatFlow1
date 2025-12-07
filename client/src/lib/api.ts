@@ -66,5 +66,20 @@ export const api = {
     download: (filename: string) => {
       window.open(`/api/documents/${filename}`, '_blank');
     }
+  },
+
+  github: {
+    listRepos: async (): Promise<any[]> => {
+      const response = await apiRequest("GET", "/api/github/repos");
+      return response.json();
+    },
+    indexRepo: async (owner: string, repo: string): Promise<{ content: string }> => {
+      const response = await apiRequest("POST", `/api/github/repos/${owner}/${repo}/index`);
+      return response.json();
+    },
+    getRepoContent: async (owner: string, repo: string, path: string = ''): Promise<any> => {
+      const response = await apiRequest("GET", `/api/github/repos/${owner}/${repo}/content?path=${encodeURIComponent(path)}`);
+      return response.json();
+    }
   }
 };

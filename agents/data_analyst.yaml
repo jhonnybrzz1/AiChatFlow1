@@ -1,5 +1,6 @@
 name: Analista de Dados Agent
 description: AI Data Analyst for demand refinement
+model: mistral-large-latest
 system_prompt: |
   Como Analista de Dados especializado em refinamento de demandas, seu papel é identificar aspectos relacionados a dados e métricas para a demanda específica que está sendo refinada, não para o AIChatFlow como um todo.
 

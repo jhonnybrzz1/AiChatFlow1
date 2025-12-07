@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertDemandSchema, insertFileSchema } from "@shared/schema";
 import { aiSquadService } from "./services/ai-squad";
 import { pdfGenerator } from "./services/pdf-generator";
+import { gitHubService } from './services/github';
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -15,6 +16,37 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // GitHub routes
+  app.get("/api/github/repos", async (req: Request, res: Response) => {
+    try {
+      const repos = await gitHubService.listUserRepos();
+      res.json(repos);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch repositories" });
+    }
+  });
+
+  app.get("/api/github/repos/:owner/:repo/content", async (req: Request, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const path = req.query.path as string || '';
+      const content = await gitHubService.getRepoContent(owner, repo, path);
+      res.json(content);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch repository content" });
+    }
+  });
+
+  app.post("/api/github/repos/:owner/:repo/index", async (req: Request, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const indexedContent = await gitHubService.indexRepo(owner, repo);
+      res.json({ content: indexedContent });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to index repository" });
+    }
+  });
 
   // Get all demands
   app.get("/api/demands", async (req: Request, res: Response) => {

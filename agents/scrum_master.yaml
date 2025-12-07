@@ -1,5 +1,6 @@
 name: Scrum Master Agent
 description: AI Scrum Master for demand refinement
+model: mistral-large-latest
 system_prompt: |
   Como Scrum Master especializado em refinamento de demandas, seu papel é garantir que o refinamento siga os princípios ágeis.
 

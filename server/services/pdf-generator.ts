@@ -1,4 +1,3 @@
-
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
@@ -106,7 +105,13 @@ ${summaryContent || 'No summary available.'}
    */
   private extractTaskCategories(content: string): string {
     const lines = content.split('\n');
-    const categories = {
+    const categories: {
+      backend: string[];
+      frontend: string[];
+      qa: string[];
+      devops: string[];
+      other: string[];
+    } = {
       backend: [],
       frontend: [],
       qa: [],
@@ -133,27 +138,27 @@ ${summaryContent || 'No summary available.'}
 
     if (categories.backend.length > 0) {
       result += '### 2.1 Backend Tasks\n\n';
-      result += categories.backend.map(task => `- [ ] ${task.replace(/^- \[ \]\s*/, '').trim()}`).join('\n');
+      result += categories.backend.map(task => `- [ ] ${this.removeEmojis(task.replace(/^- [ \ ]\s*/, '').trim())}`).join('\n');
     }
 
     if (categories.frontend.length > 0) {
       result += '\n### 2.2 Frontend Tasks\n\n';
-      result += categories.frontend.map(task => `- [ ] ${task.replace(/^- \[ \]\s*/, '').trim()}`).join('\n');
+      result += categories.frontend.map(task => `- [ ] ${this.removeEmojis(task.replace(/^- [ \ ]\s*/, '').trim())}`).join('\n');
     }
 
     if (categories.qa.length > 0) {
       result += '\n### 2.3 QA Tasks\n\n';
-      result += categories.qa.map(task => `- [ ] ${task.replace(/^- \[ \]\s*/, '').trim()}`).join('\n');
+      result += categories.qa.map(task => `- [ ] ${this.removeEmojis(task.replace(/^- [ \ ]\s*/, '').trim())}`).join('\n');
     }
 
     if (categories.devops.length > 0) {
       result += '\n### 2.4 DevOps Tasks\n\n';
-      result += categories.devops.map(task => `- [ ] ${task.replace(/^- \[ \]\s*/, '').trim()}`).join('\n');
+      result += categories.devops.map(task => `- [ ] ${this.removeEmojis(task.replace(/^- [ \ ]\s*/, '').trim())}`).join('\n');
     }
 
     if (categories.other.length > 0) {
       result += '\n### 2.5 Other Tasks\n\n';
-      result += categories.other.map(task => `- [ ] ${task.replace(/^- \[ \]\s*/, '').trim()}`).join('\n');
+      result += categories.other.map(task => `- [ ] ${this.removeEmojis(task.replace(/^- [ \ ]\s*/, '').trim())}`).join('\n');
     }
 
     return result || '- [No tasks provided]';
@@ -301,8 +306,8 @@ ${summaryContent || 'Nenhum resumo disponível.'}
         fontSize = 16;
         currentFont = boldFont;
         color = rgb(0.2, 0.4, 0.6);
-      } else if (line.trim().match(/^- \[ \]/)) {
-        const taskText = line.replace(/^- \[ \]\s*/, '').trim();
+      } else if (line.trim().match(/^- [ \ ]/)) {
+        const taskText = line.replace(/^- [ \ ]\s*/, '').trim();
         wrappedLines = this.wrapText('• ' + taskText, maxWidth - 20, font, 12);
         indent = 10;
       } else if (line.trim().startsWith('-')) {
@@ -400,106 +405,6 @@ ${summaryContent || 'Nenhum resumo disponível.'}
       thickness: 1,
       color: rgb(0.8, 0.8, 0.8),
     });
-  }
-
-  private drawContent(page: any, font: any, boldFont: any, content: string) {
-    const { width, height } = page.getSize();
-    const margin = 50;
-    const maxWidth = width - (margin * 2);
-    const lineHeight = 14;
-    let yPosition = height - 200; // Start below the header
-
-    // Remove emojis from content before processing
-    const cleanContent = this.removeEmojis(content);
-
-    // Split content into lines
-    const lines = cleanContent.split('\n');
-
-    for (const line of lines) {
-      if (line.trim() === '') {
-        // Add space for empty lines
-        yPosition -= 8;
-        continue;
-      }
-
-      // Check if this is a heading (starts with #)
-      if (line.trim().startsWith('#')) {
-        const headingText = line.replace(/^#+\s*/, '').trim();
-        const wrappedLines = this.wrapText(headingText, maxWidth, boldFont, 16);
-
-        for (const wrappedLine of wrappedLines) {
-          if (yPosition < margin + 50) break;
-
-          page.drawText(wrappedLine, {
-            x: margin,
-            y: yPosition,
-            size: 16,
-            font: boldFont,
-            color: rgb(0.2, 0.4, 0.6),
-          });
-          yPosition -= 20;
-        }
-      }
-      // Check if this is a task item (starts with - [ ] or similar)
-      else if (line.trim().match(/^- \[ \]/)) {
-        const taskText = line.replace(/^- \[ \]\s*/, '').trim();
-        const wrappedLines = this.wrapText('• ' + taskText, maxWidth - 20, font, 12);
-
-        for (const wrappedLine of wrappedLines) {
-          if (yPosition < margin + 50) break;
-
-          page.drawText(wrappedLine, {
-            x: margin + 10,
-            y: yPosition,
-            size: 12,
-            font: font,
-            color: rgb(0, 0, 0),
-          });
-          yPosition -= lineHeight;
-        }
-      }
-      // Check if this is a list item (starts with -)
-      else if (line.trim().startsWith('-')) {
-        const listText = line.replace(/^-\s*/, '').trim();
-        const wrappedLines = this.wrapText('• ' + listText, maxWidth - 20, font, 12);
-
-        for (const wrappedLine of wrappedLines) {
-          if (yPosition < margin + 50) break;
-
-          page.drawText(wrappedLine, {
-            x: margin + 10,
-            y: yPosition,
-            size: 12,
-            font: font,
-            color: rgb(0, 0, 0),
-          });
-          yPosition -= lineHeight;
-        }
-      }
-      else {
-        // Regular text - wrap if needed
-        const wrappedLines = this.wrapText(line, maxWidth, font, 12);
-
-        for (const wrappedLine of wrappedLines) {
-          if (yPosition < margin + 50) break;
-
-          page.drawText(wrappedLine, {
-            x: margin,
-            y: yPosition,
-            size: 12,
-            font: font,
-            color: rgb(0, 0, 0),
-          });
-          yPosition -= lineHeight;
-        }
-      }
-
-      // Check if we need a new page
-      if (yPosition < margin + 50) {
-        // For now, just break - in production, would add new pages
-        break;
-      }
-    }
   }
 
   /**
