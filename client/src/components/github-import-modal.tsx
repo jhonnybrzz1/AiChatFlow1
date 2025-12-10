@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,43 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   const [showGenericWarning, setShowGenericWarning] = useState(false);
   const [isIndexed, setIsIndexed] = useState(false); // New state
   const [indexedRepoName, setIndexedRepoName] = useState<string | null>(null); // New state
+  const [countdown, setCountdown] = useState<number>(0); // Countdown timer
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-index timer effect
+  useEffect(() => {
+    if (selectedRepo && !indexRepoMutation.isPending) {
+      // Start countdown from 3 seconds
+      setCountdown(3);
+
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Set timer to auto-index after 3 seconds
+      timerRef.current = setTimeout(() => {
+        handleIndexRepo();
+      }, 3000);
+
+      return () => {
+        clearInterval(countdownInterval);
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+      };
+    } else {
+      setCountdown(0);
+    }
+  }, [selectedRepo, indexRepoMutation.isPending]);
 
   const { data: repos, isLoading: isLoadingRepos, isError: isErrorRepos } = useQuery({
     queryKey: ['github/repos'],
@@ -67,6 +102,15 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
       }
       const [owner, repo] = selectedRepo.split('/');
       indexRepoMutation.mutate({ owner, repo, demandDescription });
+    }
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedRepo(null);
+    setCountdown(0);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
   };
 
@@ -161,18 +205,38 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
             </ScrollArea>
           )}
 
-          <Button
-            onClick={handleIndexRepo}
-            disabled={!selectedRepo || indexRepoMutation.isPending}
-            className="w-full"
-          >
-            {indexRepoMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Github className="mr-2 h-4 w-4" />
+          <div className="flex gap-2">
+            <Button
+              onClick={handleIndexRepo}
+              disabled={!selectedRepo || indexRepoMutation.isPending}
+              className="flex-1"
+            >
+              {indexRepoMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Indexando...
+                </>
+              ) : countdown > 0 ? (
+                <>
+                  <Github className="mr-2 h-4 w-4" />
+                  Indexando em {countdown}s...
+                </>
+              ) : (
+                <>
+                  <Github className="mr-2 h-4 w-4" />
+                  Indexar Repositório
+                </>
+              )}
+            </Button>
+            {selectedRepo && countdown > 0 && !indexRepoMutation.isPending && (
+              <Button
+                onClick={handleCancelSelection}
+                variant="outline"
+              >
+                Cancelar
+              </Button>
             )}
-            Indexar Repositório
-          </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
