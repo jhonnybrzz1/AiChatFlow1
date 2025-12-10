@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle, FileJson, FileText } from "lucide-react";
+import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle, FileJson, FileText, Copy } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { type Demand, type ChatMessage } from "@shared/schema";
@@ -131,6 +131,52 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
     });
   };
 
+  const handleCopyChat = async () => {
+    if (!selectedDemand || chatMessages.length === 0) return;
+
+    // Formatar o conteúdo do chat
+    let chatContent = `HISTÓRICO DE DIÁLOGO - DEMANDA #${selectedDemand.id}\n`;
+    chatContent += `${'='.repeat(60)}\n\n`;
+    chatContent += `Título: ${selectedDemand.title}\n`;
+    chatContent += `Tipo: ${selectedDemand.type}\n`;
+    chatContent += `Prioridade: ${selectedDemand.priority}\n`;
+    chatContent += `Status: ${selectedDemand.status}\n`;
+    chatContent += `Criado em: ${selectedDemand.createdAt}\n`;
+    chatContent += `\nDescrição:\n${selectedDemand.description}\n\n`;
+    chatContent += `${'='.repeat(60)}\n`;
+    chatContent += `MENSAGENS DO CHAT\n`;
+    chatContent += `${'='.repeat(60)}\n\n`;
+
+    chatMessages.forEach((message, index) => {
+      const agentName = agentNames[message.agent] || message.agent;
+      const timestamp = new Date(message.timestamp).toLocaleString('pt-BR');
+      const status = message.type === 'completed' ? '✓' : message.type === 'processing' ? '⏳' : '✗';
+
+      chatContent += `[${index + 1}] ${agentName} ${status}\n`;
+      chatContent += `Data/Hora: ${timestamp}\n`;
+      chatContent += `${'-'.repeat(60)}\n`;
+      chatContent += `${message.message}\n\n`;
+    });
+
+    chatContent += `${'='.repeat(60)}\n`;
+    chatContent += `FIM DO HISTÓRICO\n`;
+    chatContent += `Copiado em: ${new Date().toLocaleString('pt-BR')}\n`;
+
+    try {
+      await navigator.clipboard.writeText(chatContent);
+      toast({
+        title: "Diálogo copiado",
+        description: "O conteúdo do chat foi copiado para a área de transferência.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o conteúdo do chat.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const openRefinementDialog = (agent: string, message: string) => {
     const agentDisplayName = agentNames[agent] || agent;
     setRefinementDialog({
@@ -196,6 +242,15 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                   >
                     <FileText className="w-4 h-4 mr-1" />
                     TXT
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyChat}
+                    title="Copiar diálogo para área de transferência"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copiar
                   </Button>
                 </>
               )}
