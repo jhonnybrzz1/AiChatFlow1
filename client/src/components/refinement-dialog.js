@@ -98,7 +98,7 @@ class RefinementDialog {
       // Focus the dialog for accessibility
       const firstFocusable = this.dialog.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
       if (firstFocusable) {
-        (firstFocusable as HTMLElement).focus();
+        firstFocusable.focus();
       }
     });
 
