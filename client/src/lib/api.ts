@@ -7,61 +7,61 @@ export const api = {
       const response = await apiRequest("GET", "/api/demands");
       return response.json();
     },
-    
+
     get: async (id: number): Promise<Demand> => {
       const response = await apiRequest("GET", `/api/demands/${id}`);
       return response.json();
     },
-    
+
     create: async (demand: InsertDemand, files?: FileList): Promise<Demand> => {
       const formData = new FormData();
-      
+
       // Add demand data
       Object.entries(demand).forEach(([key, value]) => {
         formData.append(key, value as string);
       });
-      
+
       // Add files if any
       if (files) {
         Array.from(files).forEach((file) => {
           formData.append('files', file);
         });
       }
-      
+
       const response = await fetch("/api/demands", {
         method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
-      
+
       return response.json();
     },
-    
+
     getMessages: async (id: number): Promise<ChatMessage[]> => {
       const response = await apiRequest("GET", `/api/demands/${id}/messages`);
       return response.json();
     },
-    
+
     subscribeToUpdates: (id: number, onUpdate: (demand: Demand) => void) => {
       const eventSource = new EventSource(`/api/demands/${id}/events`);
-      
+
       eventSource.onmessage = (event) => {
         const demand = JSON.parse(event.data);
         onUpdate(demand);
       };
-      
+
       eventSource.onerror = (error) => {
         console.error('SSE error:', error);
         eventSource.close();
       };
-      
+
       return () => eventSource.close();
     }
   },
-  
+
   documents: {
     download: (filename: string) => {
       window.open(`/api/documents/${filename}`, '_blank');
@@ -73,7 +73,7 @@ export const api = {
       const response = await apiRequest("GET", "/api/github/repos");
       return response.json();
     },
-    indexRepo: async (owner: string, repo: string, demandDescription?: string): Promise<{ content: string; demandDescription: string | null }> => {
+    indexRepo: async (owner: string, repo: string, demandDescription?: string): Promise<{ content: string; demandDescription: string | null; analysisResult: string; repoName: string }> => {
       const response = await apiRequest("POST", `/api/github/repos/${owner}/${repo}/index`, { demandDescription });
       return response.json();
     },

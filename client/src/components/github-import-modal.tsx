@@ -28,6 +28,38 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   const queryClient = useQueryClient();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const { data: repos, isLoading: isLoadingRepos, isError: isErrorRepos } = useQuery({
+    queryKey: ['github/repos'],
+    queryFn: () => api.github.listRepos(),
+    enabled: isOpen,
+  });
+
+  const indexRepoMutation = useMutation({
+    mutationFn: ({ owner, repo, demandDescription }: { owner: string; repo: string; demandDescription?: string }) =>
+      api.github.indexRepo(owner, repo, demandDescription),
+    onSuccess: (data) => {
+      toast({
+        title: "Repositório indexado com sucesso!",
+        description: "O conteúdo do repositório foi carregado para análise.",
+      });
+      onImportSuccess(data.content, data.analysisResult);
+      setIsIndexed(true);
+      setIndexedRepoName(data.repoName); // Set repo name from API response
+      setIsOpen(false);
+      setSelectedRepo(null);
+      setRepoSearch('');
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao indexar repositório",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsIndexed(false);
+      setIndexedRepoName(null);
+    },
+  });
+
   // Auto-index timer effect
   useEffect(() => {
     if (selectedRepo && !indexRepoMutation.isPending) {
@@ -60,38 +92,6 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
       setCountdown(0);
     }
   }, [selectedRepo, indexRepoMutation.isPending]);
-
-  const { data: repos, isLoading: isLoadingRepos, isError: isErrorRepos } = useQuery({
-    queryKey: ['github/repos'],
-    queryFn: () => api.github.listRepos(),
-    enabled: isOpen,
-  });
-
-  const indexRepoMutation = useMutation({
-    mutationFn: ({ owner, repo, demandDescription }: { owner: string; repo: string; demandDescription?: string }) =>
-      api.github.indexRepo(owner, repo, demandDescription),
-    onSuccess: (data) => {
-      toast({
-        title: "Repositório indexado com sucesso!",
-        description: "O conteúdo do repositório foi carregado para análise.",
-      });
-      onImportSuccess(data.content, data.analysisResult);
-      setIsIndexed(true);
-      setIndexedRepoName(data.repoName); // Set repo name from API response
-      setIsOpen(false);
-      setSelectedRepo(null);
-      setRepoSearch('');
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao indexar repositório",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsIndexed(false);
-      setIndexedRepoName(null);
-    },
-  });
 
   const handleIndexRepo = () => {
     if (selectedRepo) {
