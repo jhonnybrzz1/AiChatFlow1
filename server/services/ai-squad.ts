@@ -21,14 +21,14 @@ export class AISquadService {
     const agentsDir = path.join(process.cwd(), 'agents');
     if (!fs.existsSync(agentsDir)) {
       console.warn('Agents directory not found, using default agents');
+      // PM não está aqui - será chamado separadamente após refinamento
       this.agents = [
         { name: "refinador", icon: "🧠", description: "Captando e reformulando a demanda para a squad..." },
         { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
         { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
         { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
         { name: "analista_de_dados", icon: "📈", description: "Verificando estrutura de dados e integrações necessárias..." },
-        { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." },
-        { name: "pm", icon: "📋", description: "Sumarizando aprendizados e gerando PRD completo..." }
+        { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." }
       ];
       return;
     }
@@ -70,28 +70,22 @@ export class AISquadService {
         this.agents.unshift({ name: "refinador", icon: "🧠", description: "Captando e reformulando a demanda para a squad..." });
       }
 
-      // Ensure PM is always last
-      const pmIndex = this.agents.findIndex(a => a.name === 'pm' || a.name === 'product_manager');
-      if (pmIndex !== -1 && pmIndex !== this.agents.length - 1) {
-        const pm = this.agents.splice(pmIndex, 1)[0];
-        this.agents.push(pm);
-      } else if (pmIndex === -1) {
-        this.agents.push({ name: "pm", icon: "📋", description: "Sumarizando aprendizados e gerando PRD completo..." });
-      }
+      // PM não deve estar no loop de agentes - será chamado separadamente
+      // Remover PM se foi adicionado via YAML
+      this.agents = this.agents.filter(a => a.name !== 'pm' && a.name !== 'product_manager');
 
       console.log('Loaded agent configurations:', this.agents.map(a => a.name));
 
     } catch (error) {
       console.error('Error loading agent configurations:', error);
-      // Fallback to default agents
+      // Fallback to default agents (sem PM)
       this.agents = [
         { name: "refinador", icon: "🧠", description: "Captando e reformulando a demanda para a squad..." },
         { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
         { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
         { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
         { name: "analista_de_dados", icon: "📈", description: "Verificando estrutura de dados e integrações necessárias..." },
-        { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." },
-        { name: "pm", icon: "📋", description: "Sumarizando aprendizados e gerando PRD completo..." }
+        { name: "tech_lead", icon: "💧", description: "Avaliando viabilidade técnica e arquitetura..." }
       ];
     }
   }
@@ -160,12 +154,10 @@ export class AISquadService {
       }
 
       // Process with agent for actual agent response
-      // For PM, pass all previous messages as context
       const response = await this.processWithAgent(
         agent.name,
         demand,
-        refinementLevels,
-        agent.name === 'pm' || agent.name === 'product_manager' ? messages : undefined
+        refinementLevels
       );
 
       message.message = response;
@@ -220,77 +212,23 @@ export class AISquadService {
   private async processWithAgent(
     agentName: string,
     demand: Demand,
-    refinementLevels: number,
-    previousMessages?: ChatMessage[]
+    refinementLevels: number
   ): Promise<string> {
     const intensityLevel = this.getIntensityByType(demand.type);
-
-    // Check if we have a custom configuration for this agent
     const agentConfig = this.agentConfigs[agentName];
 
-    // Special handling for PM - sumarize all refinement
-    if ((agentName === 'pm' || agentName === 'product_manager') && previousMessages) {
-      const refinementSummary = previousMessages
-        .map(msg => `**${msg.agent}**: ${msg.message}`)
-        .join('\n\n');
-
-      const systemPrompt = `Você é um Product Manager experiente. Sua responsabilidade é SUMARIZAR todo o aprendizado do refinamento da squad e gerar um PRD (Product Requirements Document) completo e estruturado.
-
-IMPORTANTE: Você deve analisar TODAS as contribuições dos agentes anteriores e criar um documento coeso que capture:
-- Objetivo claro da demanda
-- Requisitos funcionais e não-funcionais
-- Critérios de aceite
-- Considerações técnicas (do Tech Lead)
-- Aspectos de UX (do UX Designer)
-- Estratégia de testes (do QA)
-- Estrutura de dados (do Analista de Dados)
-- Impacto no processo (do Scrum Master)
-
-Gere um PRD profissional em português brasileiro, bem estruturado e completo.`;
-
-      const userPrompt = `Demanda Original: ${demand.title}
-Descrição: ${demand.description}
-Tipo: ${demand.type}
-Prioridade: ${demand.priority}
-
-=== REFINAMENTO DA SQUAD ===
-${refinementSummary}
-
-=== SUA TAREFA ===
-Com base em TODAS as análises acima, crie um PRD completo que sumarize todo o aprendizado da squad. O PRD deve ser um documento profissional que qualquer pessoa possa ler e entender o que precisa ser feito.`;
-
-      try {
-        const response = await mistralAIService.generateChatCompletion(
-          systemPrompt,
-          userPrompt,
-          {
-            temperature: 0.5, // Mais determinístico para documentação
-            maxTokens: 4000, // PRD pode ser longo
-            model: agentConfig?.model
-          }
-        );
-
-        return response || `PRD gerado com base no refinamento da squad.`;
-      } catch (error) {
-        console.error(`Error generating PRD with PM:`, error);
-        return `Erro ao gerar PRD. Refinamento capturado mas documento não foi criado.`;
-      }
-    }
-
-    // Standard processing for other agents
+    // Processamento padrão para todos os agentes de refinamento
     const systemPrompt = agentConfig?.system_prompt
       ? `${agentConfig.system_prompt}\n\nContexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
       : `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`;
 
-    // Generate a user prompt based on the agent type
     const userPrompt = agentConfig?.description
       ? `Para esta ${demand.type}, ${agentConfig.description.toLowerCase()}: ${demand.description}`
       : `Analise a demanda: ${demand.description}`;
 
     try {
-      // Set max tokens based on intensity level
       const maxTokens = intensityLevel === 'baixa' ? 800 : intensityLevel === 'media' ? 1500 : 2500;
-      const model = agentConfig?.model || undefined; // Use agent's model or default
+      const model = agentConfig?.model || undefined;
 
       const response = await mistralAIService.generateChatCompletion(
         systemPrompt,
