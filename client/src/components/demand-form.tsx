@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Plus, TrendingUp, Bug, MoreHorizontal, CloudUpload, Send, Github } from "lucide-react";
+import { Plus, TrendingUp, Bug, Compass, BarChart, CloudUpload, Send, Github } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertDemandSchema } from "@shared/schema";
@@ -20,7 +20,8 @@ const demandTypes = [
   { value: "nova_funcionalidade", label: "Nova Funcionalidade", icon: Plus },
   { value: "melhoria", label: "Melhoria", icon: TrendingUp },
   { value: "bug", label: "Bug", icon: Bug },
-  { value: "outro", label: "Outro", icon: MoreHorizontal },
+  { value: "discovery", label: "Discovery", icon: Compass },
+  { value: "analise_exploratoria", label: "Análise Exploratória", icon: BarChart },
 ];
 
 const priorities = [

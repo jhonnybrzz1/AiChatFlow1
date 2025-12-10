@@ -6,7 +6,7 @@ export const demands = pgTable("demands", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  type: text("type").notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'outro'
+  type: text("type").notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'discovery', 'analise_exploratoria'
   priority: text("priority").notNull(), // 'baixa', 'media', 'alta', 'critica'
   status: text("status").notNull().default('processing'), // 'processing', 'completed', 'error', 'stopped'
   progress: serial("progress").notNull().default(0), // Progress percentage 0-100
