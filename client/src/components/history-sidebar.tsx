@@ -190,7 +190,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
   return (
     <>
       {/* Mobile: Drawer (Sheet) */}
-      <div className="md:hidden" data-tour="history-sidebar">
+      <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="w-full mb-4">
@@ -207,7 +207,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
       </div>
 
       {/* Desktop: Card */}
-      <div className="hidden md:block" data-tour="history-sidebar">
+      <div className="hidden md:block">
         <Card className="shadow-sm">
           {sidebarContent}
         </Card>

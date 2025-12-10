@@ -20,10 +20,9 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [repoSearch, setRepoSearch] = useState('');
-  const [showGenericWarning, setShowGenericWarning] = useState(false);
-  const [isIndexed, setIsIndexed] = useState(false); // New state
-  const [indexedRepoName, setIndexedRepoName] = useState<string | null>(null); // New state
-  const [countdown, setCountdown] = useState<number>(0); // Countdown timer
+  const [isIndexed, setIsIndexed] = useState(false);
+  const [indexedRepoName, setIndexedRepoName] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number>(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -95,12 +94,8 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
 
   const handleIndexRepo = () => {
     if (selectedRepo) {
-      if (!demandDescription || demandDescription.trim() === '') {
-        setShowGenericWarning(true);
-      } else {
-        setShowGenericWarning(false);
-      }
       const [owner, repo] = selectedRepo.split('/');
+      // Sempre anexar repositório no backend, sem precisar de descrição
       indexRepoMutation.mutate({ owner, repo, demandDescription });
     }
   };
@@ -114,7 +109,7 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
     }
   };
 
-  const filteredRepos = repos?.filter(repo => 
+  const filteredRepos = repos?.filter(repo =>
     repo.full_name.toLowerCase().includes(repoSearch.toLowerCase())
   ) || [];
 
@@ -137,8 +132,8 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
             {indexRepoMutation.isPending
               ? "Indexando..."
               : isIndexed && indexedRepoName
-              ? `Indexado: ${indexedRepoName}`
-              : "Importar do GitHub"}
+                ? `Indexado: ${indexedRepoName}`
+                : "Importar do GitHub"}
           </span>
         </Button>
       </DialogTrigger>
@@ -151,18 +146,11 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
         </DialogHeader>
 
         <div className="space-y-4">
-          <Input 
-            placeholder="Buscar repositórios..." 
-            value={repoSearch} 
-            onChange={(e) => setRepoSearch(e.target.value)} 
+          <Input
+            placeholder="Buscar repositórios..."
+            value={repoSearch}
+            onChange={(e) => setRepoSearch(e.target.value)}
           />
-
-          {showGenericWarning && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
-              <p className="font-bold">Modo genérico ativado!</p>
-              <p>A análise pode gerar sugestões fora do escopo atual, pois nenhuma demanda específica foi fornecida.</p>
-            </div>
-          )}
 
           {isLoadingRepos && (
             <div className="flex items-center justify-center p-4">
