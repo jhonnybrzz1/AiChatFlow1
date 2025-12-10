@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
+import { validatePRDDocument, validateTasksDocument, formatValidationErrors, type ValidationResult } from '../utils/validateDocuments';
 
 export class PDFGenerator {
   /**
@@ -14,6 +15,28 @@ export class PDFGenerator {
   }
 
   async generatePRDDocument(content: string, demandId: number): Promise<Buffer> {
+    // Validate document structure before generating PDF
+    const validation = validatePRDDocument(content);
+
+    if (!validation.isValid) {
+      console.error('[PDF-GENERATOR] PRD validation failed:', {
+        demandId,
+        errors: validation.errors,
+        timestamp: new Date().toISOString()
+      });
+
+      // Log formatted errors for easier debugging
+      console.error(formatValidationErrors(validation, 'PRD'));
+    }
+
+    if (validation.warnings.length > 0) {
+      console.warn('[PDF-GENERATOR] PRD validation warnings:', {
+        demandId,
+        warnings: validation.warnings,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // Format content to follow standard PRD structure
     const formattedContent = this.formatPRDContent(content);
 
@@ -33,6 +56,28 @@ export class PDFGenerator {
   }
 
   async generateTasksDocument(content: string, demandId: number): Promise<Buffer> {
+    // Validate document structure before generating PDF
+    const validation = validateTasksDocument(content);
+
+    if (!validation.isValid) {
+      console.error('[PDF-GENERATOR] Tasks validation failed:', {
+        demandId,
+        errors: validation.errors,
+        timestamp: new Date().toISOString()
+      });
+
+      // Log formatted errors for easier debugging
+      console.error(formatValidationErrors(validation, 'Tasks'));
+    }
+
+    if (validation.warnings.length > 0) {
+      console.warn('[PDF-GENERATOR] Tasks validation warnings:', {
+        demandId,
+        warnings: validation.warnings,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // Format content to follow standard Tasks structure
     const formattedContent = this.formatTasksContent(content);
 
