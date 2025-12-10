@@ -136,6 +136,82 @@ export class AutoGenBridge {
     }
 
     /**
+     * Run a debate between existing squad agents (from YAML configs)
+     */
+    async runSquadDebate(
+        problem: string,
+        agentNames: string[],
+        options: { maxRounds?: number; useOllama?: boolean } = {}
+    ): Promise<DebateResult> {
+        const { maxRounds = 5, useOllama = true } = options;
+
+        const squadScriptPath = path.join(process.cwd(), 'autogen_squad_integration.py');
+
+        return new Promise((resolve, reject) => {
+            const args = [
+                squadScriptPath,
+                '--problem', problem,
+                '--agents', ...agentNames,
+                '--max-rounds', maxRounds.toString()
+            ];
+
+            if (useOllama) {
+                args.push('--use-ollama');
+            }
+
+            console.log(`Running squad debate with agents: ${agentNames.join(', ')}`);
+
+            const python = spawn(this.pythonPath, args);
+
+            let stdout = '';
+            let stderr = '';
+            let jsonOutput = '';
+
+            python.stdout.on('data', (data) => {
+                const output = data.toString();
+                stdout += output;
+
+                const jsonMatch = output.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    jsonOutput = jsonMatch[0];
+                }
+            });
+
+            python.stderr.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            python.on('close', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`Squad debate failed with code ${code}: ${stderr}`));
+                    return;
+                }
+
+                try {
+                    const result = jsonOutput ? JSON.parse(jsonOutput) : JSON.parse(stdout);
+
+                    const debateResult: DebateResult = {
+                        problem: result.problem,
+                        messages: result.messages || [],
+                        rounds: result.rounds || 0,
+                        consensusReached: result.consensus_reached || false,
+                        error: result.error
+                    };
+
+                    console.log(`Squad debate completed: ${debateResult.rounds} rounds`);
+                    resolve(debateResult);
+                } catch (error) {
+                    reject(new Error(`Failed to parse squad debate result: ${error}`));
+                }
+            });
+
+            python.on('error', (error) => {
+                reject(new Error(`Failed to start squad debate: ${error.message}`));
+            });
+        });
+    }
+
+    /**
      * Convert debate messages to ChatMessage format
      */
     convertToChatMessages(debateResult: DebateResult, demandId: number): ChatMessage[] {
