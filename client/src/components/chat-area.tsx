@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { type Demand, type ChatMessage } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import RefinementDialog from "./refinement-dialog";
 
 const agentIcons: Record<string, string> = {
   refinador: "🧠",
@@ -36,6 +37,12 @@ interface ChatAreaProps {
 export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) {
   const [selectedDemand, setSelectedDemand] = useState<Demand | null>(null);
   const [progress, setProgress] = useState(0);
+  const [refinementDialog, setRefinementDialog] = useState<{
+    isOpen: boolean;
+    agent: string;
+    header: string;
+    message: string;
+  }>({ isOpen: false, agent: '', header: '', message: '' });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -101,6 +108,36 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
 
   const handleDownloadDocument = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  const openRefinementDialog = (agent: string, message: string) => {
+    const agentDisplayName = agentNames[agent] || agent;
+    setRefinementDialog({
+      isOpen: true,
+      agent,
+      header: `Refinamento de ${agentDisplayName}`,
+      message
+    });
+  };
+
+  const closeRefinementDialog = () => {
+    setRefinementDialog({ isOpen: false, agent: '', header: '', message: '' });
+  };
+
+  const handleApplyRefinement = () => {
+    toast({
+      title: "Refinamento aplicado",
+      description: `O refinamento do ${agentNames[refinementDialog.agent] || refinementDialog.agent} foi aplicado com sucesso.`,
+    });
+    closeRefinementDialog();
+  };
+
+  const handleReviewLater = () => {
+    toast({
+      title: "Revisão adiada",
+      description: `Você pode revisar o refinamento do ${agentNames[refinementDialog.agent] || refinementDialog.agent} mais tarde.`,
+    });
+    closeRefinementDialog();
   };
 
   return (
@@ -172,9 +209,19 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                         <XCircle className="w-3 h-3 text-red-600" />
                       )}
                     </div>
-                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                      {message.message}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                        {message.message}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={() => openRefinementDialog(message.agent, message.message)}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Ver refinamento completo
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))
@@ -262,6 +309,17 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
           </CardContent>
         </Card>
       )}
+
+      {/* Refinement Dialog */}
+      <RefinementDialog
+        agent={refinementDialog.agent}
+        header={refinementDialog.header}
+        message={refinementDialog.message}
+        isOpen={refinementDialog.isOpen}
+        onClose={closeRefinementDialog}
+        onApply={handleApplyRefinement}
+        onReviewLater={handleReviewLater}
+      />
     </>
   );
 }

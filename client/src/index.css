@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './components/refinement-dialog.css';
+
 :root {
   --background: hsl(210, 16%, 97%);
   --foreground: hsl(20, 14.3%, 4.1%);
