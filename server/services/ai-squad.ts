@@ -256,6 +256,136 @@ export class AISquadService {
     }
   }
 
+  // ===== NOVOS MÉTODOS: Geração de PRD e Tasks com PM (FORA DO LOOP) =====
+  
+  private async generatePRDWithPM(
+    demand: Demand,
+    refinementMessages: ChatMessage[]
+  ): Promise<string> {
+    const refinementSummary = refinementMessages
+      .filter(msg => msg.type === 'completed')
+      .map(msg => `**${msg.agent}**: ${msg.message}`)
+      .join('\n\n');
+
+    const systemPrompt = `Você é um Product Manager experiente.
+Sua responsabilidade é criar um PRD (Product Requirements Document) profissional em Markdown.
+
+FORMATO DO PRD:
+# [Título da Demanda]
+
+## 📋 Visão Geral
+[Objetivo claro e contexto]
+
+## 🎯 Requisitos Funcionais
+- RF1: [Requisito funcional 1]
+- RF2: [Requisito funcional 2]
+
+## ✅ Critérios de Aceite
+- CA1: [Critério de aceite 1]
+- CA2: [Critério de aceite 2]
+
+## 🏗️ Considerações Técnicas
+[Insights do Tech Lead sobre arquitetura e viabilidade]
+
+## 🎨 UX/UI
+[Considerações do UX Designer sobre experiência do usuário]
+
+## 🧪 Estratégia de Testes
+[Plano do QA para testes e validação]
+
+## 📊 Estrutura de Dados
+[Análise do Analista de Dados sobre dados e integrações]
+
+## 📈 Impacto no Processo
+[Análise do Scrum Master sobre impacto no processo]
+
+Gere um PRD completo, profissional e bem estruturado em português brasileiro.`;
+
+    const userPrompt = `Demanda Original: ${demand.title}
+Descrição: ${demand.description}
+Tipo: ${demand.type}
+Prioridade: ${demand.priority}
+
+=== REFINAMENTO DA SQUAD ===
+${refinementSummary}
+
+=== SUA TAREFA ===
+Com base em TODAS as análises acima, crie um PRD completo em Markdown seguindo o formato especificado.
+O PRD deve ser um documento profissional que qualquer pessoa possa ler e entender o que precisa ser feito.`;
+
+    try {
+      const response = await mistralAIService.generateChatCompletion(
+        systemPrompt,
+        userPrompt,
+        {
+          temperature: 0.5,
+          maxTokens: 4000
+        }
+      );
+
+      return response || `# ${demand.title}\n\nPRD gerado com base no refinamento da squad.`;
+    } catch (error) {
+      console.error(`Error generating PRD with PM:`, error);
+      return `# ${demand.title}\n\n## Erro\nErro ao gerar PRD. Refinamento capturado mas documento não foi criado.`;
+    }
+  }
+
+  private async generateTasksWithPM(
+    demand: Demand,
+    prdContent: string
+  ): Promise<string> {
+    const systemPrompt = `Você é um Product Manager experiente.
+Crie uma lista de tasks técnicas detalhadas baseadas no PRD.
+
+FORMATO DAS TASKS:
+## Backend
+- [ ] Task backend 1
+- [ ] Task backend 2
+
+## Frontend
+- [ ] Task frontend 1
+- [ ] Task frontend 2
+
+## Database
+- [ ] Task database 1
+
+## DevOps/Infraestrutura
+- [ ] Task devops 1
+
+## Testes
+- [ ] Task testes 1
+
+Cada task deve ser:
+- Específica e acionável
+- Com escopo claro
+- Tecnicamente detalhada
+
+Gere tasks em português brasileiro.`;
+
+    const userPrompt = `PRD:
+${prdContent}
+
+=== SUA TAREFA ===
+Com base no PRD acima, crie uma lista completa de tasks técnicas organizadas por categoria.
+As tasks devem cobrir todos os aspectos técnicos necessários para implementar a demanda.`;
+
+    try {
+      const response = await mistralAIService.generateChatCompletion(
+        systemPrompt,
+        userPrompt,
+        {
+          temperature: 0.5,
+          maxTokens: 2000
+        }
+      );
+
+      return response || `# Tasks - ${demand.title}\n\n## Geral\n- [ ] Implementar funcionalidade`;
+    } catch (error) {
+      console.error(`Error generating Tasks with PM:`, error);
+      return `# Tasks - ${demand.title}\n\n## Erro\nErro ao gerar tasks.`;
+    }
+  }
+
   private async generateDocuments(demand: Demand, messages: ChatMessage[]): Promise<{ prdContent: string, tasksContent: string }> {
     // Summarize agent discussions first
     const summarizedContent = await this.summarizeAgentDiscussions(demand, messages);
