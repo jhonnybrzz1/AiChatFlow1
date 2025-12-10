@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle } from "lucide-react";
+import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle, FileJson, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { type Demand, type ChatMessage } from "@shared/schema";
@@ -110,6 +110,24 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
     window.open(url, '_blank');
   };
 
+  const handleExportJSON = () => {
+    if (!selectedDemand) return;
+    window.open(`/api/demands/${selectedDemand.id}/export/json`, '_blank');
+    toast({
+      title: "Exportando diálogo",
+      description: "O arquivo JSON está sendo baixado.",
+    });
+  };
+
+  const handleExportTXT = () => {
+    if (!selectedDemand) return;
+    window.open(`/api/demands/${selectedDemand.id}/export/txt`, '_blank');
+    toast({
+      title: "Exportando diálogo",
+      description: "O arquivo TXT está sendo baixado.",
+    });
+  };
+
   const openRefinementDialog = (agent: string, message: string) => {
     const agentDisplayName = agentNames[agent] || agent;
     setRefinementDialog({
@@ -149,27 +167,51 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
             <div className="flex items-center space-x-2">
               <MessageCircle className="text-primary" size={20} />
               <span>
-                {selectedDemand?.status === 'processing' ? 'Refinamento em Andamento' : 
+                {selectedDemand?.status === 'processing' ? 'Refinamento em Andamento' :
                  selectedDemand?.status === 'completed' ? 'Refinamento Concluído' :
                  selectedDemand?.status === 'stopped' ? 'Refinamento Interrompido' :
                  'Squad de Refinamento'}
               </span>
             </div>
-            {selectedDemand?.status === 'processing' && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => stopProcessingMutation.mutate(selectedDemand.id)}
-                disabled={stopProcessingMutation.isPending}
-              >
-                {stopProcessingMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <StopCircle className="w-4 h-4 mr-2" />
-                )}
-                Parar
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {selectedDemand && chatMessages.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportJSON}
+                    title="Exportar diálogo em JSON"
+                  >
+                    <FileJson className="w-4 h-4 mr-1" />
+                    JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportTXT}
+                    title="Exportar diálogo em TXT"
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    TXT
+                  </Button>
+                </>
+              )}
+              {selectedDemand?.status === 'processing' && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => stopProcessingMutation.mutate(selectedDemand.id)}
+                  disabled={stopProcessingMutation.isPending}
+                >
+                  {stopProcessingMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <StopCircle className="w-4 h-4 mr-2" />
+                  )}
+                  Parar
+                </Button>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">

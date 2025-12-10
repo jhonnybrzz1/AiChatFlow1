@@ -139,6 +139,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export chat dialog as JSON
+  app.get("/api/demands/:id/export/json", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      const exportData = {
+        demandId: demand.id,
+        title: demand.title,
+        description: demand.description,
+        type: demand.type,
+        priority: demand.priority,
+        status: demand.status,
+        createdAt: demand.createdAt,
+        updatedAt: demand.updatedAt,
+        chatHistory: demand.chatMessages || []
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="dialogo_demanda_${id}_${Date.now()}.json"`);
+      res.json(exportData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export chat as JSON" });
+    }
+  });
+
+  // Export chat dialog as TXT
+  app.get("/api/demands/:id/export/txt", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      const agentNames: Record<string, string> = {
+        refinador: "Refinador",
+        scrum_master: "Scrum Master",
+        qa: "QA",
+        ux: "UX Designer",
+        analista_de_dados: "Analista de Dados",
+        tech_lead: "Tech Lead",
+        pm: "Product Manager",
+      };
+
+      let txtContent = `HISTÓRICO DE DIÁLOGO - DEMANDA #${demand.id}\n`;
+      txtContent += `${'='.repeat(60)}\n\n`;
+      txtContent += `Título: ${demand.title}\n`;
+      txtContent += `Tipo: ${demand.type}\n`;
+      txtContent += `Prioridade: ${demand.priority}\n`;
+      txtContent += `Status: ${demand.status}\n`;
+      txtContent += `Criado em: ${demand.createdAt}\n`;
+      txtContent += `\nDescrição:\n${demand.description}\n\n`;
+      txtContent += `${'='.repeat(60)}\n`;
+      txtContent += `MENSAGENS DO CHAT\n`;
+      txtContent += `${'='.repeat(60)}\n\n`;
+
+      const messages = demand.chatMessages || [];
+      messages.forEach((message, index) => {
+        const agentName = agentNames[message.agent] || message.agent;
+        const timestamp = new Date(message.timestamp).toLocaleString('pt-BR');
+        const status = message.type === 'completed' ? '✓' : message.type === 'processing' ? '⏳' : '✗';
+
+        txtContent += `[${index + 1}] ${agentName} ${status}\n`;
+        txtContent += `Data/Hora: ${timestamp}\n`;
+        txtContent += `${'-'.repeat(60)}\n`;
+        txtContent += `${message.message}\n\n`;
+      });
+
+      txtContent += `${'='.repeat(60)}\n`;
+      txtContent += `FIM DO HISTÓRICO\n`;
+      txtContent += `Exportado em: ${new Date().toLocaleString('pt-BR')}\n`;
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="dialogo_demanda_${id}_${Date.now()}.txt"`);
+      res.send(txtContent);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export chat as TXT" });
+    }
+  });
+
   // Stop processing demand
   app.post("/api/demands/:id/stop", async (req: Request, res: Response) => {
     try {
