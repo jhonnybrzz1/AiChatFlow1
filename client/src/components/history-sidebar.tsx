@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { History, RefreshCw, Download, CheckCircle, Clock, XCircle, StopCircle } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { History, RefreshCw, Download, CheckCircle, Clock, XCircle, StopCircle, Menu } from "lucide-react";
 import { type Demand } from "@shared/schema";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface HistorySidebarProps {
   demands: Demand[];
@@ -13,6 +15,7 @@ interface HistorySidebarProps {
 
 export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: HistorySidebarProps) {
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleDownload = (url: string | null, type: 'PRD' | 'Tasks') => {
     if (!url) {
@@ -73,8 +76,8 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
     }
   };
 
-  return (
-    <Card className="shadow-sm">
+  const sidebarContent = (
+    <>
       <CardHeader className="border-b border-border">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center space-x-2">
@@ -99,10 +102,12 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
             demands.map((demand) => (
               <div
                 key={demand.id}
-                className={`p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer ${
-                  selectedDemand?.id === demand.id ? 'bg-primary/10 border-primary/50' : ''
-                }`}
-                onClick={() => onSelectDemand?.(demand)}
+                className={`p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer ${selectedDemand?.id === demand.id ? 'bg-primary/10 border-primary/50' : ''
+                  }`}
+                onClick={() => {
+                  onSelectDemand?.(demand);
+                  setIsOpen(false); // Fechar drawer ao selecionar
+                }}
               >
                 <div className="flex items-start space-x-3">
                   <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
@@ -118,20 +123,20 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
                     <p className="text-xs text-muted-foreground mt-1 capitalize">
                       {demand.type.replace('_', ' ')} • {demand.priority}
                     </p>
-                    
+
                     {demand.status === 'processing' && (
                       <div className="mt-2">
                         <div className="w-full bg-muted rounded-full h-1">
-                          <div 
+                          <div
                             className="bg-primary h-1 rounded-full transition-all duration-500"
-                            style={{ 
-                              width: `${((demand.chatMessages?.filter(m => m.type === 'completed').length || 0) / 7) * 100}%` 
+                            style={{
+                              width: `${((demand.chatMessages?.filter(m => m.type === 'completed').length || 0) / 7) * 100}%`
                             }}
                           />
                         </div>
                       </div>
                     )}
-                    
+
                     {demand.status === 'completed' && (
                       <div className="flex items-center space-x-2 mt-2">
                         <Button
@@ -160,7 +165,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
                         </Button>
                       </div>
                     )}
-                    
+
                     {demand.status === 'error' && (
                       <Button
                         variant="ghost"
@@ -179,6 +184,34 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
           )}
         </div>
       </CardContent>
-    </Card>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile: Drawer (Sheet) */}
+      <div className="md:hidden">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full mb-4">
+              <Menu size={16} className="mr-2" />
+              Histórico ({demands.length})
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+            <div className="h-full overflow-y-auto">
+              {sidebarContent}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop: Card */}
+      <div className="hidden md:block">
+        <Card className="shadow-sm">
+          {sidebarContent}
+        </Card>
+      </div>
+    </>
   );
 }
