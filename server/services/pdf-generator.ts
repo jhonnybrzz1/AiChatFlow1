@@ -2,8 +2,84 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import { validatePRDDocument, validateTasksDocument, formatValidationErrors, type ValidationResult } from '../utils/validateDocuments';
+import { validatePRD as validatePRDSchema, validateTasksDocument as validateTasksSchema, formatValidationErrors as formatZodErrors } from '../../shared/document-schemas';
 
 export class PDFGenerator {
+  /**
+   * Extrai dados estruturados de um documento PRD em Markdown
+   * para validação com schema Zod
+   */
+  private extractPRDDataFromMarkdown(content: string): any {
+    // Esta é uma implementação básica que extrai informações do Markdown
+    // Em produção, você pode usar um parser mais robusto
+    const data: any = {
+      title: '',
+      overview: { objective: '', problem: '', solution: '' },
+      functionalRequirements: [],
+      nonFunctionalRequirements: [],
+      scope: { inScope: [], outOfScope: [] },
+      acceptanceCriteria: [],
+      dependencies: { internal: [], external: [] },
+      risks: [],
+      metrics: { primary: [], secondary: [] },
+      timeline: { mvpDate: '', phases: [] },
+      version: '1.0.0',
+    };
+
+    // Extrai título
+    const titleMatch = content.match(/^#\s+PRD\s*-\s*(.+)$/m);
+    if (titleMatch) data.title = titleMatch[1].trim();
+
+    // Extrai versão
+    const versionMatch = content.match(/\*\*Versão:\*\*\s*\[?(\d+\.\d+\.\d+)\]?/);
+    if (versionMatch) data.version = versionMatch[1];
+
+    // Log para debugging
+    console.log('[PDF-GENERATOR] Extracted PRD data for validation:', {
+      title: data.title,
+      version: data.version,
+      hasTitle: !!data.title,
+      contentLength: content.length
+    });
+
+    return data;
+  }
+
+  /**
+   * Extrai dados estruturados de um documento Tasks em Markdown
+   * para validação com schema Zod
+   */
+  private extractTasksDataFromMarkdown(content: string): any {
+    const data: any = {
+      title: '',
+      metadata: {
+        priority: 'Média',
+        responsible: '@unknown-team',
+        status: 'Não Iniciado',
+        version: '1.0.0',
+      },
+      tasks: [],
+      successMetrics: [],
+    };
+
+    // Extrai título
+    const titleMatch = content.match(/^#\s+Tasks Document\s*-\s*(.+)$/m);
+    if (titleMatch) data.title = titleMatch[1].trim();
+
+    // Extrai versão
+    const versionMatch = content.match(/\*\*Versão:\*\*\s*\[?(\d+\.\d+\.\d+)\]?/);
+    if (versionMatch) data.metadata.version = versionMatch[1];
+
+    // Log para debugging
+    console.log('[PDF-GENERATOR] Extracted Tasks data for validation:', {
+      title: data.title,
+      version: data.metadata.version,
+      hasTitle: !!data.title,
+      contentLength: content.length
+    });
+
+    return data;
+  }
   /**
    * Remove emojis and other non-WinAnsi characters from text
    * WinAnsi (used by Helvetica) only supports basic Latin characters
@@ -15,24 +91,59 @@ export class PDFGenerator {
   }
 
   async generatePRDDocument(content: string, demandId: number): Promise<Buffer> {
-    // Validate document structure before generating PDF
-    const validation = validatePRDDocument(content);
+    console.log('[PDF-GENERATOR] Starting PRD document generation', {
+      demandId,
+      contentLength: content.length,
+      timestamp: new Date().toISOString()
+    });
 
-    if (!validation.isValid) {
-      console.error('[PDF-GENERATOR] PRD validation failed:', {
+    // FASE 1: Validação de estrutura Markdown (validação existente)
+    const markdownValidation = validatePRDDocument(content);
+
+    if (!markdownValidation.isValid) {
+      console.error('[PDF-GENERATOR] PRD Markdown validation failed:', {
         demandId,
-        errors: validation.errors,
+        errors: markdownValidation.errors,
         timestamp: new Date().toISOString()
       });
-
-      // Log formatted errors for easier debugging
-      console.error(formatValidationErrors(validation, 'PRD'));
+      console.error(formatValidationErrors(markdownValidation, 'PRD'));
     }
 
-    if (validation.warnings.length > 0) {
-      console.warn('[PDF-GENERATOR] PRD validation warnings:', {
+    if (markdownValidation.warnings.length > 0) {
+      console.warn('[PDF-GENERATOR] PRD Markdown validation warnings:', {
         demandId,
-        warnings: validation.warnings,
+        warnings: markdownValidation.warnings,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // FASE 2: Validação de schema Zod (nova validação estrutural)
+    try {
+      const extractedData = this.extractPRDDataFromMarkdown(content);
+      const schemaValidation = validatePRDSchema(extractedData);
+
+      if (!schemaValidation.success && schemaValidation.errors) {
+        const formattedErrors = formatZodErrors(schemaValidation.errors);
+        console.error('[PDF-GENERATOR] PRD Zod schema validation failed:', {
+          demandId,
+          errors: formattedErrors,
+          timestamp: new Date().toISOString()
+        });
+
+        // Log cada erro individualmente para facilitar debugging
+        formattedErrors.forEach((error, index) => {
+          console.error(`[PDF-GENERATOR] PRD Schema Error ${index + 1}: ${error}`);
+        });
+      } else {
+        console.log('[PDF-GENERATOR] PRD Zod schema validation passed', {
+          demandId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error('[PDF-GENERATOR] Error during Zod validation:', {
+        demandId,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
     }
@@ -56,24 +167,59 @@ export class PDFGenerator {
   }
 
   async generateTasksDocument(content: string, demandId: number): Promise<Buffer> {
-    // Validate document structure before generating PDF
-    const validation = validateTasksDocument(content);
+    console.log('[PDF-GENERATOR] Starting Tasks document generation', {
+      demandId,
+      contentLength: content.length,
+      timestamp: new Date().toISOString()
+    });
 
-    if (!validation.isValid) {
-      console.error('[PDF-GENERATOR] Tasks validation failed:', {
+    // FASE 1: Validação de estrutura Markdown (validação existente)
+    const markdownValidation = validateTasksDocument(content);
+
+    if (!markdownValidation.isValid) {
+      console.error('[PDF-GENERATOR] Tasks Markdown validation failed:', {
         demandId,
-        errors: validation.errors,
+        errors: markdownValidation.errors,
         timestamp: new Date().toISOString()
       });
-
-      // Log formatted errors for easier debugging
-      console.error(formatValidationErrors(validation, 'Tasks'));
+      console.error(formatValidationErrors(markdownValidation, 'Tasks'));
     }
 
-    if (validation.warnings.length > 0) {
-      console.warn('[PDF-GENERATOR] Tasks validation warnings:', {
+    if (markdownValidation.warnings.length > 0) {
+      console.warn('[PDF-GENERATOR] Tasks Markdown validation warnings:', {
         demandId,
-        warnings: validation.warnings,
+        warnings: markdownValidation.warnings,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // FASE 2: Validação de schema Zod (nova validação estrutural)
+    try {
+      const extractedData = this.extractTasksDataFromMarkdown(content);
+      const schemaValidation = validateTasksSchema(extractedData);
+
+      if (!schemaValidation.success && schemaValidation.errors) {
+        const formattedErrors = formatZodErrors(schemaValidation.errors);
+        console.error('[PDF-GENERATOR] Tasks Zod schema validation failed:', {
+          demandId,
+          errors: formattedErrors,
+          timestamp: new Date().toISOString()
+        });
+
+        // Log cada erro individualmente para facilitar debugging
+        formattedErrors.forEach((error, index) => {
+          console.error(`[PDF-GENERATOR] Tasks Schema Error ${index + 1}: ${error}`);
+        });
+      } else {
+        console.log('[PDF-GENERATOR] Tasks Zod schema validation passed', {
+          demandId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error('[PDF-GENERATOR] Error during Zod validation:', {
+        demandId,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
     }
