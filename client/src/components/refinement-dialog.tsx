@@ -31,7 +31,7 @@ const agentClassMap: Record<string, string> = {
   'intj': 'agent-analyst',
 };
 
-export const RefinementDialog: React.FC<RefinementDialogProps> = ({
+const RefinementDialog: React.FC<RefinementDialogProps> = ({
   agent,
   header,
   message,
