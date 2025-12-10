@@ -129,7 +129,7 @@ export function DemandForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* GitHub Import - Moved to top */}
-              <div className="flex justify-end">
+              <div className="flex justify-end" data-tour="github-import">
                 <GitHubImportModal
                   onImportSuccess={handleGitHubImport}
                   demandDescription={form.watch('description')}
@@ -141,7 +141,7 @@ export function DemandForm() {
                 control={form.control}
                 name="type"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem data-tour="demand-type">
                     <FormLabel>Tipo de Demanda</FormLabel>
                     <FormControl>
                       <Tabs value={selectedType} onValueChange={(value) => {
@@ -235,7 +235,7 @@ export function DemandForm() {
               />
 
               {/* File Upload */}
-              <div className="space-y-2">
+              <div className="space-y-2" data-tour="file-upload">
                 <Label>Anexar Documentos (Opcional)</Label>
                 <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-muted-foreground transition-colors">
                   <CloudUpload className="mx-auto text-muted-foreground mb-2" size={24} />
