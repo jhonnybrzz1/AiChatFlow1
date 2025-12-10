@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   }>({ isOpen: false, agent: '', header: '', message: '' });
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: demands = [] } = useQuery({
     queryKey: ['/api/demands'],
@@ -216,8 +217,8 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+        <CardContent className="p-4" data-chat-area>
+          <div className="space-y-4 max-h-96 overflow-y-auto" id="chat-messages-container">
             {chatMessages.length === 0 ? (
               <div className="text-center py-8">
                 <Bot className="mx-auto text-muted-foreground mb-4" size={48} />

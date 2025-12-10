@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Plus, TrendingUp, Bug, Compass, BarChart, CloudUpload, Send, Github } from "lucide-react";
+import { Plus, TrendingUp, Bug, Compass, BarChart, CloudUpload, Send, Github, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertDemandSchema } from "@shared/schema";
@@ -24,6 +24,7 @@ const demandTypes = [
   { value: "analise_exploratoria", label: "Análise Exploratória", icon: BarChart },
 ];
 
+// Ordenadas logicamente: Baixa → Média → Alta → Crítica
 const priorities = [
   { value: "baixa", label: "Baixa" },
   { value: "media", label: "Média" },
@@ -34,6 +35,7 @@ const priorities = [
 export function DemandForm() {
   const [selectedType, setSelectedType] = useState("nova_funcionalidade");
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -57,7 +59,16 @@ export function DemandForm() {
       });
       form.reset();
       setSelectedFiles(null);
+      setIsCollapsed(true); // Minimizar formulário após envio
       queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
+
+      // Foco automático no chat após 500ms
+      setTimeout(() => {
+        const chatArea = document.querySelector('[data-chat-area]');
+        if (chatArea) {
+          chatArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
     },
     onError: (error) => {
       toast({
@@ -90,169 +101,199 @@ export function DemandForm() {
     });
   };
 
+  const handleRemoveFile = (indexToRemove: number) => {
+    if (selectedFiles) {
+      const dt = new DataTransfer();
+      Array.from(selectedFiles).forEach((file, index) => {
+        if (index !== indexToRemove) {
+          dt.items.add(file);
+        }
+      });
+      setSelectedFiles(dt.files.length > 0 ? dt.files : null);
+    }
+  };
+
   return (
     <Card className="shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Nova Demanda</CardTitle>
+      <CardHeader className="cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold">Nova Demanda</CardTitle>
+          <Button variant="ghost" size="sm" type="button">
+            {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Demand Type Selection */}
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Demanda</FormLabel>
-                  <FormControl>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {demandTypes.map((type) => {
-                        const Icon = type.icon;
-                        return (
-                          <button
-                            key={type.value}
-                            type="button"
-                            onClick={() => {
-                              setSelectedType(type.value);
-                              field.onChange(type.value);
-                            }}
-                            className={cn(
-                              "demand-type-btn p-3 rounded-lg border-2 font-medium text-sm transition-all hover:border-muted-foreground",
-                              selectedType === type.value
-                                ? "border-primary bg-blue-50 text-primary"
-                                : "border-border text-muted-foreground"
-                            )}
-                          >
-                            <Icon className="mx-auto mb-1" size={16} />
-                            <div>{type.label}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Demand Title */}
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título da Demanda</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Sistema de autenticação por biometria"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Demand Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição Detalhada</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descreva sua demanda em detalhes. Inclua contexto, objetivos e qualquer informação relevante..."
-                      rows={4}
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Priority Selection */}
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Prioridade</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a prioridade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {priorities.map((priority) => (
-                          <SelectItem key={priority.value} value={priority.value}>
-                            {priority.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* File Upload */}
-            <div className="space-y-2">
-              <Label>Anexar Documentos (Opcional)</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-muted-foreground transition-colors">
-                <CloudUpload className="mx-auto text-muted-foreground mb-2" size={24} />
-                <p className="text-sm text-muted-foreground">
-                  Arraste arquivos aqui ou{" "}
-                  <label className="text-primary cursor-pointer hover:text-primary/80">
-                    clique para selecionar
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".txt,.pdf,.docx"
-                      multiple
-                      onChange={handleFileChange}
-                    />
-                  </label>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Formatos suportados: .txt, .pdf, .docx
-                </p>
-                {selectedFiles && (
-                  <div className="mt-2 text-sm text-foreground">
-                    {Array.from(selectedFiles).map((file, index) => (
-                      <div key={index} className="text-left">
-                        {file.name} ({Math.round(file.size / 1024)}KB)
+      {!isCollapsed && (
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Demand Type Selection */}
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Demanda</FormLabel>
+                    <FormControl>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {demandTypes.map((type) => {
+                          const Icon = type.icon;
+                          return (
+                            <button
+                              key={type.value}
+                              type="button"
+                              onClick={() => {
+                                setSelectedType(type.value);
+                                field.onChange(type.value);
+                              }}
+                              className={cn(
+                                "demand-type-btn p-3 rounded-lg border-2 font-medium text-sm transition-all hover:border-muted-foreground",
+                                selectedType === type.value
+                                  ? "border-primary bg-blue-50 text-primary"
+                                  : "border-border text-muted-foreground"
+                              )}
+                            >
+                              <Icon className="mx-auto mb-1" size={16} />
+                              <div>{type.label}</div>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center pt-2">
-              <GitHubImportModal
-                onImportSuccess={handleGitHubImport}
-                demandDescription={form.watch('description')} // Pass the current demand description
               />
-              <Button
-                type="submit"
-                disabled={createDemandMutation.isPending}
-                className="flex items-center space-x-2"
-              >
-                <Send size={16} />
-                <span>
-                  {createDemandMutation.isPending ? "Enviando..." : "Enviar para Squad"}
-                </span>
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
+
+              {/* Demand Title */}
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título da Demanda</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex: Sistema de autenticação por biometria"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Demand Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição Detalhada</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descreva sua demanda em detalhes. Inclua contexto, objetivos e qualquer informação relevante..."
+                        rows={4}
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Priority Selection */}
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prioridade</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a prioridade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {priorities.map((priority) => (
+                            <SelectItem key={priority.value} value={priority.value}>
+                              {priority.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label>Anexar Documentos (Opcional)</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-muted-foreground transition-colors">
+                  <CloudUpload className="mx-auto text-muted-foreground mb-2" size={24} />
+                  <p className="text-sm text-muted-foreground">
+                    Arraste arquivos aqui ou{" "}
+                    <label className="text-primary cursor-pointer hover:text-primary/80">
+                      clique para selecionar
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".txt,.pdf,.docx"
+                        multiple
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Formatos suportados: .txt, .pdf, .docx
+                  </p>
+                  {selectedFiles && (
+                    <div className="mt-2 space-y-1">
+                      {Array.from(selectedFiles).map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-muted px-3 py-2 rounded text-sm">
+                          <span className="text-foreground">
+                            {file.name} ({Math.round(file.size / 1024)}KB)
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFile(index)}
+                            className="h-6 w-6 p-0 hover:bg-destructive/10"
+                          >
+                            <X size={14} className="text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center pt-2">
+                <GitHubImportModal
+                  onImportSuccess={handleGitHubImport}
+                  demandDescription={form.watch('description')} // Pass the current demand description
+                />
+                <Button
+                  type="submit"
+                  disabled={createDemandMutation.isPending}
+                  className="flex items-center space-x-2"
+                >
+                  <Send size={16} />
+                  <span>
+                    {createDemandMutation.isPending ? "Enviando..." : "Enviar para Squad"}
+                  </span>
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      )}
     </Card>
   );
 }
