@@ -14,7 +14,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { GitHubImportModal } from "./github-import-modal"; // Import the new modal
+import { GitHubImportModal } from "./github-import-modal";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const demandTypes = [
   { value: "nova_funcionalidade", label: "Nova Funcionalidade", icon: Plus },
@@ -127,7 +128,15 @@ export function DemandForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Demand Type Selection */}
+              {/* GitHub Import - Moved to top */}
+              <div className="flex justify-end">
+                <GitHubImportModal
+                  onImportSuccess={handleGitHubImport}
+                  demandDescription={form.watch('description')}
+                />
+              </div>
+
+              {/* Demand Type Selection - Now with Tabs */}
               <FormField
                 control={form.control}
                 name="type"
@@ -135,30 +144,26 @@ export function DemandForm() {
                   <FormItem>
                     <FormLabel>Tipo de Demanda</FormLabel>
                     <FormControl>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {demandTypes.map((type) => {
-                          const Icon = type.icon;
-                          return (
-                            <button
-                              key={type.value}
-                              type="button"
-                              onClick={() => {
-                                setSelectedType(type.value);
-                                field.onChange(type.value);
-                              }}
-                              className={cn(
-                                "demand-type-btn p-3 rounded-lg border-2 font-medium text-sm transition-all hover:border-muted-foreground",
-                                selectedType === type.value
-                                  ? "border-primary bg-blue-50 text-primary"
-                                  : "border-border text-muted-foreground"
-                              )}
-                            >
-                              <Icon className="mx-auto mb-1" size={16} />
-                              <div>{type.label}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <Tabs value={selectedType} onValueChange={(value) => {
+                        setSelectedType(value);
+                        field.onChange(value);
+                      }}>
+                        <TabsList className="grid w-full grid-cols-5">
+                          {demandTypes.map((type) => {
+                            const Icon = type.icon;
+                            return (
+                              <TabsTrigger
+                                key={type.value}
+                                value={type.value}
+                                className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                              >
+                                <Icon size={16} />
+                                <span className="text-xs hidden sm:inline">{type.label}</span>
+                              </TabsTrigger>
+                            );
+                          })}
+                        </TabsList>
+                      </Tabs>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -273,12 +278,8 @@ export function DemandForm() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-between items-center pt-2">
-                <GitHubImportModal
-                  onImportSuccess={handleGitHubImport}
-                  demandDescription={form.watch('description')} // Pass the current demand description
-                />
+              {/* Action Buttons - Removed GitHub Import from here */}
+              <div className="flex justify-end pt-2">
                 <Button
                   type="submit"
                   disabled={createDemandMutation.isPending}
