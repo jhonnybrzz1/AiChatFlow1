@@ -34,12 +34,15 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+export type MessageCategory = 'question' | 'answer' | 'alert' | 'error' | 'system';
+
 export type ChatMessage = {
   id: string;
   agent: string;
   message: string;
   timestamp: string;
   type: 'processing' | 'completed' | 'error';
+  category?: MessageCategory; // Visual category for message styling
   progress?: number; // Progress percentage 0-100
 };
 

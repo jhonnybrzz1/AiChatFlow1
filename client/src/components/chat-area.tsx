@@ -9,6 +9,8 @@ import { type Demand, type ChatMessage } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import RefinementDialog from "./refinement-dialog";
+import { MessageCategoryBadge, categoryConfig } from "./message-category";
+import { cn } from "@/lib/utils";
 
 const agentIcons: Record<string, string> = {
   refinador: "🧠",
@@ -80,19 +82,19 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
     // If there's a processing demand, prioritize it
     if (processingDemand) {
       setSelectedDemand(processingDemand);
-      
+
       // Calculate progress based on messages
       const totalAgents = 7;
       const completedMessages = processingDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
       setProgress((completedMessages / totalAgents) * 100);
-      
+
       // Subscribe to real-time updates
       const unsubscribe = api.demands.subscribeToUpdates(processingDemand.id, (updatedDemand) => {
         setSelectedDemand(updatedDemand);
         const newCompletedMessages = updatedDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
         setProgress((newCompletedMessages / totalAgents) * 100);
       });
-      
+
       return unsubscribe;
     }
     // Otherwise use the selected demand from props
@@ -168,9 +170,9 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
               <MessageCircle className="text-primary" size={20} />
               <span>
                 {selectedDemand?.status === 'processing' ? 'Refinamento em Andamento' :
-                 selectedDemand?.status === 'completed' ? 'Refinamento Concluído' :
-                 selectedDemand?.status === 'stopped' ? 'Refinamento Interrompido' :
-                 'Squad de Refinamento'}
+                  selectedDemand?.status === 'completed' ? 'Refinamento Concluído' :
+                    selectedDemand?.status === 'stopped' ? 'Refinamento Interrompido' :
+                      'Squad de Refinamento'}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -225,48 +227,61 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                 </p>
               </div>
             ) : (
-              chatMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className="chat-message flex items-start space-x-3 p-3 rounded-lg bg-muted/50"
-                >
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">{agentIcons[message.agent] || "🤖"}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-sm font-medium text-foreground">
-                        {agentNames[message.agent] || message.agent}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(message.timestamp).toLocaleTimeString('pt-BR')}
-                      </span>
-                      {message.type === 'processing' && (
-                        <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                      )}
-                      {message.type === 'completed' && (
-                        <CheckCircle className="w-3 h-3 text-green-600" />
-                      )}
-                      {message.type === 'error' && (
-                        <XCircle className="w-3 h-3 text-red-600" />
-                      )}
+              chatMessages.map((message) => {
+                // Determine category (default to 'answer' if not specified)
+                const category = message.category || 'answer';
+                const config = categoryConfig[category];
+
+                return (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "chat-message flex items-start space-x-3 p-3 rounded-lg border-l-4 transition-colors",
+                      config.borderColor,
+                      config.bgColor
+                    )}
+                    role="article"
+                    aria-label={`${config.ariaLabel} de ${agentNames[message.agent] || message.agent}`}
+                  >
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm">{agentIcons[message.agent] || "🤖"}</span>
                     </div>
-                    <div className="flex flex-col">
-                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                        {message.message}
-                      </p>
-                      <div className="mt-2 flex gap-2">
-                        <button
-                          onClick={() => openRefinementDialog(message.agent, message.message)}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Ver refinamento completo
-                        </button>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1 flex-wrap gap-1">
+                        <span className="text-sm font-medium text-foreground">
+                          {agentNames[message.agent] || message.agent}
+                        </span>
+                        <MessageCategoryBadge category={category} />
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(message.timestamp).toLocaleTimeString('pt-BR')}
+                        </span>
+                        {message.type === 'processing' && (
+                          <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                        )}
+                        {message.type === 'completed' && (
+                          <CheckCircle className="w-3 h-3 text-green-600" />
+                        )}
+                        {message.type === 'error' && (
+                          <XCircle className="w-3 h-3 text-red-600" />
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                          {message.message}
+                        </p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={() => openRefinementDialog(message.agent, message.message)}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            Ver refinamento completo
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>
