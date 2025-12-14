@@ -63,7 +63,7 @@ class MistralAutoGenDebate:
             logger.info("Using Mistral API")
             return {
                 "config_list": [{
-                    "model": os.getenv('MISTRAL_MODEL', 'mistral-large-latest'),
+                    "model": os.getenv('MISTRAL_MODEL', 'devstral-2512'),
                     "api_key": self.api_key,
                     "base_url": "https://api.mistral.ai/v1",
                 }],

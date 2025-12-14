@@ -61,14 +61,15 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
 
   // Auto-index timer effect
   useEffect(() => {
-    if (selectedRepo && !indexRepoMutation.isPending) {
+    let countdownInterval: NodeJS.Timeout | null = null;
+    if (selectedRepo) {
       // Start countdown from 3 seconds
       setCountdown(3);
 
-      const countdownInterval = setInterval(() => {
+      countdownInterval = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
-            clearInterval(countdownInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
             return 0;
           }
           return prev - 1;
@@ -81,7 +82,7 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
       }, 3000);
 
       return () => {
-        clearInterval(countdownInterval);
+        if (countdownInterval) clearInterval(countdownInterval);
         if (timerRef.current) {
           clearTimeout(timerRef.current);
           timerRef.current = null;
@@ -90,7 +91,7 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
     } else {
       setCountdown(0);
     }
-  }, [selectedRepo, indexRepoMutation.isPending]);
+  }, [selectedRepo]);
 
   const handleIndexRepo = () => {
     if (selectedRepo) {

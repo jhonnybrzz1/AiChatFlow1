@@ -6,6 +6,11 @@ import path from "path";
 import { mistralAIService } from "./mistral-ai";
 import yaml from "js-yaml";
 import { pdfGenerator } from "./pdf-generator";
+import { demandRoutingOrchestrator } from "../routing/orchestrator";
+import { DiscoveryPlugin } from "../plugins/discovery-plugin";
+import { BugPlugin } from "../plugins/bug-plugin";
+import { ImprovementPlugin } from "../plugins/improvement-plugin";
+import { agentInteractionService } from "./agent-interaction";
 
 // Using Mistral AI service instead of OpenAI
 
@@ -15,6 +20,23 @@ export class AISquadService {
 
   constructor() {
     this.loadAgentConfigurations();
+    this.initializeRoutingSystem();
+  }
+
+  private async initializeRoutingSystem(): Promise<void> {
+    try {
+      // Initialize the routing orchestrator
+      await demandRoutingOrchestrator.initialize();
+
+      // Register plugins
+      demandRoutingOrchestrator.registerPlugin(new DiscoveryPlugin());
+      demandRoutingOrchestrator.registerPlugin(new BugPlugin());
+      demandRoutingOrchestrator.registerPlugin(new ImprovementPlugin());
+
+      console.log('Routing system initialized with plugins');
+    } catch (error) {
+      console.error('Error initializing routing system:', error);
+    }
   }
 
   private loadAgentConfigurations(): void {
@@ -72,7 +94,12 @@ export class AISquadService {
 
       // PM não deve estar no loop de agentes - será chamado separadamente
       // Remover PM se foi adicionado via YAML
-      this.agents = this.agents.filter(a => a.name !== 'pm' && a.name !== 'product_manager');
+      this.agents = this.agents.filter(a => {
+        const lowerName = a.name.toLowerCase();
+        return lowerName !== 'pm' &&
+               lowerName !== 'product_manager' &&
+               !(lowerName.includes('product') && lowerName.includes('manager'));
+      });
 
       console.log('Loaded agent configurations:', this.agents.map(a => a.name));
 
@@ -116,58 +143,162 @@ export class AISquadService {
     // Update status to processing
     await storage.updateDemand(demandId, { status: 'processing' });
 
-    const refinementLevels = this.getRefinementLevels(demand.type);
-    const messages: ChatMessage[] = [];
+    // Use intelligent routing to determine optimal processing path
+    try {
+      const routingPrediction = await demandRoutingOrchestrator.routeDemand(demandId);
+      console.log(`Demand ${demandId} routed to team: ${routingPrediction.team} with ${routingPrediction.confidence}% confidence`);
 
-    // Calculate progress per agent (90% for agents, 10% for document generation)
-    const progressPerAgent = 90 / this.agents.length;
-
-    for (let i = 0; i < this.agents.length; i++) {
-      // Check if processing was stopped
-      if (this.stopRequests.has(demandId)) {
-        this.stopRequests.delete(demandId);
-        await storage.updateDemand(demandId, { status: 'stopped' });
-        return;
-      }
-
-      const agent = this.agents[i];
-      const message: ChatMessage = {
-        id: `${demandId}-${i}`,
-        agent: agent.name,
-        message: agent.description,
-        timestamp: new Date().toISOString(),
-        type: 'processing',
-        progress: Math.min(90, Math.round((i + 1) * progressPerAgent)) // Calculate progress (max 90% for agents)
-      };
-
-      messages.push(message);
-      await storage.updateDemandChat(demandId, messages);
-
-      // Update demand with current progress
+      // Update demand with routing information
       await storage.updateDemand(demandId, {
-        status: 'processing',
-        progress: message.progress
+        status: 'routed',
+        progress: 5 // Set to 5% to indicate routing completed
       });
 
+      // Send routing update via progress callback
       if (onProgress) {
-        onProgress(message);
+        onProgress({
+          id: `${demandId}-routing`,
+          agent: 'router',
+          message: `Rota otimizada: ${routingPrediction.team} (confiança: ${routingPrediction.confidence}%)`,
+          timestamp: new Date().toISOString(),
+          type: 'completed',
+          progress: 5
+        });
       }
+    } catch (error) {
+      console.error(`Error during routing for demand ${demandId}:`, error);
+      // Continue with default processing if routing fails
+      await storage.updateDemand(demandId, {
+        status: 'processing',
+        progress: 5
+      });
+    }
 
-      // Process with agent for actual agent response
-      const response = await this.processWithAgent(
-        agent.name,
+    // Perform multi-agent interaction for collaborative refinement
+    const agentConfigs = this.agentConfigs; // Use the loaded agent configurations
+    let messages: ChatMessage[] = []; // Initialize messages array
+
+    // Progress: 10% after routing
+    await storage.updateDemand(demandId, {
+      status: 'processing',
+      progress: 10
+    });
+
+    // Send progress update
+    if (onProgress) {
+      onProgress({
+        id: `${demandId}-interaction-start`,
+        agent: 'coordinator',
+        message: 'Iniciando interação colaborativa entre agentes...',
+        timestamp: new Date().toISOString(),
+        type: 'processing',
+        progress: 10
+      });
+    }
+
+    // Conduct multi-agent interaction
+    let interactionResult: import("./agent-interaction").AgentInteractionResult | undefined;
+    try {
+      interactionResult = await agentInteractionService.conductMultiAgentInteraction(
         demand,
-        refinementLevels
+        agentConfigs,
+        onProgress
       );
 
-      message.message = response;
-      message.type = 'completed';
+      if (interactionResult) {
+        // Save the interaction results as chat messages
+        messages = interactionResult.conversationHistory.map((agentMsg, index) => ({
+          id: `${demandId}-interaction-${index}`,
+          agent: agentMsg.agent,
+          message: agentMsg.message,
+          timestamp: agentMsg.timestamp,
+          type: 'completed',
+          category: 'system' as const,
+          progress: 10 + Math.min(75, Math.round((index + 1) * 75 / interactionResult!.conversationHistory.length))
+        }));
 
-      // Update with actual agent response
-      await storage.updateDemandChat(demandId, messages);
+        // Update with all interaction messages
+        await storage.updateDemandChat(demandId, messages);
 
-      if (onProgress) {
-        onProgress(message);
+        // Update progress to reflect interaction completion
+        await storage.updateDemand(demandId, {
+          status: 'processing',
+          progress: interactionResult!.completedEarly ? 87 : 85
+        });
+
+        if (onProgress) {
+          const completionMessage = interactionResult!.completedEarly
+            ? `Interação entre agentes concluída antecipadamente com ${interactionResult!.finalCompletenessPercentage}% de completude (${interactionResult!.conversationHistory.length} mensagens)`
+            : `Interação entre agentes concluída com ${interactionResult!.finalCompletenessPercentage}% de completude (${interactionResult!.conversationHistory.length} mensagens)`;
+
+          onProgress({
+            id: `${demandId}-interaction-complete`,
+            agent: 'coordinator',
+            message: completionMessage,
+            timestamp: new Date().toISOString(),
+            type: 'completed',
+            progress: interactionResult!.completedEarly ? 87 : 85
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error during multi-agent interaction:', error);
+      // Fallback to original sequential processing
+      const refinementLevels = this.getRefinementLevels(demand.type);
+
+      // Initialize messages array for fallback
+      messages = [];
+
+      // Calculate progress per agent (85% for agents, 10% for document generation, 5% for routing)
+      const progressPerAgent = 85 / this.agents.length;
+
+      for (let i = 0; i < this.agents.length; i++) {
+        // Check if processing was stopped
+        if (this.stopRequests.has(demandId)) {
+          this.stopRequests.delete(demandId);
+          await storage.updateDemand(demandId, { status: 'stopped' });
+          return;
+        }
+
+        const agent = this.agents[i];
+        const message: ChatMessage = {
+          id: `${demandId}-${i}`,
+          agent: agent.name,
+          message: agent.description,
+          timestamp: new Date().toISOString(),
+          type: 'processing',
+          progress: Math.min(90, Math.round(5 + (i + 1) * progressPerAgent)) // Start from 5% (after routing)
+        };
+
+        messages.push(message);
+        await storage.updateDemandChat(demandId, messages);
+
+        // Update demand with current progress
+        await storage.updateDemand(demandId, {
+          status: 'processing',
+          progress: message.progress
+        });
+
+        if (onProgress) {
+          onProgress(message);
+        }
+
+        // Process with agent for actual agent response
+        const response = await this.processWithAgent(
+          agent.name,
+          demand,
+          refinementLevels
+        );
+
+        message.message = response;
+        message.type = 'completed';
+
+        // Update with actual agent response
+        await storage.updateDemandChat(demandId, messages);
+
+        if (onProgress) {
+          onProgress(message);
+        }
       }
     }
 

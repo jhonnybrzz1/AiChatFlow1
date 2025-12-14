@@ -7,6 +7,9 @@ import { aiSquadService } from "./services/ai-squad";
 import { pdfGenerator } from "./services/pdf-generator";
 import { gitHubService } from './services/github';
 import { codeAnalysisService } from './services/codeAnalysis'; // Import the new service
+import { demandRoutingOrchestrator } from './routing/orchestrator';
+import { metricsCollector } from './routing/metrics-collector';
+import { repoService } from './services/repo-service';
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -44,7 +47,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { owner, repo } = req.params;
       const { demandDescription } = req.body; // Extract demandDescription from body
 
-      const indexedContent = await gitHubService.indexRepo(owner, repo);
+      // Index the repository and store it in the database
+      let indexedContent;
+      try {
+        indexedContent = await repoService.indexRepo(owner, repo);
+      } catch (indexError: any) {
+        console.warn(`Repository indexing failed for ${owner}/${repo}, using fallback:`, indexError.message || indexError);
+        // Create minimal repository data as fallback
+        await repoService.getOrCreateRepo(owner, repo);
+        indexedContent = `# Repository: ${owner}/${repo}\n\nRepository content could not be fully indexed due to access restrictions or permissions.\n\nLast attempt: ${new Date().toISOString()}`;
+      }
 
       let userPrompt = '';
       if (demandDescription && demandDescription.trim() !== '') {
@@ -54,10 +66,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const analysisResult = await codeAnalysisService.analyzeRepo(indexedContent, demandDescription || '', userPrompt);
-      
+
       res.json({ content: indexedContent, analysisResult: analysisResult, demandDescription: demandDescription || null, repoName: `${owner}/${repo}` });
     } catch (error) {
-      res.status(500).json({ error: "Failed to index repository or analyze code" });
+      console.error('Error in repository indexing endpoint:', error);
+      // Return minimal data instead of failing completely
+      const { owner, repo } = req.params;
+      const { demandDescription } = req.body;
+      res.json({
+        content: `# Repository: ${owner}/${repo}\n\nContent unavailable due to access restrictions.\n\nLast attempt: ${new Date().toISOString()}`,
+        analysisResult: 'Repository analysis could not be performed due to access restrictions.',
+        demandDescription: demandDescription || null,
+        repoName: `${owner}/${repo}`,
+        warning: 'Could not access repository content. This may be due to GitHub token permissions or private repository access.'
+      });
+    }
+  });
+
+  // New endpoint to get repository information from backend
+  app.get("/api/github/repos/:owner/:repo", async (req: Request, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+
+      const result = await repoService.getRepoWithFiles(owner, repo);
+      if (!result) {
+        return res.status(404).json({ error: "Repository not found in backend" });
+      }
+
+      res.json({
+        repo: result.repo,
+        files: result.files,
+        fileCount: result.files.length
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get repository from backend" });
+    }
+  });
+
+  // New endpoint to get all repositories stored in backend
+  app.get("/api/github/repos", async (req: Request, res: Response) => {
+    try {
+      const repos = await repoService.getAllRepos();
+      res.json(repos);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get repositories from backend" });
     }
   });
 
@@ -374,6 +426,110 @@ This is a test document to verify PDF generation works correctly.
     } catch (error) {
       console.error('Error during PDF generation test:', error);
       res.status(500).json({ error: "Failed to generate test PDFs" });
+    }
+  });
+
+  // Route a demand with intelligent routing
+  app.post("/api/demands/:id/route", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      // Route the demand using the orchestrator
+      const routingPrediction = await demandRoutingOrchestrator.routeDemand(id);
+
+      res.json({
+        message: "Demand routed successfully",
+        routingPrediction,
+        demandId: id
+      });
+    } catch (error) {
+      console.error('Error routing demand:', error);
+      res.status(500).json({ error: "Failed to route demand" });
+    }
+  });
+
+  // Get all registered plugins
+  app.get("/api/plugins", (req: Request, res: Response) => {
+    try {
+      const plugins = demandRoutingOrchestrator.getPlugins();
+      res.json({
+        plugins: plugins.map(plugin => ({
+          name: plugin.name,
+          description: plugin.description,
+          type: plugin.getSupportedTypes(),
+          enabled: plugin.isEnabled(),
+          priority: plugin.getPriority()
+        }))
+      });
+    } catch (error) {
+      console.error('Error getting plugins:', error);
+      res.status(500).json({ error: "Failed to get plugins" });
+    }
+  });
+
+  // Get metrics for a specific demand
+  app.get("/api/demands/:id/metrics", (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const metrics = metricsCollector.getDemandMetricsById(id);
+
+      if (!metrics) {
+        return res.status(404).json({ error: "Metrics not found for this demand" });
+      }
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error getting demand metrics:', error);
+      res.status(500).json({ error: "Failed to get demand metrics" });
+    }
+  });
+
+  // Get overall system metrics
+  app.get("/api/metrics", (req: Request, res: Response) => {
+    try {
+      const systemMetrics = metricsCollector.getSystemMetrics();
+
+      if (!systemMetrics) {
+        return res.status(404).json({ error: "No metrics available yet" });
+      }
+
+      res.json(systemMetrics);
+    } catch (error) {
+      console.error('Error getting system metrics:', error);
+      res.status(500).json({ error: "Failed to get system metrics" });
+    }
+  });
+
+  // Get improvement metrics
+  app.get("/api/metrics/improvement", (req: Request, res: Response) => {
+    try {
+      const improvementMetrics = metricsCollector.calculateImprovementMetrics();
+
+      res.json(improvementMetrics);
+    } catch (error) {
+      console.error('Error getting improvement metrics:', error);
+      res.status(500).json({ error: "Failed to get improvement metrics" });
+    }
+  });
+
+  // Get demand metrics by type
+  app.get("/api/metrics/type/:type", (req: Request, res: Response) => {
+    try {
+      const type = req.params.type;
+      const metrics = metricsCollector.getMetricsByType(type);
+
+      res.json({
+        type,
+        metrics
+      });
+    } catch (error) {
+      console.error('Error getting metrics by type:', error);
+      res.status(500).json({ error: "Failed to get metrics by type" });
     }
   });
 

@@ -1,0 +1,7 @@
+{
+  "enableRefactoringFeatures": true,
+  "enableNewProductFeatures": true,
+  "enableEnhancedValidation": true,
+  "enableAdvancedLogging": true,
+  "enableUserFeedbackSystem": true
+}

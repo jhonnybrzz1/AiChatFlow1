@@ -17,6 +17,45 @@ export const demands = pgTable("demands", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const repos = pgTable("repos", {
+  id: serial("id").primaryKey(),
+  owner: text("owner").notNull(),
+  name: text("name").notNull(),
+  fullName: text("full_name").notNull().unique(),
+  description: text("description"),
+  url: text("url").notNull(),
+  cloneUrl: text("clone_url"),
+  sshUrl: text("ssh_url"),
+  htmlUrl: text("html_url"),
+  defaultBranch: text("default_branch"),
+  language: text("language"),
+  size: serial("size"), // Size in KB
+  stars: serial("stars").default(0),
+  forks: serial("forks").default(0),
+  isPrivate: boolean("is_private").default(false),
+  isFork: boolean("is_fork").default(false),
+  indexedContent: text("indexed_content"),
+  indexedAt: timestamp("indexed_at"),
+  lastCommit: text("last_commit"),
+  lastCommitDate: timestamp("last_commit_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const repoFiles = pgTable("repo_files", {
+  id: serial("id").primaryKey(),
+  repoId: serial("repo_id").references(() => repos.id, { onDelete: 'cascade' }),
+  path: text("path").notNull(),
+  filename: text("filename").notNull(),
+  content: text("content"),
+  language: text("language"),
+  size: serial("size"), // Size in bytes
+  sha: text("sha"),
+  url: text("url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const files = pgTable("files", {
   id: serial("id").primaryKey(),
   demandId: serial("demand_id").references(() => demands.id),
@@ -62,6 +101,20 @@ export const insertFileSchema = createInsertSchema(files).omit({
   createdAt: true,
 });
 
+export const insertRepoSchema = createInsertSchema(repos).omit({
+  id: true,
+  indexedAt: true,
+  lastCommitDate: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRepoFileSchema = createInsertSchema(repoFiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -69,7 +122,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertDemand = z.infer<typeof insertDemandSchema>;
 export type InsertFile = z.infer<typeof insertFileSchema>;
+export type InsertRepo = z.infer<typeof insertRepoSchema>;
+export type InsertRepoFile = z.infer<typeof insertRepoFileSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export type Demand = typeof demands.$inferSelect;
+export type Repo = typeof repos.$inferSelect;
+export type RepoFile = typeof repoFiles.$inferSelect;
 export type File = typeof files.$inferSelect;
 export type User = typeof users.$inferSelect;

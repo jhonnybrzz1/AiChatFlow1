@@ -10,8 +10,6 @@ export class PDFGenerator {
    * para validação com schema Zod
    */
   private extractPRDDataFromMarkdown(content: string): any {
-    // Esta é uma implementação básica que extrai informações do Markdown
-    // Em produção, você pode usar um parser mais robusto
     const data: any = {
       title: '',
       overview: { objective: '', problem: '', solution: '' },
@@ -28,18 +26,121 @@ export class PDFGenerator {
 
     // Extrai título
     const titleMatch = content.match(/^#\s+PRD\s*-\s*(.+)$/m);
+    console.log('[PDF-GENERATOR-DEBUG] titleMatch:', titleMatch);
     if (titleMatch) data.title = titleMatch[1].trim();
 
     // Extrai versão
     const versionMatch = content.match(/\*\*Versão:\*\*\s*\[?(\d+\.\d+\.\d+)\]?/);
+    console.log('[PDF-GENERATOR-DEBUG] versionMatch:', versionMatch);
     if (versionMatch) data.version = versionMatch[1];
+    
+    // Extrai overview
+    const overviewObjectiveMatch = content.match(/## 📋 Visão Geral\n\n\*\*Objetivo:\*\*\s*([^\n]+)/m);
+    console.log('[PDF-GENERATOR-DEBUG] overviewObjectiveMatch:', overviewObjectiveMatch);
+    if (overviewObjectiveMatch) data.overview.objective = overviewObjectiveMatch[1].trim();
+    const overviewProblemMatch = content.match(/\*\*Problema:\*\*\s*([^\n]+)/m);
+    console.log('[PDF-GENERATOR-DEBUG] overviewProblemMatch:', overviewProblemMatch);
+    if (overviewProblemMatch) data.overview.problem = overviewProblemMatch[1].trim();
+    const overviewSolutionMatch = content.match(/\*\*Solução:\*\*\s*([^\n]+)/m);
+    console.log('[PDF-GENERATOR-DEBUG] overviewSolutionMatch:', overviewSolutionMatch);
+    if (overviewSolutionMatch) data.overview.solution = overviewSolutionMatch[1].trim();
+
+    // Extrai functional requirements
+    const functionalRequirementsMatch = content.match(/## 🎯 Requisitos Funcionais([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] functionalRequirementsMatch:', functionalRequirementsMatch);
+    if (functionalRequirementsMatch) {
+      const requirements = functionalRequirementsMatch[1].match(/- RF\d+:[\s\S]*?(?=- RF\d+:|##|$)/g);
+      console.log('[PDF-GENERATOR-DEBUG] functionalRequirements:', requirements);
+      if (requirements) {
+        data.functionalRequirements = requirements.map(req => ({
+          id: req.match(/- RF(\d+):/)?.[1] || '',
+          description: req.match(/\*\*Descrição:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+          acceptanceCriteria: req.match(/\*\*Critérios de Aceite:\*\*\s*([\s\S]*?)(?=\*\*Prioridade|$)/)?.[1].trim() || '',
+          priority: req.match(/\*\*Prioridade:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+        }));
+      }
+    }
+
+    // Extrai non-functional requirements
+    const nonFunctionalRequirementsMatch = content.match(/## 🛠️ Requisitos Não Funcionais([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch:', nonFunctionalRequirementsMatch);
+    if (nonFunctionalRequirementsMatch) {
+      const requirements = nonFunctionalRequirementsMatch[1].match(/- RNF\d+:[\s\S]*?(?=- RNF\d+:|##|$)/g);
+      console.log('[PDF-GENERATOR-DEBUG] nonFunctionalRequirements:', requirements);
+      if (requirements) {
+        data.nonFunctionalRequirements = requirements.map(req => ({
+          id: req.match(/- RNF(\d+):/)?.[1] || '',
+          description: req.match(/\*\*Descrição:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+          metric: req.match(/\*\*Métrica:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+        }));
+      }
+    }
+
+    // Extrai scope
+    const inScopeMatch = content.match(/### In Scope([\s\S]*?)###/m);
+    console.log('[PDF-GENERATOR-DEBUG] inScopeMatch:', inScopeMatch);
+    if (inScopeMatch) {
+      data.scope.inScope = inScopeMatch[1].match(/- [^\n]+/g)?.map(item => item.replace(/- /, '').trim()) || [];
+    }
+    const outOfScopeMatch = content.match(/### Out of Scope([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] outOfScopeMatch:', outOfScopeMatch);
+    if (outOfScopeMatch) {
+      data.scope.outOfScope = outOfScopeMatch[1].match(/- [^\n]+/g)?.map(item => item.replace(/- /, '').trim()) || [];
+    }
+
+    // Extrai acceptance criteria
+    const acceptanceCriteriaMatch = content.match(/## ✅ Critérios de Aceitação Gerais([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch:', acceptanceCriteriaMatch);
+    if (acceptanceCriteriaMatch) {
+      data.acceptanceCriteria = acceptanceCriteriaMatch[1].match(/- [^\n]+/g)?.map(item => item.replace(/- /, '').trim()) || [];
+    }
+    
+    // Extrai risks
+    const risksMatch = content.match(/## ⚠️ Riscos e Mitigações([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] risksMatch:', risksMatch);
+    if (risksMatch) {
+        data.risks = risksMatch[1].match(/- \*\*Risco \d+:\*\*[\s\S]*?(?=- \*\*Risco \d+:|##|$)/g)?.map(risk => ({
+            description: risk.match(/- \*\*Risco \d+:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+            impact: risk.match(/\*\*Impacto:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+            probability: risk.match(/\*\*Probabilidade:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+            mitigation: risk.match(/\*\*Mitigação:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+        })) || [];
+    }
+
+    // Extrai metrics
+    const primaryMetricsMatch = content.match(/### KPIs Primários([\s\S]*?)###/m);
+    console.log('[PDF-GENERATOR-DEBUG] primaryMetricsMatch:', primaryMetricsMatch);
+    if (primaryMetricsMatch) {
+      data.metrics.primary = primaryMetricsMatch[1].match(/- [^\n]+/g)?.map(item => item.replace(/- /, '').trim()) || [];
+    }
+    const secondaryMetricsMatch = content.match(/### KPIs Secundários([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] secondaryMetricsMatch:', secondaryMetricsMatch);
+    if (secondaryMetricsMatch) {
+      data.metrics.secondary = secondaryMetricsMatch[1].match(/- [^\n]+/g)?.map(item => item.replace(/- /, '').trim()) || [];
+    }
+    
+    // Extrai timeline
+    const timelineMatch = content.match(/## 📅 Cronograma Estimado([\s\S]*?)##/m);
+    console.log('[PDF-GENERATOR-DEBUG] timelineMatch:', timelineMatch);
+    if (timelineMatch) {
+        data.timeline.mvpDate = timelineMatch[1].match(/\*\*Data de Lançamento \(MVP\):\*\*\s*([^\n]+)/)?.[1].trim() || '';
+    }
+
 
     // Log para debugging
     console.log('[PDF-GENERATOR] Extracted PRD data for validation:', {
       title: data.title,
       version: data.version,
       hasTitle: !!data.title,
-      contentLength: content.length
+      contentLength: content.length,
+      overview: data.overview,
+      functionalRequirements: data.functionalRequirements,
+      nonFunctionalRequirements: data.nonFunctionalRequirements,
+      scope: data.scope,
+      acceptanceCriteria: data.acceptanceCriteria,
+      risks: data.risks,
+      metrics: data.metrics,
+      timeline: data.timeline,
     });
 
     return data;
@@ -49,38 +150,71 @@ export class PDFGenerator {
    * Extrai dados estruturados de um documento Tasks em Markdown
    * para validação com schema Zod
    */
-  private extractTasksDataFromMarkdown(content: string): any {
-    const data: any = {
-      title: '',
-      metadata: {
-        priority: 'Média',
-        responsible: '@unknown-team',
-        status: 'Não Iniciado',
-        version: '1.0.0',
-      },
-      tasks: [],
-      successMetrics: [],
-    };
-
-    // Extrai título
-    const titleMatch = content.match(/^#\s+Tasks Document\s*-\s*(.+)$/m);
-    if (titleMatch) data.title = titleMatch[1].trim();
-
-    // Extrai versão
-    const versionMatch = content.match(/\*\*Versão:\*\*\s*\[?(\d+\.\d+\.\d+)\]?/);
-    if (versionMatch) data.metadata.version = versionMatch[1];
-
-    // Log para debugging
-    console.log('[PDF-GENERATOR] Extracted Tasks data for validation:', {
-      title: data.title,
-      version: data.metadata.version,
-      hasTitle: !!data.title,
-      contentLength: content.length
-    });
-
-    return data;
-  }
-  /**
+    private extractTasksDataFromMarkdown(content: string): any {
+      const data: any = {
+        title: '',
+        metadata: {
+          priority: 'Média',
+          responsible: '@unknown-team',
+          status: 'Não Iniciado',
+          version: '1.0.0',
+        },
+        tasks: [],
+        successMetrics: [],
+      };
+  
+      // Extrai título
+      const titleMatch = content.match(/^#\s+Tasks Document\s*-\s*(.+)$/m);
+      console.log('[PDF-GENERATOR-DEBUG] titleMatch:', titleMatch);
+      if (titleMatch) data.title = titleMatch[1].trim();
+  
+      // Extrai versão
+      const versionMatch = content.match(/\*\*Versão:\*\*\s*\[?(\d+\.\d+\.\d+)\]?/);
+      console.log('[PDF-GENERATOR-DEBUG] versionMatch:', versionMatch);
+      if (versionMatch) data.metadata.version = versionMatch[1];
+  
+      // Extrai metadata
+      const priorityMatch = content.match(/\*\*Prioridade:\*\*\s*([^\n]+)/m);
+      console.log('[PDF-GENERATOR-DEBUG] priorityMatch:', priorityMatch);
+      if (priorityMatch) data.metadata.priority = priorityMatch[1].trim();
+      const responsibleMatch = content.match(/\*\*Responsável:\*\*\s*([^\n]+)/m);
+      console.log('[PDF-GENERATOR-DEBUG] responsibleMatch:', responsibleMatch);
+      if (responsibleMatch) data.metadata.responsible = responsibleMatch[1].trim();
+      const statusMatch = content.match(/\*\*Status:\*\*\s*([^\n]+)/m);
+      console.log('[PDF-GENERATOR-DEBUG] statusMatch:', statusMatch);
+      if (statusMatch) data.metadata.status = statusMatch[1].trim();
+      
+      // Extrai tasks
+      const tasksMatch = content.match(/## Tarefas([\s\S]*?)##/m);
+      console.log('[PDF-GENERATOR-DEBUG] tasksMatch:', tasksMatch);
+      if (tasksMatch) {
+          data.tasks = tasksMatch[1].match(/- \*\*T\d+:\*\*[\s\S]*?(?=- \*\*T\d+:|##|$)/g)?.map(task => ({
+              id: task.match(/- \*\*T(\d+):\*\*/)?.[1] || '',
+              description: task.match(/- \*\*T\d+:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+              acceptanceCriteria: task.match(/Critérios de aceite:\s*([\s\S]*?)(?=\*\*Dependências|\*\*Vinculado|$)/)?.[1].trim() || '',
+              dependencies: task.match(/\*\*Dependências:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+              linkedToPRD: task.match(/\*\*Vinculado ao PRD:\*\*\s*([^\n]+)/)?.[1].trim() || '',
+          })) || [];
+      }
+      
+      // Extrai success metrics
+      const successMetricsMatch = content.match(/## Métricas de Sucesso([\s\S]*?)##/m);
+      console.log('[PDF-GENERATOR-DEBUG] successMetricsMatch:', successMetricsMatch);
+      if (successMetricsMatch) {
+          data.successMetrics = successMetricsMatch[1].match(/- [^\n]+/g)?.map(item => item.replace(/- /, '').trim()) || [];
+      }
+  
+      // Log para debugging
+      console.log('[PDF-GENERATOR] Extracted Tasks data for validation:', {
+        title: data.title,
+        metadata: data.metadata,
+        tasks: data.tasks,
+        successMetrics: data.successMetrics,
+        contentLength: content.length
+      });
+  
+      return data;
+    }  /**
    * Remove emojis and other non-WinAnsi characters from text
    * WinAnsi (used by Helvetica) only supports basic Latin characters
    */

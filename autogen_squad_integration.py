@@ -58,7 +58,7 @@ class SquadAutoGenIntegration:
         else:
             return {
                 "config_list": [{
-                    "model": os.getenv('MISTRAL_MODEL', 'mistral-large-latest'),
+                    "model": os.getenv('MISTRAL_MODEL', 'devstral-2512'),
                     "api_key": os.getenv('MISTRAL_API_KEY'),
                     "base_url": "https://api.mistral.ai/v1",
                 }],

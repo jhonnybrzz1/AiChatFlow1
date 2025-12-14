@@ -2,7 +2,7 @@
 import { Mistral } from '@mistralai/mistralai';
 
 // Default model is mistral-large-latest, which is their most capable model
-const DEFAULT_MODEL = 'mistral-large-latest';
+const DEFAULT_MODEL = 'devstral-2512';
 
 export class MistralAIService {
   private client: Mistral;

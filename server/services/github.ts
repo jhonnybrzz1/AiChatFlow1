@@ -9,7 +9,7 @@ import path from 'path';
 const MAX_INDEX_TOKENS = 200000; 
 
 export class GitHubService {
-  private client: Octokit;
+  public client: Octokit;
   private git: SimpleGit;
 
   constructor(apiKey?: string) {
@@ -70,8 +70,8 @@ export class GitHubService {
         console.log(`Repository ${owner}/${repo} indexed successfully via GitHub API.`);
         return apiIndexedContent;
       }
-    } catch (apiError) {
-      console.warn(`Failed to index repository ${owner}/${repo} via GitHub API (Error: ${apiError.message}). Falling back to cloning.`);
+    } catch (apiError: unknown) {
+      console.warn(`Failed to index repository ${owner}/${repo} via GitHub API (Error: ${(apiError as Error).message}). Falling back to cloning.`);
       // Fall through to cloning if API indexing fails
     }
 
@@ -94,9 +94,9 @@ export class GitHubService {
       await fs.rm(tempDir, { recursive: true, force: true });
       console.log(`Repository ${owner}/${repo} indexed successfully via cloning.`);
       return indexedContent;
-    } catch (cloneError) {
+    } catch (cloneError: unknown) {
       console.error(`Error indexing repository ${owner}/${repo} via cloning:`, cloneError);
-      throw new Error(`Failed to index repository: ${cloneError.message}`);
+      throw new Error(`Failed to index repository: ${(cloneError as Error).message}`);
     }
   }
 
@@ -153,15 +153,15 @@ export class GitHubService {
             indexedContent += `--- FILE: ${file.path} ---\n\n${decodedContent}\n\n`;
             currentTokens += fileTokens;
 
-          } catch (contentError) {
-            console.warn(`Could not fetch content for ${file.path}: ${contentError.message}`);
+          } catch (contentError: unknown) {
+            console.warn(`Could not fetch content for ${file.path}: ${(contentError as Error).message}`);
           }
         }
       }
       return indexedContent;
 
-    } catch (error) {
-      console.error(`Failed to fetch repository contents from GitHub API for ${owner}/${repo}: ${error.message}`);
+    } catch (error: unknown) {
+      console.error(`Failed to fetch repository contents from GitHub API for ${owner}/${repo}: ${(error as Error).message}`);
       return null; // Return null to trigger fallback to cloning
     }
   }

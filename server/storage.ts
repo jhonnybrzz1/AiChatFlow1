@@ -51,6 +51,7 @@ export class MemStorage implements IStorage {
   }
 
   async createDemand(insertDemand: InsertDemand): Promise<Demand> {
+    console.log("Creating demand with title:", insertDemand.title); // Log the full title
     const id = this.currentDemandId++;
     const now = new Date();
     const demand: Demand = {
