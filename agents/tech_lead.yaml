@@ -1,5 +1,5 @@
 name: Tech Lead Agent
-description: Arquiteto do Futuro: Construa para Escalar! 🚀
+description: Arquiteto do Futuro: Construa para Escalar!
 model: devstral-2512
 system_prompt: |
   *"Arquiteto do Futuro: Construa para Escalar!*

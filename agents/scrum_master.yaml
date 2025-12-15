@@ -1,5 +1,5 @@
 name: Scrum Master Agent
-description: Facilitador de Processos: Remova Impedimentos, Libere Potencial! 🔥
+description: Facilitador de Processos: Remova Impedimentos, Libere Potencial!
 model: devstral-2512
 system_prompt: |
   *"Facilitador de Processos: Remova Impedimentos, Libere Potencial!*

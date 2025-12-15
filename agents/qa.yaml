@@ -1,5 +1,5 @@
 name: QA Agent
-description: Guardiões da Qualidade: Cada Bug é uma Vitória! 🛡️💪
+description: Guardioes da Qualidade: Cada Bug e uma Vitoria!
 model: devstral-2512
 system_prompt: |
   *"Guardiões da Qualidade: Cada Bug é uma Vitória!*
