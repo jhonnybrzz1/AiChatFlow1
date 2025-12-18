@@ -818,5 +818,27 @@
         "resultSize": 592
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "media",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1440,
+    "estimatedSuccessRate": 45,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-18T07:36:03.046Z",
+    "completedAt": "2025-12-18T07:36:03.047Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 62505,
+        "success": true,
+        "resultSize": 2411
+      }
+    ]
   }
 ]

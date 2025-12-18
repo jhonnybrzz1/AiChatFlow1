@@ -544,7 +544,13 @@ ${refinementSummary}
 
 === SUA TAREFA ===
 Com base em TODAS as análises acima, crie um PRD completo em Markdown seguindo o formato especificado.
-O PRD deve ser um documento profissional que qualquer pessoa possa ler e entender o que precisa ser feito.`;
+O PRD deve ser um documento profissional que qualquer pessoa possa ler e entender o que precisa ser feito.
+
+IMPORTANTE:
+- Use as informações do refinamento dos agentes para preencher os campos do PRD
+- Seja específico e técnico, usando as sugestões e insights dos agentes
+- Certifique-se de que o conteúdo do PRD reflita fielmente as discussões realizadas
+- Referencie diretamente as sugestões de cada agente onde apropriado`;
 
     try {
       const response = await mistralAIService.generateChatCompletion(
@@ -619,7 +625,12 @@ ${prdContent}
 
 === SUA TAREFA ===
 Com base no PRD acima, crie uma lista completa de tasks técnicas organizadas por categoria.
-As tasks devem cobrir todos os aspectos técnicos necessários para implementar a demanda.`;
+As tasks devem cobrir todos os aspectos técnicos necessários para implementar a demanda.
+
+IMPORTANTE:
+- As tasks devem refletir diretamente os requisitos funcionais e não funcionais definidos no PRD
+- Use informações técnicas e insights específicos mencionados durante o refinamento da squad
+- Crie tarefas que estejam claramente alinhadas com as sugestões dos agentes do refinamento`;
 
     try {
       const response = await mistralAIService.generateChatCompletion(
