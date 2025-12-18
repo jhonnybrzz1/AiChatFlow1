@@ -204,7 +204,7 @@ export function DemandForm() {
                         }}
                         className="w-full"
                       >
-                        <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-lg">
+                        <TabsList className="grid w-full grid-cols-5 bg-transparent p-1 rounded-lg border-0">
                           {demandTypes.map((type) => {
                             const Icon = type.icon;
                             return (

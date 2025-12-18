@@ -132,11 +132,11 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
               />
             </div>
 
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
                 aria-label="Filtrar por status"
               >
                 <option value="all">Todos os Status</option>
@@ -148,7 +148,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
               <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
-                className="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
                 aria-label="Filtrar por prioridade"
               >
                 <option value="all">Todas as Prioridades</option>

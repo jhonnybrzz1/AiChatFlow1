@@ -759,5 +759,64 @@
     "completedAt": "2025-12-18T06:52:17.437Z",
     "processingTime": 0,
     "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "media",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 960,
+    "estimatedSuccessRate": 55,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-18T07:19:21.998Z",
+    "completedAt": "2025-12-18T07:19:21.999Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 2,
+    "type": "melhoria",
+    "priority": "baixa",
+    "routingTeam": "fullstack",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 374,
+    "estimatedSuccessRate": 66,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-18T07:23:41.615Z",
+    "completedAt": "2025-12-18T07:23:41.615Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "ImprovementPlugin",
+        "executionTime": 15649,
+        "success": true,
+        "resultSize": 703
+      }
+    ]
+  },
+  {
+    "demandId": 3,
+    "type": "bug",
+    "priority": "critica",
+    "routingTeam": "support",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 115,
+    "estimatedSuccessRate": 77,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-18T07:29:51.486Z",
+    "completedAt": "2025-12-18T07:29:51.486Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "BugPlugin",
+        "executionTime": 27967,
+        "success": true,
+        "resultSize": 592
+      }
+    ]
   }
 ]

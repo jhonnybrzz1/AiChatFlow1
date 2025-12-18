@@ -21,19 +21,21 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <div className="min-h-screen bg-background">
-          <CustomDisclaimer
-            title="Sobre o AICHATflow"
-            variant="note"
-            className="border-0 rounded-none"
-          >
-            <p className="text-sm">
-              Esta plataforma utiliza inteligência artificial para refinar demandas com
-              colaboração entre agentes especializados. Os agentes trabalham juntos para
-              entender completamente seu pedido antes de gerar documentos finais.
-            </p>
-          </CustomDisclaimer>
+        <div className="min-h-screen flex flex-col bg-background">
           <Router />
+          <footer className="mt-auto">
+            <CustomDisclaimer
+              title="Sobre o AICHATflow"
+              variant="note"
+              className="border-0 rounded-none"
+            >
+              <p className="text-sm">
+                Esta plataforma utiliza inteligência artificial para refinar demandas com
+                colaboração entre agentes especializados. Os agentes trabalham juntos para
+                entender completamente seu pedido antes de gerar documentos finais.
+              </p>
+            </CustomDisclaimer>
+          </footer>
         </div>
       </TooltipProvider>
     </QueryClientProvider>
