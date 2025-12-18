@@ -1,35 +1,39 @@
-@import './components/refinement-dialog.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@import './components/refinement-dialog.css';
+@import '@uiw/react-md-editor/dist/mdeditor.css';
+
 :root {
-  --background: hsl(210, 16%, 97%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(210, 40%, 95%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  /* Updated theme colors for better accessibility */
+  --background: hsl(240, 10%, 99%); /* Lighter background */
+  --foreground: hsl(240, 10%, 10%); /* Darker text for better contrast */
+  --muted: hsl(240, 5%, 95%);
+  --muted-foreground: hsl(240, 5%, 35%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(240, 10%, 10%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(214, 32%, 91%);
-  --input: hsl(214, 32%, 91%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(210, 40%, 95%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(210, 40%, 95%);
-  --accent-foreground: hsl(24, 9.8%, 10%);
+  --card-foreground: hsl(240, 10%, 10%);
+  --border: hsl(240, 10%, 90%);
+  --input: hsl(240, 10%, 90%);
+  --primary: hsl(217, 91%, 60%); /* Enhanced blue */
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(240, 5%, 95%);
+  --secondary-foreground: hsl(240, 10%, 15%);
+  --accent: hsl(240, 5%, 95%);
+  --accent-foreground: hsl(240, 10%, 15%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
   --success: hsl(142, 71%, 45%);
   --success-foreground: hsl(144, 61%, 20%);
   --warning: hsl(32, 95%, 44%);
   --warning-foreground: hsl(21, 92%, 14%);
-  --ring: hsl(20, 14.3%, 4.1%);
+  --ring: hsl(217, 91%, 60%); /* Match primary color */
   --radius: 0.5rem;
 }
 
+/* Dark theme variables */
 .dark {
   --background: hsl(240, 10%, 3.9%);
   --foreground: hsl(0, 0%, 98%);
@@ -41,7 +45,7 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(207, 90%, 54%);
+  --primary: hsl(217, 91%, 60%);
   --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
@@ -64,6 +68,17 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Ensure proper focus indicators for accessibility */
+  button:focus,
+  input:focus,
+  textarea:focus,
+  select:focus,
+  a:focus {
+    @apply outline-none ring-2 ring-offset-2 ring-primary;
   }
 }
 
@@ -71,16 +86,111 @@
   .demand-type-btn {
     @apply transition-all duration-200 hover:scale-105;
   }
-  
+
   .demand-type-btn.active {
-    @apply border-primary bg-blue-50 text-primary;
+    @apply border-primary bg-blue-50 text-primary font-semibold;
   }
-  
+
   .chat-message {
     @apply animate-in slide-in-from-bottom-4 duration-300;
   }
-  
+
   .processing-spinner {
     @apply animate-spin rounded-full border-2 border-primary border-t-transparent;
   }
+
+  /* Premium card styling */
+  .premium-card {
+    @apply bg-gradient-to-br from-gray-50 to-white shadow-lg rounded-xl border-0;
+  }
+
+  /* Enhanced button styling */
+  .premium-btn {
+    @apply rounded-lg font-medium transition-all duration-200;
+  }
+
+  .premium-btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  .premium-btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-800;
+  }
+}
+
+/* Custom MDEditor overrides */
+.w-md-editor {
+  @apply rounded-lg border border-border shadow-sm;
+}
+
+.w-md-editor-toolbar {
+  @apply bg-muted border-b border-border rounded-t-lg;
+}
+
+.w-md-editor-content {
+  @apply bg-background;
+}
+
+.wmde-markdown {
+  @apply text-foreground;
+  background-color: transparent !important;
+}
+
+.wmde-markdown h1,
+.wmde-markdown h2,
+.wmde-markdown h3,
+.wmde-markdown h4,
+.wmde-markdown h5,
+.wmde-markdown h6 {
+  @apply text-foreground font-semibold mt-6 mb-3;
+}
+
+.wmde-markdown h1 {
+  @apply text-3xl border-b pb-2;
+}
+
+.wmde-markdown h2 {
+  @apply text-2xl border-b pb-2;
+}
+
+.wmde-markdown h3 {
+  @apply text-xl;
+}
+
+.wmde-markdown code {
+  @apply bg-muted px-1 py-0.5 rounded text-sm;
+}
+
+.wmde-markdown pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto;
+}
+
+.wmde-markdown ul,
+.wmde-markdown ol {
+  @apply ml-6 my-2;
+}
+
+.wmde-markdown li {
+  @apply my-1;
+}
+
+.wmde-markdown blockquote {
+  @apply border-l-4 border-primary pl-4 italic my-4;
+}
+
+.wmde-markdown table {
+  @apply w-full border-collapse my-4;
+}
+
+.wmde-markdown th,
+.wmde-markdown td {
+  @apply border border-border px-4 py-2;
+}
+
+.wmde-markdown th {
+  @apply bg-muted font-semibold;
+}
+
+.wmde-markdown a {
+  @apply text-primary hover:underline;
 }

@@ -1,5 +1,5 @@
 name: Analista de Dados Agent
-description: Desvendando o Futuro: Seus Dados, Nossa Estrategia!
+description: Desvendando o Futuro: Seus Dados, Nossa Estratégia!
 model: devstral-2512
 system_prompt: |
   *"Desvendando o Futuro: Seus Dados, Nossa Estratégia!*

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Circle } from "lucide-react";
+import CustomDisclaimer from "@/components/ui/custom-disclaimer";
 
 const squadMembers = [
   { name: "Analista de Dados", icon: "📈", color: "bg-blue-500" },
@@ -20,6 +21,19 @@ export function SquadMembers() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
+        {/* Disclaimer sobre colaboração dos agentes */}
+        <CustomDisclaimer
+          title="Como os agentes colaboram"
+          variant="note"
+          className="mb-4"
+        >
+          <p className="text-sm">
+            Cada agente contribui com sua especialidade para refinar sua demanda.
+            Eles trabalham em conjunto para garantir que todas as perspectivas
+            importantes sejam consideradas antes da geração dos documentos finais.
+          </p>
+        </CustomDisclaimer>
+
         <div className="space-y-3">
           {squadMembers.map((member, index) => (
             <div key={index} className="flex items-center space-x-3">

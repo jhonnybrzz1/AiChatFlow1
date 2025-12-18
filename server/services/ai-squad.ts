@@ -101,7 +101,21 @@ export class AISquadService {
                !(lowerName.includes('product') && lowerName.includes('manager'));
       });
 
+      // IMPORTANTE: Também remover PM do agentConfigs (usado na interação multi-agente)
+      const pmKeys = Object.keys(this.agentConfigs).filter(key => {
+        const lowerKey = key.toLowerCase();
+        return lowerKey === 'pm' ||
+               lowerKey === 'product_manager' ||
+               lowerKey === 'productmanager' ||
+               (lowerKey.includes('product') && lowerKey.includes('manager'));
+      });
+
+      pmKeys.forEach(key => {
+        delete this.agentConfigs[key];
+      });
+
       console.log('Loaded agent configurations:', this.agents.map(a => a.name));
+      console.log('Agent configs (excluding PM):', Object.keys(this.agentConfigs));
 
     } catch (error) {
       console.error('Error loading agent configurations:', error);
@@ -420,37 +434,104 @@ export class AISquadService {
       .join('\n\n');
 
     const systemPrompt = `Você é um Product Manager experiente.
-Sua responsabilidade é criar um PRD (Product Requirements Document) profissional em Markdown.
+Sua responsabilidade é criar um PRD (Product Requirements Document) profissional em Markdown seguindo EXATAMENTE este formato:
 
-FORMATO DO PRD:
-# [Título da Demanda]
+# PRD - [Título da Demanda]
+
+**Versão:** 1.0.0
+**Data:** [Data atual]
+**Autor:** Product Manager
 
 ## 📋 Visão Geral
-[Objetivo claro e contexto]
+
+**Objetivo:** [Descreva o objetivo principal em 1-2 frases]
+**Problema:** [Descreva o problema que está sendo resolvido]
+**Solução:** [Descreva a solução proposta]
 
 ## 🎯 Requisitos Funcionais
-- RF1: [Requisito funcional 1]
-- RF2: [Requisito funcional 2]
 
-## ✅ Critérios de Aceite
-- CA1: [Critério de aceite 1]
-- CA2: [Critério de aceite 2]
+- RF1:
+  **Descrição:** [Descrição detalhada do requisito]
+  **Critérios de Aceite:** [Critérios de aceite específicos]
+  **Prioridade:** [Alta/Média/Baixa]
 
-## 🏗️ Considerações Técnicas
-[Insights do Tech Lead sobre arquitetura e viabilidade]
+- RF2:
+  **Descrição:** [Descrição detalhada do requisito]
+  **Critérios de Aceite:** [Critérios de aceite específicos]
+  **Prioridade:** [Alta/Média/Baixa]
 
-## 🎨 UX/UI
-[Considerações do UX Designer sobre experiência do usuário]
+[Continue com mais RFs conforme necessário]
 
-## 🧪 Estratégia de Testes
-[Plano do QA para testes e validação]
+## 🛠️ Requisitos Não Funcionais
 
-## 📊 Estrutura de Dados
-[Análise do Analista de Dados sobre dados e integrações]
+- RNF1:
+  **Descrição:** [Descrição do requisito não funcional]
+  **Métrica:** [Métrica mensurável]
 
-## 📈 Impacto no Processo
-[Análise do Scrum Master sobre impacto no processo]
+- RNF2:
+  **Descrição:** [Descrição do requisito não funcional]
+  **Métrica:** [Métrica mensurável]
 
+[Continue com mais RNFs conforme necessário]
+
+## 🎯 Escopo
+
+### In Scope
+- [Item no escopo 1]
+- [Item no escopo 2]
+- [Item no escopo 3]
+
+### Out of Scope
+- [Item fora do escopo 1]
+- [Item fora do escopo 2]
+
+## ✅ Critérios de Aceitação Gerais
+- [Critério geral 1]
+- [Critério geral 2]
+- [Critério geral 3]
+
+## 📦 Dependências
+
+**Internas:**
+- [Dependência interna 1]
+- [Dependência interna 2]
+
+**Externas:**
+- [Dependência externa 1]
+- [Dependência externa 2]
+
+## ⚠️ Riscos e Mitigações
+
+- **Risco 1:**
+  **Impacto:** [Alto/Médio/Baixo]
+  **Probabilidade:** [Alta/Média/Baixa]
+  **Mitigação:** [Estratégia de mitigação]
+
+- **Risco 2:**
+  **Impacto:** [Alto/Médio/Baixo]
+  **Probabilidade:** [Alta/Média/Baixa]
+  **Mitigação:** [Estratégia de mitigação]
+
+## 📊 Métricas de Sucesso
+
+**Primárias:**
+- [Métrica primária 1 com valor alvo]
+- [Métrica primária 2 com valor alvo]
+
+**Secundárias:**
+- [Métrica secundária 1 com valor alvo]
+- [Métrica secundária 2 com valor alvo]
+
+## 📅 Cronograma
+
+**Data MVP:** [Data estimada]
+
+**Fases:**
+1. **Fase 1:** [Nome] - [Duração estimada] - [Descrição breve]
+2. **Fase 2:** [Nome] - [Duração estimada] - [Descrição breve]
+3. **Fase 3:** [Nome] - [Duração estimada] - [Descrição breve]
+
+IMPORTANTE: Siga EXATAMENTE este formato, incluindo todos os emojis, títulos de seção e estrutura.
 Gere um PRD completo, profissional e bem estruturado em português brasileiro.`;
 
     const userPrompt = `Demanda Original: ${demand.title}
@@ -487,32 +568,51 @@ O PRD deve ser um documento profissional que qualquer pessoa possa ler e entende
     prdContent: string
   ): Promise<string> {
     const systemPrompt = `Você é um Product Manager experiente.
-Crie uma lista de tasks técnicas detalhadas baseadas no PRD.
+Crie um documento de tasks técnicas detalhadas baseadas no PRD seguindo EXATAMENTE este formato:
 
-FORMATO DAS TASKS:
-## Backend
-- [ ] Task backend 1
-- [ ] Task backend 2
+# Tasks Document - [Título da Demanda]
 
-## Frontend
-- [ ] Task frontend 1
-- [ ] Task frontend 2
+**Versão:** 1.0.0
+**Prioridade:** [Alta/Média/Baixa]
+**Responsável:** @squad-dev
+**Status:** Não Iniciado
 
-## Database
-- [ ] Task database 1
+## Tarefas
 
-## DevOps/Infraestrutura
-- [ ] Task devops 1
+- **T1:** [Descrição concisa da tarefa 1]
+  Critérios de aceite: [Critérios específicos de aceite]
+  **Dependências:** [Tarefas ou recursos necessários]
+  **Vinculado ao PRD:** RF1, RF2
 
-## Testes
-- [ ] Task testes 1
+- **T2:** [Descrição concisa da tarefa 2]
+  Critérios de aceite: [Critérios específicos de aceite]
+  **Dependências:** T1
+  **Vinculado ao PRD:** RF3
 
-Cada task deve ser:
-- Específica e acionável
-- Com escopo claro
-- Tecnicamente detalhada
+- **T3:** [Descrição concisa da tarefa 3]
+  Critérios de aceite: [Critérios específicos de aceite]
+  **Dependências:** Nenhuma
+  **Vinculado ao PRD:** RNF1
 
-Gere tasks em português brasileiro.`;
+[Continue com mais tasks conforme necessário - mínimo 5 tasks]
+
+## Métricas de Sucesso
+- [Métrica 1: Como medir o sucesso desta implementação]
+- [Métrica 2: KPI específico relacionado às tasks]
+- [Métrica 3: Indicador de qualidade]
+
+## Notas de Implementação
+[Observações técnicas importantes, boas práticas, ou considerações de arquitetura]
+
+IMPORTANTE:
+- Siga EXATAMENTE este formato
+- Gere NO MÍNIMO 5 tasks detalhadas
+- Cada task deve ter ID sequencial (T1, T2, T3, etc.)
+- Vincule cada task aos requisitos do PRD (RF ou RNF)
+- As tasks devem cobrir: Backend, Frontend, Database, Testes e DevOps
+- Seja específico e técnico nas descrições
+
+Gere o documento em português brasileiro.`;
 
     const userPrompt = `PRD:
 ${prdContent}
@@ -547,6 +647,11 @@ As tasks devem cobrir todos os aspectos técnicos necessários para implementar 
     const timestamp = Date.now();
     const filename = `${type}_${demandId}_${timestamp}.pdf`;
     const filepath = path.join(documentsDir, filename);
+
+    // Save markdown content for viewer
+    const markdownFilename = `${type}_${demandId}_${timestamp}.md`;
+    const markdownFilepath = path.join(documentsDir, markdownFilename);
+    fs.writeFileSync(markdownFilepath, content, 'utf8');
 
     try {
       // Generate PDF using pdf-lib

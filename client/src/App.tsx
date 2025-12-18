@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import CustomDisclaimer from "@/components/ui/custom-disclaimer";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 
@@ -20,7 +21,20 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <div className="min-h-screen bg-background">
+          <CustomDisclaimer
+            title="Sobre o AICHATflow"
+            variant="note"
+            className="border-0 rounded-none"
+          >
+            <p className="text-sm">
+              Esta plataforma utiliza inteligência artificial para refinar demandas com
+              colaboração entre agentes especializados. Os agentes trabalham juntos para
+              entender completamente seu pedido antes de gerar documentos finais.
+            </p>
+          </CustomDisclaimer>
+          <Router />
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   );

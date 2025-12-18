@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface AlertProps {
+interface CustomAlertProps {
   children: React.ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'destructive' | 'info';
   title?: string;
@@ -9,7 +9,7 @@ interface AlertProps {
   onClose?: () => void;
 }
 
-const Alert: React.FC<AlertProps> = ({
+const CustomAlert: React.FC<CustomAlertProps> = ({
   children,
   variant = 'default',
   title,
@@ -78,4 +78,4 @@ const Alert: React.FC<AlertProps> = ({
   );
 };
 
-export default Alert;
+export default CustomAlert;

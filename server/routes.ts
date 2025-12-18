@@ -104,14 +104,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // New endpoint to get all repositories stored in backend
-  app.get("/api/github/repos", async (req: Request, res: Response) => {
-    try {
-      const repos = await repoService.getAllRepos();
-      res.json(repos);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to get repositories from backend" });
-    }
-  });
+  // COMMENTED OUT: This route conflicts with the GitHub repos route above
+  // Use /api/github/repos/backend instead if you need to list backend repos
+  // app.get("/api/github/repos", async (req: Request, res: Response) => {
+  //   try {
+  //     const repos = await repoService.getAllRepos();
+  //     res.json(repos);
+  //   } catch (error) {
+  //     res.status(500).json({ error: "Failed to get repositories from backend" });
+  //   }
+  // });
 
   // Get all demands
   app.get("/api/demands", async (req: Request, res: Response) => {
@@ -274,6 +276,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(txtContent);
     } catch (error) {
       res.status(500).json({ error: "Failed to export chat as TXT" });
+    }
+  });
+
+  // Get markdown content of documents (PRD or Tasks)
+  app.get("/api/demands/:id/documents/:type", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const type = req.params.type.toLowerCase();
+
+      if (type !== 'prd' && type !== 'tasks') {
+        return res.status(400).json({ error: "Invalid document type. Use 'prd' or 'tasks'" });
+      }
+
+      const demand = await storage.getDemand(id);
+
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      if (demand.status !== 'completed') {
+        return res.status(400).json({ error: "Demand is not completed yet" });
+      }
+
+      // Find the markdown file
+      const documentsDir = path.join(process.cwd(), 'documents');
+      const searchType = type === 'prd' ? 'PRD' : 'Tasks';
+
+      const files = fs.readdirSync(documentsDir);
+      const markdownFile = files.find(file =>
+        file.startsWith(`${searchType}_${id}_`) && file.endsWith('.md')
+      );
+
+      if (!markdownFile) {
+        return res.status(404).json({ error: `Markdown file for ${type} not found` });
+      }
+
+      const markdownPath = path.join(documentsDir, markdownFile);
+      const content = fs.readFileSync(markdownPath, 'utf8');
+
+      res.json({ content });
+    } catch (error) {
+      console.error('Error fetching markdown document:', error);
+      res.status(500).json({ error: "Failed to fetch markdown document" });
     }
   });
 
