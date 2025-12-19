@@ -96,6 +96,9 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
         setSelectedDemand(updatedDemand);
         const newCompletedMessages = updatedDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
         setProgress((newCompletedMessages / totalAgents) * 100);
+
+        // Trigger a refresh of the component to update the displayed documents
+        setProgress(prev => prev + 0.001); // Small increment to trigger re-render when documents are updated
       });
 
       return unsubscribe;

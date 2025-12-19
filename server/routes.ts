@@ -398,6 +398,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'Access-Control-Allow-Origin': '*'
     });
 
+    // Adiciona o cliente à lista de conexões SSE no serviço
+    const connection = { res, lastEventId: Date.now() };
+    aiSquadService.addSSEConnection(id, connection);
+
+    // Envia atualização inicial
+    try {
+      const demand = await storage.getDemand(id);
+      if (demand) {
+        res.write(`data: ${JSON.stringify(demand)}\n\n`);
+      }
+    } catch (error) {
+      console.error('Initial SSE error:', error);
+    }
+
+    // Atualizações periódicas
     const intervalId = setInterval(async () => {
       try {
         const demand = await storage.getDemand(id);
@@ -407,10 +422,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error('SSE error:', error);
       }
-    }, 1000);
+    }, 2000); // Reduzido o intervalo para atualizações mais rápidas
 
     req.on('close', () => {
       clearInterval(intervalId);
+      // Remove a conexão quando o cliente se desconecta
+      aiSquadService.removeSSEConnection(id);
     });
   });
 

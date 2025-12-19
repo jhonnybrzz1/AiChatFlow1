@@ -906,5 +906,49 @@
         "resultSize": 453
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "discovery",
+    "priority": "media",
+    "routingTeam": "research",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 576,
+    "estimatedSuccessRate": 56,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-19T17:27:53.534Z",
+    "completedAt": "2025-12-19T17:27:53.535Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 22337,
+        "success": true,
+        "resultSize": 2128
+      }
+    ]
+  },
+  {
+    "demandId": 2,
+    "type": "analise_exploratoria",
+    "priority": "media",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1368,
+    "estimatedSuccessRate": 47,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-19T17:42:03.349Z",
+    "completedAt": "2025-12-19T17:42:03.350Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 70142,
+        "success": true,
+        "resultSize": 2104
+      }
+    ]
   }
 ]

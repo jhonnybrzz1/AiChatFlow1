@@ -14,13 +14,40 @@ import { agentInteractionService } from "./agent-interaction";
 
 // Using Mistral AI service instead of OpenAI
 
+// Adicionando interface para gerenciamento de SSE
+interface SSEConnection {
+  res: any;
+  lastEventId: number;
+}
+
 export class AISquadService {
   private agents: { name: string, icon: string, description: string }[] = [];
   private agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }> = {};
+  private sseConnections: Map<number, SSEConnection> = new Map(); // Map de demandId para connection
 
   constructor() {
     this.loadAgentConfigurations();
     this.initializeRoutingSystem();
+  }
+
+  public addSSEConnection(demandId: number, connection: SSEConnection): void {
+    this.sseConnections.set(demandId, connection);
+  }
+
+  public removeSSEConnection(demandId: number): void {
+    this.sseConnections.delete(demandId);
+  }
+
+  public sendSSEUpdate(demandId: number, data: any): void {
+    const connection = this.sseConnections.get(demandId);
+    if (connection) {
+      try {
+        connection.res.write(`data: ${JSON.stringify(data)}\n\n`);
+      } catch (error) {
+        // Remover conexão se ela estiver encerrada
+        this.sseConnections.delete(demandId);
+      }
+    }
   }
 
   private async initializeRoutingSystem(): Promise<void> {
@@ -369,6 +396,23 @@ export class AISquadService {
       progress: 100,
       prdUrl: prdPath,
       tasksUrl: tasksPath
+    });
+
+    // Emitir evento para atualizar clientes conectados
+    this.notifyDemandUpdate(demandId);
+  }
+
+  private notifyDemandUpdate(demandId: number): void {
+    // Notifica os clientes conectados sobre a atualização da demanda
+    console.log(`Notificando atualização para demanda ${demandId}`);
+
+    // Obter a demanda atualizada e enviar via SSE
+    storage.getDemand(demandId).then(demand => {
+      if (demand) {
+        this.sendSSEUpdate(demandId, demand);
+      }
+    }).catch(error => {
+      console.error(`Erro ao obter demanda para notificação: ${demandId}`, error);
     });
   }
 
