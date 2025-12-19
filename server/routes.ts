@@ -27,7 +27,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const repos = await gitHubService.listUserRepos();
       res.json(repos);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch repositories" });
+      console.error('GitHub API Error:', error);
+      // Return minimal data instead of failing completely
+      res.status(500).json({
+        error: "Failed to fetch repositories. This may be due to GitHub token permissions or connection issues.",
+        // Provide helpful message to user
+        message: 'Please check your GitHub token permissions and ensure it has the required scopes (repo, read:org).'
+      });
     }
   });
 
@@ -38,7 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const content = await gitHubService.getRepoContent(owner, repo, path);
       res.json(content);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch repository content" });
+      console.error('GitHub content fetch error:', error);
+      res.status(500).json({
+        error: "Failed to fetch repository content. Check repository visibility and token permissions."
+      });
     }
   });
 
