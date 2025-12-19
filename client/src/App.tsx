@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import CustomDisclaimer from "@/components/ui/custom-disclaimer";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
+import { ThemeProvider } from "next-themes";
 
 function Router() {
   return (
@@ -18,27 +19,29 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <div className="min-h-screen flex flex-col bg-background">
-          <Router />
-          <footer className="mt-auto">
-            <CustomDisclaimer
-              title="Sobre o AICHATflow"
-              variant="note"
-              className="border-0 rounded-none"
-            >
-              <p className="text-sm">
-                Esta plataforma utiliza inteligência artificial para refinar demandas com
-                colaboração entre agentes especializados. Os agentes trabalham juntos para
-                entender completamente seu pedido antes de gerar documentos finais.
-              </p>
-            </CustomDisclaimer>
-          </footer>
-        </div>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <div className="min-h-screen flex flex-col bg-background">
+            <Router />
+            <footer className="mt-auto">
+              <CustomDisclaimer
+                title="Sobre o AICHATflow"
+                variant="note"
+                className="border-0 rounded-none"
+              >
+                <p className="text-sm">
+                  Esta plataforma utiliza inteligência artificial para refinar demandas com
+                  colaboração entre agentes especializados. Os agentes trabalham juntos para
+                  entender completamente seu pedido antes de gerar documentos finais.
+                </p>
+              </CustomDisclaimer>
+            </footer>
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

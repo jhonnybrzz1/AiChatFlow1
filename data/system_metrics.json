@@ -1,5 +1,5 @@
 {
-  "totalDemandsProcessed": 44,
+  "totalDemandsProcessed": 46,
   "averageRoutingConfidence": 60,
   "successRate": 0,
   "averageResolutionTime": 0,
@@ -13,16 +13,16 @@
     },
     "DiscoveryPlugin": {
       "name": "DiscoveryPlugin",
-      "totalExecutions": 14,
-      "successfulExecutions": 14,
-      "averageExecutionTime": 20498.5,
+      "totalExecutions": 15,
+      "successfulExecutions": 15,
+      "averageExecutionTime": 20425,
       "usefulnessScore": 100
     },
     "BugPlugin": {
       "name": "BugPlugin",
-      "totalExecutions": 4,
-      "successfulExecutions": 4,
-      "averageExecutionTime": 19185.75,
+      "totalExecutions": 5,
+      "successfulExecutions": 5,
+      "averageExecutionTime": 18962.6,
       "usefulnessScore": 100
     }
   }

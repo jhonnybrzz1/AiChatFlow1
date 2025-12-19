@@ -88,7 +88,7 @@
   }
 
   .demand-type-btn.active {
-    @apply border-primary bg-blue-50 text-primary font-semibold;
+    @apply border-primary bg-blue-50 text-primary font-semibold dark:bg-blue-900/30 dark:text-blue-300;
   }
 
   .chat-message {
@@ -101,7 +101,7 @@
 
   /* Premium card styling */
   .premium-card {
-    @apply bg-gradient-to-br from-gray-50 to-white shadow-lg rounded-xl border-0;
+    @apply bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 shadow-lg rounded-xl border-0;
   }
 
   /* Enhanced button styling */
@@ -114,13 +114,13 @@
   }
 
   .premium-btn-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-800;
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200;
   }
 }
 
 /* Custom MDEditor overrides */
 .w-md-editor {
-  @apply rounded-lg border border-border shadow-sm;
+  @apply rounded-lg border border-border shadow-sm bg-background text-foreground;
 }
 
 .w-md-editor-toolbar {
@@ -162,7 +162,7 @@
 }
 
 .wmde-markdown pre {
-  @apply bg-muted p-4 rounded-lg overflow-x-auto;
+  @apply bg-muted p-4 rounded-lg overflow-x-auto text-foreground;
 }
 
 .wmde-markdown ul,

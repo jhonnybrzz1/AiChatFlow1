@@ -124,9 +124,9 @@ export function DemandForm() {
   };
 
   return (
-    <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-gray-50 to-white">
+    <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50">
       <CardHeader
-        className="cursor-pointer p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl border-b border-gray-200"
+        className="cursor-pointer p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-t-xl border-b border-gray-200 dark:border-gray-700"
         onClick={() => setIsCollapsed(!isCollapsed)}
         role="button"
         tabIndex={0}
@@ -140,16 +140,16 @@ export function DemandForm() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="bg-blue-500 p-2 rounded-lg">
+            <div className="bg-blue-500 dark:bg-blue-600 p-2 rounded-lg">
               <Plus className="w-5 h-5 text-white" />
             </div>
-            <CardTitle className="text-lg font-semibold text-gray-800">Nova Demanda</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-800 dark:text-white">Nova Demanda</CardTitle>
           </div>
           <Button
             variant="ghost"
             size="sm"
             type="button"
-            className="h-8 w-8 p-0 rounded-full hover:bg-blue-100"
+            className="h-8 w-8 p-0 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50"
             aria-label={isCollapsed ? "Expandir formulário" : "Recolher formulário"}
           >
             {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -189,7 +189,7 @@ export function DemandForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.type ? 'text-blue-600' : 'text-gray-700'}`}
+                      className={`block text-sm font-medium mb-2 ${isFocused.type ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
                       onFocus={() => setIsFocused(prev => ({ ...prev, type: true }))}
                       onBlur={() => setIsFocused(prev => ({ ...prev, type: false }))}
                     >
@@ -204,7 +204,7 @@ export function DemandForm() {
                         }}
                         className="w-full"
                       >
-                        <TabsList className="grid w-full grid-cols-5 bg-transparent p-1 rounded-lg border-0">
+                        <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg border-0">
                           {demandTypes.map((type) => {
                             const Icon = type.icon;
                             return (
@@ -212,8 +212,8 @@ export function DemandForm() {
                                 key={type.value}
                                 value={type.value}
                                 className={cn(
-                                  "h-14 flex flex-col items-center gap-1 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm",
-                                  selectedType === type.value ? 'text-blue-600' : 'text-gray-600'
+                                  "h-14 flex flex-col items-center gap-1 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-blue-400",
+                                  selectedType === type.value ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
                                 )}
                                 aria-selected={selectedType === type.value}
                               >
@@ -237,7 +237,7 @@ export function DemandForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.title ? 'text-blue-600' : 'text-gray-700'}`}
+                      className={`block text-sm font-medium mb-2 ${isFocused.title ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
                       onFocus={() => setIsFocused(prev => ({ ...prev, title: true }))}
                       onBlur={() => setIsFocused(prev => ({ ...prev, title: false }))}
                     >
@@ -247,8 +247,8 @@ export function DemandForm() {
                       <Input
                         placeholder="Ex: Sistema de autenticação por biometria"
                         className={cn(
-                          "transition-all duration-200",
-                          form.formState.errors.title ? "border-red-500 ring-red-500" : "border-gray-300"
+                          "transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
+                          form.formState.errors.title ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : ""
                         )}
                         {...field}
                         aria-invalid={!!form.formState.errors.title}
@@ -266,7 +266,7 @@ export function DemandForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.description ? 'text-blue-600' : 'text-gray-700'}`}
+                      className={`block text-sm font-medium mb-2 ${isFocused.description ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
                       onFocus={() => setIsFocused(prev => ({ ...prev, description: true }))}
                       onBlur={() => setIsFocused(prev => ({ ...prev, description: false }))}
                     >
@@ -277,8 +277,8 @@ export function DemandForm() {
                         placeholder="Descreva sua demanda em detalhes. Inclua contexto, objetivos e qualquer informação relevante..."
                         rows={5}
                         className={cn(
-                          "resize-none transition-all duration-200",
-                          form.formState.errors.description ? "border-red-500 ring-red-500" : "border-gray-300"
+                          "resize-none transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
+                          form.formState.errors.description ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : ""
                         )}
                         {...field}
                         aria-invalid={!!form.formState.errors.description}
@@ -296,7 +296,7 @@ export function DemandForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.priority ? 'text-blue-600' : 'text-gray-700'}`}
+                      className={`block text-sm font-medium mb-2 ${isFocused.priority ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
                       onFocus={() => setIsFocused(prev => ({ ...prev, priority: true }))}
                       onBlur={() => setIsFocused(prev => ({ ...prev, priority: false }))}
                     >
@@ -306,16 +306,20 @@ export function DemandForm() {
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger
                           className={cn(
-                            "w-full",
-                            form.formState.errors.priority ? "border-red-500 ring-red-500" : "border-gray-300"
+                            "w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
+                            form.formState.errors.priority ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : ""
                           )}
                           aria-invalid={!!form.formState.errors.priority}
                         >
                           <SelectValue placeholder="Selecione a prioridade" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                           {priorities.map((priority) => (
-                            <SelectItem key={priority.value} value={priority.value}>
+                            <SelectItem
+                              key={priority.value}
+                              value={priority.value}
+                              className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            >
                               {priority.label}
                             </SelectItem>
                           ))}
@@ -329,17 +333,19 @@ export function DemandForm() {
 
               {/* File Upload */}
               <div className="space-y-2">
-                <Label className="block text-sm font-medium text-gray-700">Anexar Documentos (Opcional)</Label>
+                <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anexar Documentos (Opcional)</Label>
                 <div
                   className={cn(
                     "border-2 border-dashed rounded-xl p-6 text-center transition-colors",
-                    selectedFiles ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-blue-500 bg-gray-50"
+                    selectedFiles
+                      ? "border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-900/20"
+                      : "border-gray-300 hover:border-blue-500 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50 dark:hover:border-blue-500"
                   )}
                 >
-                  <CloudUpload className="mx-auto text-gray-400 mb-2" size={24} />
-                  <p className="text-sm text-gray-600">
+                  <CloudUpload className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={24} />
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Arraste arquivos aqui ou{" "}
-                    <label className="text-blue-600 cursor-pointer hover:text-blue-800 font-medium">
+                    <label className="text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-300 font-medium">
                       clique para selecionar
                       <input
                         type="file"
@@ -351,18 +357,18 @@ export function DemandForm() {
                       />
                     </label>
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Formatos suportados: .txt, .pdf, .docx
                   </p>
                   {selectedFiles && (
                     <div className="mt-3 space-y-2">
                       {Array.from(selectedFiles).map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-200 text-sm">
+                        <div key={index} className="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
                           <div className="flex items-center truncate">
-                            <span className="text-gray-900 truncate" title={file.name}>
+                            <span className="text-gray-900 dark:text-gray-100 truncate" title={file.name}>
                               {file.name}
                             </span>
-                            <span className="text-gray-500 ml-2 text-xs">
+                            <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">
                               ({Math.round(file.size / 1024)}KB)
                             </span>
                           </div>
@@ -371,10 +377,10 @@ export function DemandForm() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveFile(index)}
-                            className="h-6 w-6 p-0 hover:bg-red-100 rounded-full"
+                            className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
                             aria-label={`Remover arquivo ${file.name}`}
                           >
-                            <X size={14} className="text-red-500" />
+                            <X size={14} className="text-red-500 dark:text-red-400" />
                           </Button>
                         </div>
                       ))}
@@ -388,7 +394,7 @@ export function DemandForm() {
                 <Button
                   type="submit"
                   disabled={createDemandMutation.isPending}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors dark:bg-blue-700 dark:hover:bg-blue-800"
                 >
                   {createDemandMutation.isPending ? (
                     <>

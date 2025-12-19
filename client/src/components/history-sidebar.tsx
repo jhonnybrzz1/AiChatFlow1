@@ -98,20 +98,20 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
 
   const sidebarContent = (
     <>
-      <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl p-5">
+      <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-t-xl p-5">
         <div className="flex flex-col space-y-4">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center space-x-2">
-              <div className="bg-blue-500 p-2 rounded-lg">
+              <div className="bg-blue-500 dark:bg-blue-600 p-2 rounded-lg">
                 <History className="text-white" size={20} />
               </div>
-              <span className="font-semibold text-gray-800">Histórico de Demandas</span>
+              <span className="font-semibold text-gray-800 dark:text-white">Histórico de Demandas</span>
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => window.location.reload()}
-              className="text-gray-600 hover:bg-gray-100"
+              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Atualizar histórico"
             >
               <RefreshCw size={16} />
@@ -121,13 +121,13 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
           {/* Search and filters */}
           <div className="space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar demandas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 aria-label="Buscar demandas"
               />
             </div>
@@ -136,7 +136,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
+                className="flex-1 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 aria-label="Filtrar por status"
               >
                 <option value="all">Todos os Status</option>
@@ -148,7 +148,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
               <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
-                className="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
+                className="flex-1 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 aria-label="Filtrar por prioridade"
               >
                 <option value="all">Todas as Prioridades</option>
@@ -161,19 +161,19 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-96 overflow-y-auto bg-white dark:bg-gray-800">
           {filteredDemands.length === 0 ? (
             <div className="p-8 text-center">
-              <div className="mx-auto bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                <History className="text-gray-500" size={32} />
+              <div className="mx-auto bg-gray-100 dark:bg-gray-700 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                <History className="text-gray-500 dark:text-gray-400" size={32} />
               </div>
-              <p className="text-gray-600 font-medium">
+              <p className="text-gray-600 font-medium dark:text-gray-300">
                 {demands.length === 0
                   ? 'Nenhuma demanda processada ainda'
                   : 'Nenhuma demanda encontrada com os filtros aplicados'}
               </p>
               {demands.length > 0 && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Tente ajustar sua busca ou filtros
                 </p>
               )}
@@ -182,7 +182,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
             filteredDemands.map((demand) => (
               <div
                 key={demand.id}
-                className={`p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors cursor-pointer ${selectedDemand?.id === demand.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
+                className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${selectedDemand?.id === demand.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500 dark:border-l-blue-500' : ''}`}
                 onClick={() => {
                   onSelectDemand?.(demand);
                   setIsOpen(false); // Fechar drawer ao selecionar
@@ -198,27 +198,27 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
                 aria-label={`Demanda: ${demand.title}, Status: ${getStatusText(demand.status)}`}
               >
                 <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
                     {getStatusIcon(demand.status)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-800 truncate">
+                    <h4 className="text-sm font-semibold text-gray-800 dark:text-white truncate">
                       {demand.title}
                     </h4>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+                      <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
                         {getStatusText(demand.status)}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {getTimeAgo(demand.updatedAt!)}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs text-gray-600 capitalize">
+                      <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">
                         {demand.type.replace('_', ' ')}
                       </span>
-                      <span className="text-xs text-gray-400">•</span>
-                      <span className="text-xs text-gray-600 capitalize">
+                      <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">
                         {demand.priority}
                       </span>
                     </div>
@@ -241,7 +241,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 px-2 text-xs text-blue-700 border-blue-300 hover:bg-blue-50"
+                          className="h-7 px-2 text-xs text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDownload(demand.prdUrl, 'PRD');
@@ -253,7 +253,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 px-2 text-xs text-blue-700 border-blue-300 hover:bg-blue-50"
+                          className="h-7 px-2 text-xs text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDownload(demand.tasksUrl, 'Tasks');
@@ -269,7 +269,7 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 px-2 text-xs text-red-700 border-red-300 hover:bg-red-50 mt-2"
+                        className="h-7 px-2 text-xs text-red-700 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 mt-2"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <RefreshCw size={12} className="mr-1" />

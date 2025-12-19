@@ -840,5 +840,49 @@
         "resultSize": 2411
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "media",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1440,
+    "estimatedSuccessRate": 45,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-18T07:51:52.949Z",
+    "completedAt": "2025-12-18T07:51:52.949Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 19396,
+        "success": true,
+        "resultSize": 2604
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "bug",
+    "priority": "critica",
+    "routingTeam": "support",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 115,
+    "estimatedSuccessRate": 77,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-19T04:46:56.427Z",
+    "completedAt": "2025-12-19T04:46:56.428Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "BugPlugin",
+        "executionTime": 18070,
+        "success": true,
+        "resultSize": 516
+      }
+    ]
   }
 ]
