@@ -213,6 +213,12 @@ export class AISquadService {
     // Conduct multi-agent interaction
     let interactionResult: import("./agent-interaction").AgentInteractionResult | undefined;
     try {
+      // Verify that agentConfigs is not empty to prevent the "No agents available" error
+      if (Object.keys(agentConfigs).length === 0) {
+        console.warn('No agent configurations loaded, using fallback processing');
+        throw new Error('No agent configurations available for interaction');
+      }
+
       interactionResult = await agentInteractionService.conductMultiAgentInteraction(
         demand,
         agentConfigs,

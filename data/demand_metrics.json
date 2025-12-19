@@ -884,5 +884,27 @@
         "resultSize": 516
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "bug",
+    "priority": "critica",
+    "routingTeam": "support",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 144,
+    "estimatedSuccessRate": 73,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-19T14:51:04.064Z",
+    "completedAt": "2025-12-19T14:51:04.065Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "BugPlugin",
+        "executionTime": 36439,
+        "success": true,
+        "resultSize": 453
+      }
+    ]
   }
 ]

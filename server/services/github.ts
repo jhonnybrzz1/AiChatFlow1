@@ -65,13 +65,18 @@ export class GitHubService {
 
     try {
       // Attempt to fetch contents directly from GitHub API first
+      console.log(`Attempting to index repository ${owner}/${repo} via GitHub API...`);
       const apiIndexedContent = await this.fetchRepoContentsFromApi(owner, repo, githubToken);
       if (apiIndexedContent) {
         console.log(`Repository ${owner}/${repo} indexed successfully via GitHub API.`);
         return apiIndexedContent;
       }
     } catch (apiError: unknown) {
-      console.warn(`Failed to index repository ${owner}/${repo} via GitHub API (Error: ${(apiError as Error).message}). Falling back to cloning.`);
+      console.warn(`Failed to index repository ${owner}/${repo} via GitHub API. Error: ${(apiError as Error).message}. Falling back to cloning.`);
+      // Check if this is an authentication/permission error
+      if ((apiError as Error).message.includes('401') || (apiError as Error).message.includes('403')) {
+        console.error(`Authentication/Permission error for ${owner}/${repo}. Check GitHub token permissions.`);
+      }
       // Fall through to cloning if API indexing fails
     }
 

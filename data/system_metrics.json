@@ -1,5 +1,5 @@
 {
-  "totalDemandsProcessed": 46,
+  "totalDemandsProcessed": 47,
   "averageRoutingConfidence": 60,
   "successRate": 0,
   "averageResolutionTime": 0,
@@ -20,9 +20,9 @@
     },
     "BugPlugin": {
       "name": "BugPlugin",
-      "totalExecutions": 5,
-      "successfulExecutions": 5,
-      "averageExecutionTime": 18962.6,
+      "totalExecutions": 6,
+      "successfulExecutions": 6,
+      "averageExecutionTime": 21875.333333333332,
       "usefulnessScore": 100
     }
   }
