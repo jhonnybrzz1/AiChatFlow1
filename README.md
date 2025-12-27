@@ -1,372 +1,111 @@
-# AICHATflow
 
-AICHATflow é uma plataforma modular construída com Node.js, Express e React, que utiliza IA para processamento inteligente de demandas, geração de documentação e colaboração multi-agente. O sistema incorpora roteamento inteligente baseado em Machine Learning, interação colaborativa entre agentes especializados e um sistema de plugins extensível.
+# AiChatFlow
 
-## Configuração do Ambiente
+O AiChatFlow é uma plataforma inteligente de orquestração de fluxos de trabalho, projetada para automatizar e otimizar o ciclo de vida de desenvolvimento de software. Utilizando um sistema multi-agente com IA, a plataforma transforma demandas complexas em documentação técnica detalhada, planos de ação e produtos refinados, agilizando a entrega e melhorando a colaboração entre equipes.
 
-1. Clone o repositório
-2. Instale as dependências:
-   ```
-   npm install
-   ```
-3. Crie um arquivo `.env` baseado no `.env.example` e configure as variáveis de ambiente necessárias
-4. Execute o servidor de desenvolvimento:
-   ```
-   npm run dev
-   ```
+## Principais Funcionalidades
 
-## Gestão de Dependências
+- **Sistema Multi-Agente Colaborativo**: Uma equipe de agentes de IA especializados (Product Manager, Tech Lead, QA, etc.) que trabalham em conjunto para refinar, analisar e documentar demandas.
+- **Roteamento Inteligente com Machine Learning**: Direciona automaticamente cada demanda para o time ou agente mais adequado, com base em análise de dados históricos.
+- **Geração Automática de Documentação**: Cria artefatos essenciais como PRDs (Product Requirement Document) e Documentos de Tarefas, seguindo templates padronizados.
+- **Arquitetura Baseada em Plugins**: Um design extensível que permite adicionar novas funcionalidades e lógicas de negócio de forma modular.
+- **Integração Contínua**: Conecta-se a ferramentas como GitHub para importar demandas e sincronizar o trabalho.
+- **Monitoramento e Métricas**: Coleta dados sobre o desempenho do sistema, dos agentes e das demandas para aprendizado e otimização contínuos.
 
-### Resolução de Conflitos Vite 7.x + Tailwind CSS
+## Como Funciona
 
-O projeto utiliza **Vite 7.2.7** como build tool. Durante a atualização de dependências, foi identificado um conflito de peer dependencies com `@tailwindcss/vite`.
+O fluxo de trabalho do AiChatFlow segue um processo estruturado:
 
-**Problema Identificado:**
-```
-@tailwindcss/vite@4.1.3 requer Vite ^5.2.0 || ^6
-Projeto usa Vite 7.2.7
-```
+1.  **Criação da Demanda**: Um usuário submete uma nova demanda através da interface da plataforma ou ela é importada (ex: de uma issue do GitHub).
+2.  **Roteamento Inteligente**: O motor de Machine Learning analisa a demanda e a atribui ao time de agentes mais qualificado.
+3.  **Refinamento Multi-Agente**: Os agentes de IA colaboram em um "debate" estruturado para:
+    *   Analisar a demanda sob múltiplas perspectivas (negócio, técnico, UX).
+    *   Identificar gaps de informação e solicitar esclarecimentos.
+    *   Propor soluções e alternativas.
+4.  **Geração de Documentos**: Com base no refinamento, o Product Manager Agent gera a documentação técnica (PRD, Tasks Document).
+5.  **Finalização e Entrega**: A demanda refinada e a documentação são disponibilizadas para a equipe de desenvolvimento.
 
-**Solução Implementada:**
+## O Esquadrão de Agentes de IA
 
-Atualização do `@tailwindcss/vite` para a versão 4.1.17, que adiciona suporte para Vite 7.x:
+O AiChatFlow conta com uma equipe de agentes especializados, cada um com um perfil e responsabilidades distintas:
 
-```json
-{
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.1.17",
-    "@types/node": "^22.12.0",
-    "vite": "^7.2.7"
-  }
-}
-```
-
-**Comandos de Resolução:**
-```bash
-# Verificar versões disponíveis
-npm view @tailwindcss/vite versions --json
-
-# Verificar compatibilidade
-npm view @tailwindcss/vite@4.1.17 peerDependencies
-
-# Instalar dependências atualizadas
-npm install
-```
-
-**Observação Importante:**
-- A versão 4.1.17 do `@tailwindcss/vite` suporta Vite `^5.2.0 || ^6 || ^7`
-- `@types/node` foi atualizado para `^22.12.0` para compatibilidade com Vite 7.x
-- O build foi testado e está funcionando corretamente
-
-### Ordem de @import no CSS
-
-O PostCSS requer que diretivas `@import` precedam todas as outras declarações (exceto `@charset`).
-
-Em `client/src/index.css`, a importação customizada deve vir antes das diretivas Tailwind:
-
-```css
-@import './components/refinement-dialog.css';
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-## Variáveis de Ambiente
-
-- `MISTRAL_API_KEY`: Chave de API da Mistral AI (obrigatório)
-- `PORT`: Porta em que o servidor será executado (padrão: 5000)
-- `NODE_ENV`: Ambiente de execução (development, production)
-- `DATABASE_URL`: URL de conexão com o banco de dados
-- `SESSION_SECRET`: Segredo para criptografia das sessões
-- `GITHUB_TOKEN`: Token de acesso ao GitHub para integração de repositórios
-- `ENABLE_ML_ROUTING`: Habilita/desabilita o sistema de roteamento ML (padrão: true)
-- `ENABLE_AGENT_INTERACTION`: Habilita/desabilita interação multi-agente (padrão: true)
-- `MAX_INTERACTION_ROUNDS`: Número máximo de rodadas de interação entre agentes (padrão: 5)
-- `COMPLETENESS_THRESHOLD`: Threshold de completude para finalizar interação (padrão: 85)
-
-## Integração com Mistral AI
-
-A plataforma utiliza a API da Mistral AI para processamento de linguagem natural. Para configurar:
-
-1. Crie uma conta na [Mistral AI](https://console.mistral.ai/)
-2. Obtenha sua chave de API
-3. Configure a chave no arquivo `.env`:
-   ```
-   MISTRAL_API_KEY=sua_chave_aqui
-   ```
-
-## Estrutura do Projeto
-
-- `/client`: Frontend React
-- `/server`: Backend Express
-  - `/routing`: Sistema de roteamento inteligente com ML
-  - `/plugins`: Plugins especializados por tipo de demanda
-  - `/services`: Serviços de processamento e integração
-  - `/ml_models`: Modelos de Machine Learning treinados
-- `/shared`: Código compartilhado entre frontend e backend
-- `/documents`: Documentos gerados pela plataforma
-- `/data`: Dados históricos e métricas do sistema
-- `/config`: Configurações e feature flags
-- `/agents`: Configurações YAML dos agentes especializados
-
-## Funcionalidades Principais
-
-### Sistema de Roteamento Inteligente (ML Router)
-
-O AICHATflow incorpora um sistema avançado de roteamento baseado em Machine Learning que:
-
-- **Predição Automática**: Analisa demandas e prediz automaticamente o melhor time/squad para tratamento
-- **Métricas de Confiança**: Fornece scores de confiança, tempo estimado de resolução e taxa de sucesso esperada
-- **Aprendizado Contínuo**: Treina com dados históricos e melhora continuamente as predições
-- **Coleta de Dados**: Sistema automatizado de coleta e armazenamento de métricas para treinamento do modelo
-
-**Arquivos principais:**
-- `server/routing/ml-router.ts`: Motor de ML para roteamento
-- `server/routing/orchestrator.ts`: Orquestrador do sistema de roteamento
-- `server/routing/data-collector.ts`: Coleta de dados históricos
-- `server/routing/metrics-collector.ts`: Coleta e análise de métricas
-
-### Sistema de Interação Multi-Agente
-
-Sistema de colaboração entre agentes de IA especializados que:
-
-- **Interação Colaborativa**: Agentes debatem e refinam demandas em conjunto
-- **Refinamento Baseado em Completude**: Sistema inteligente que detecta quando a informação é suficiente
-- **Contribuições Individuais**: Cada agente contribui com sua expertise específica
-- **Histórico de Conversação**: Mantém registro completo das interações entre agentes
-
-**Agentes Especializados:**
-- **Product Owner (PO)**: Define requisitos e prioridades de negócio
-- **Product Manager (PM)**: Gerencia backlog e coordena entregas
-- **Tech Lead**: Lidera decisões técnicas e arquiteturais
-- **QA**: Garante qualidade e define estratégias de teste
-
-**Arquivo principal:**
-- `server/services/agent-interaction.ts`: Serviço de interação multi-agente
-
-### Sistema de Plugins
-
-Arquitetura extensível baseada em plugins que permite processamento especializado por tipo de demanda:
-
-- **Base Plugin**: Interface comum para todos os plugins
-- **Improvement Plugin**: Otimização e melhorias de performance
-- **Bug Plugin**: Análise e correção de bugs
-- **Discovery Plugin**: Exploração e descoberta de requisitos
-
-**Características:**
-- Sistema de priorização de plugins
-- Ativação/desativação via feature flags
-- Métricas de execução por plugin
-- Processamento condicional baseado no contexto da demanda
-
-**Arquivos principais:**
-- `server/plugins/base-plugin.ts`: Plugin base abstrato
-- `server/plugins/improvement-plugin.ts`: Plugin de melhorias
-- `server/plugins/bug-plugin.ts`: Plugin de bugs
-- `server/plugins/discovery-plugin.ts`: Plugin de discovery
-
-### Sistema de Métricas e Monitoramento
-
-- **Métricas de Demandas**: Taxa de sucesso, tempo de resolução, distribuição por tipo
-- **Métricas de Sistema**: Performance, uso de recursos, latência de agentes
-- **Métricas de Plugins**: Tempo de execução, taxa de sucesso por plugin
-- **Dados Históricos**: Armazenamento de demandas processadas para treinamento do ML
-
-**Arquivos de dados:**
-- `data/demand_metrics.json`: Métricas de demandas processadas
-- `data/system_metrics.json`: Métricas gerais do sistema
-- `data/historical_demands.csv`: Histórico de demandas para ML
-
-### Feature Flags
-
-Sistema de feature flags para controle granular de funcionalidades:
-
-```json
-{
-  "enableRefactoringFeatures": true,
-  "enableNewProductFeatures": true,
-  "enableEnhancedValidation": true,
-  "enableAdvancedLogging": true,
-  "enableUserFeedbackSystem": true
-}
-```
-
-**Arquivo:** `config/feature-flags.json`
-
-## Como Usar
-
-### Processando uma Demanda com Roteamento Inteligente
-
-1. **Criar uma Demanda**: Use a interface para criar uma nova demanda com título, descrição, tipo e prioridade
-
-2. **Roteamento Automático**: O sistema automaticamente:
-   - Analisa o conteúdo da demanda
-   - Prediz o melhor time para tratamento
-   - Fornece métricas de confiança e tempo estimado
-   - Aplica plugins relevantes baseados no tipo
-
-3. **Interação Multi-Agente**: Os agentes especializados colaboram para:
-   - Refinar os requisitos
-   - Identificar gaps de informação
-   - Gerar documentação detalhada (PRD, tasks, etc.)
-   - Avaliar completude da informação
-
-### Criando um Plugin Personalizado
-
-```typescript
-import { BasePlugin, PluginResult, DemandContext } from './base-plugin';
-
-export class CustomPlugin extends BasePlugin {
-  readonly name = 'CustomPlugin';
-  readonly description = 'Descrição do seu plugin';
-  readonly type = ['seu-tipo-de-demanda'];
-
-  canProcess(context: DemandContext): boolean {
-    return this.isEnabled() &&
-           this.getSupportedTypes().includes(context.demand.type);
-  }
-
-  async process(context: DemandContext): Promise<PluginResult> {
-    // Sua lógica de processamento aqui
-    return {
-      success: true,
-      message: 'Processamento concluído',
-      data: { /* seus dados */ }
-    };
-  }
-}
-```
-
-### Registrando um Plugin
-
-No arquivo `server/routing/orchestrator.ts`:
-
-```typescript
-import { CustomPlugin } from '../plugins/custom-plugin';
-
-// No método de inicialização
-const customPlugin = new CustomPlugin();
-demandRoutingOrchestrator.registerPlugin(customPlugin);
-```
-
-### Consultando Métricas
-
-As métricas são automaticamente coletadas e podem ser consultadas em:
-
-- **Via API**: Endpoint `/api/metrics` para métricas em tempo real
-- **Arquivos JSON**: Consulte `data/demand_metrics.json` e `data/system_metrics.json`
-- **Histórico**: Dados históricos em `data/historical_demands.csv`
-
-### Treinando o Modelo ML
-
-O modelo é treinado automaticamente ao inicializar o sistema. Para retreinar manualmente:
-
-```typescript
-import { demandRoutingOrchestrator } from './routing/orchestrator';
-
-// Retreinar com novos dados
-await demandRoutingOrchestrator.initialize();
-```
+-   **Product Manager**: O planejador estratégico. Garante o alinhamento com os objetivos de negócio, gerencia o backlog e cria a documentação.
+-   **Product Owner**: O conector humano. Foca no valor para o usuário, traduzindo necessidades em requisitos claros e mantendo o time engajado.
+-   **Tech Lead**: O arquiteto do futuro. Garante a excelência técnica, a escalabilidade das soluções e a inovação.
+-   **QA (Quality Assurance)**: O guardião da qualidade. Foca em testes, documentação de bugs e garantia de que os critérios de aceite sejam atendidos.
+-   **UX Designer**: O criador de experiências. Garante que a solução seja intuitiva, acessível e encantadora para o usuário final.
+-   **Data Analyst**: O estrategista de dados. Analisa dados para extrair insights, identificar padrões e embasar as decisões.
+-   **Scrum Master**: O facilitador. Remove impedimentos, otimiza o fluxo de trabalho e garante a aplicação dos princípios ágeis.
+-   **Refinador**: O catalisador de ideias. Explora abordagens criativas e inspira soluções inovadoras.
 
 ## Tecnologias Utilizadas
 
-### Backend
-- **Node.js** + **Express**: Framework web para servidor
-- **TypeScript**: Tipagem estática para melhor qualidade de código
-- **Mistral AI API**: Modelos de IA para processamento de linguagem natural
-- **Machine Learning**: Sistema próprio de ML para roteamento inteligente
-- **SQLite**: Banco de dados para armazenamento de demandas e usuários
+-   **Backend**: Node.js, Express, TypeScript
+-   **Frontend**: React, Vite, Tailwind CSS
+-   **Inteligência Artificial**: Mistral AI
+-   **Banco de Dados**: SQLite (via Drizzle ORM)
+-   **Integrações**: GitHub API, PDF-lib
 
-### Frontend
-- **React 19**: Framework UI moderna
-- **Vite 7.2.7**: Build tool de alta performance
-- **Tailwind CSS 4.x**: Framework CSS utilitário
-- **TypeScript**: Tipagem estática
-- **Radix UI**: Componentes acessíveis e customizáveis
+## Configuração do Ambiente
 
-### Integrações
-- **GitHub API**: Importação de issues e integração com repositórios
-- **PDF Generator**: Geração automática de documentação em PDF
-- **WebSocket**: Comunicação em tempo real para atualizações de chat
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/seu-usuario/AiChatFlow.git
+    cd AiChatFlow
+    ```
 
-## Arquitetura do Sistema
+2.  **Instale as dependências:**
+    ```bash
+    npm install
+    ```
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Frontend (React)                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Chat UI      │  │ Demand Form  │  │ Metrics View │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└────────────────────────┬────────────────────────────────────┘
-                         │ HTTP/WebSocket
-┌────────────────────────▼────────────────────────────────────┐
-│                    Backend (Express)                         │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │           Demand Routing Orchestrator                 │  │
-│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐     │  │
-│  │  │ ML Router  │  │ Plugins    │  │ Metrics    │     │  │
-│  │  └────────────┘  └────────────┘  └────────────┘     │  │
-│  └──────────────────────┬───────────────────────────────┘  │
-│                         │                                    │
-│  ┌──────────────────────▼───────────────────────────────┐  │
-│  │         Agent Interaction Service                     │  │
-│  │  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐            │  │
-│  │  │  PO  │  │  PM  │  │ Tech │  │  QA  │            │  │
-│  │  │      │◄─┤      │◄─┤ Lead │◄─┤      │            │  │
-│  │  └──────┘  └──────┘  └──────┘  └──────┘            │  │
-│  └──────────────────────┬───────────────────────────────┘  │
-│                         │                                    │
-│  ┌──────────────────────▼───────────────────────────────┐  │
-│  │              Mistral AI Service                       │  │
-│  │      (devstral-2512 + mistral-large-latest)          │  │
-│  └────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────────┐
-│                  Armazenamento                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   SQLite     │  │ JSON Metrics │  │  CSV History │      │
-│  │   Database   │  │    Files     │  │    Files     │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-```
+3.  **Configure as variáveis de ambiente:**
+    - Crie um arquivo `.env` na raiz do projeto, utilizando o `.env.example` como modelo.
+    - Preencha as variáveis obrigatórias, como `MISTRAL_API_KEY`.
 
-### Fluxo de Processamento de Demanda
+    ```env
+    # .env
+    MISTRAL_API_KEY="sua_chave_da_mistral_ai"
+    PORT=5000
+    # Outras variáveis...
+    ```
 
-1. **Recepção**: Demanda criada via UI ou importada do GitHub
-2. **Roteamento ML**: Sistema ML analisa e prediz melhor tratamento
-3. **Aplicação de Plugins**: Plugins especializados processam a demanda
-4. **Interação Multi-Agente**: Agentes colaboram para refinar requisitos
-5. **Avaliação de Completude**: Sistema verifica se informação é suficiente
-6. **Geração de Documentação**: PRD, tasks e outros documentos gerados
-7. **Coleta de Métricas**: Dados armazenados para treinamento futuro
+4.  **Execute o servidor de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
 
-## Desenvolvimento
+    A aplicação estará disponível em `http://localhost:5000`.
 
-Para contribuir com o projeto:
+## Como Usar
 
-1. Crie um branch para sua feature
-2. Implemente suas mudanças
-3. Execute os testes (quando disponíveis)
-4. Envie um pull request
+A plataforma foi desenhada para ser intuitiva. Após a configuração, você pode:
 
-### Guia de Contribuição
+1.  **Criar uma Nova Demanda**: Acesse a interface web, preencha o formulário com os detalhes da sua necessidade (título, descrição, tipo, etc.).
+2.  **Importar do GitHub**: Utilize a funcionalidade de importação para trazer issues de um repositório diretamente para o fluxo de trabalho do AiChatFlow.
+3.  **Acompanhar o Refinamento**: Observe o debate entre os agentes de IA na área de chat, vendo a demanda ser analisada e detalhada em tempo real.
+4.  **Acessar os Documentos**: Uma vez que o refinamento é concluído, baixe os documentos gerados (PRD, Tasks) para iniciar o desenvolvimento.
 
-- Siga os padrões de código TypeScript
-- Mantenha a cobertura de testes
-- Documente novas funcionalidades
-- Atualize o README quando necessário
+## Contribuição
+
+Contribuições são bem-vindas! Se você deseja melhorar o AiChatFlow, siga os passos:
+
+1.  Faça um "fork" do projeto.
+2.  Crie um branch para sua nova feature (`git checkout -b feature/minha-feature`).
+3.  Implemente suas mudanças.
+4.  Faça o commit das suas alterações (`git commit -m 'Adiciona minha feature'`).
+5.  Envie para o seu fork (`git push origin feature/minha-feature`).
+6.  Abra um Pull Request.
 
 ## Roadmap
 
-- [ ] Implementar testes unitários e de integração
-- [ ] Dashboard de métricas em tempo real
-- [ ] Suporte a mais modelos de IA (OpenAI, Anthropic, etc.)
-- [ ] Sistema de notificações
-- [ ] API pública documentada
-- [ ] Integração com Jira e outras ferramentas
-- [ ] Exportação de métricas para BI tools
+-   [ ] Implementar testes unitários e de integração abrangentes.
+-   [ ] Desenvolver um dashboard de métricas em tempo real.
+-   [ ] Adicionar suporte a mais modelos de IA (OpenAI, Anthropic, etc.).
+-   [ ] Criar um sistema de notificações para os usuários.
+-   [ ] Documentar a API pública para integrações externas.
+-   [ ] Integrar com outras ferramentas de gerenciamento de projetos (Jira, Asana).
 
 ## Licença
 
-MIT
+Este projeto está licenciado sob a Licença MIT.
