@@ -6,6 +6,7 @@ import { insertDemandSchema, insertFileSchema } from "@shared/schema";
 import { aiSquadService } from "./services/ai-squad";
 import { pdfGenerator } from "./services/pdf-generator";
 import { gitHubService } from './services/github';
+// import { githubAnalyzer } from './services/github-analyzer';
 import { codeAnalysisService } from './services/codeAnalysis'; // Import the new service
 import { demandRoutingOrchestrator } from './routing/orchestrator';
 import { metricsCollector } from './routing/metrics-collector';
@@ -24,15 +25,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GitHub routes
   app.get("/api/github/repos", async (req: Request, res: Response) => {
     try {
+      console.log('Fetching user repositories from GitHub API');
       const repos = await gitHubService.listUserRepos();
+      console.log(`Successfully fetched ${repos.length} repositories from GitHub API`);
       res.json(repos);
     } catch (error) {
       console.error('GitHub API Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStatus = (error as any)?.status || 'Unknown status';
+      console.error(`GitHub API error details - Status: ${errorStatus}, Message: ${errorMessage}`);
       // Return minimal data instead of failing completely
       res.status(500).json({
         error: "Failed to fetch repositories. This may be due to GitHub token permissions or connection issues.",
         // Provide helpful message to user
-        message: 'Please check your GitHub token permissions and ensure it has the required scopes (repo, read:org).'
+        message: 'Please check your GitHub token permissions and ensure it has the required scopes (repo, read:org).',
+        errorDetails: errorMessage,
+        errorStatus: errorStatus
       });
     }
   });
@@ -41,30 +49,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { owner, repo } = req.params;
       const path = req.query.path as string || '';
+      console.log(`Fetching content for ${owner}/${repo}/${path}`);
       const content = await gitHubService.getRepoContent(owner, repo, path);
+      console.log(`Successfully fetched content for ${owner}/${repo}/${path}`);
       res.json(content);
     } catch (error) {
       console.error('GitHub content fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStatus = (error as any)?.status || 'Unknown status';
+      console.error(`GitHub API error details - Status: ${errorStatus}, Message: ${errorMessage}`);
       res.status(500).json({
-        error: "Failed to fetch repository content. Check repository visibility and token permissions."
+        error: "Failed to fetch repository content. Check repository visibility and token permissions.",
+        errorDetails: errorMessage,
+        errorStatus: errorStatus
       });
     }
   });
+
+  // New endpoint for lightweight repository analysis (disabled temporarily)
+  // app.get("/api/github/repos/:owner/:repo/analyze", async (req: Request, res: Response) => {
+  //   try {
+  //     const { owner, repo } = req.params;
+  //     console.log(`Starting repository analysis for ${owner}/${repo}`);
+  //
+  //     // Perform lightweight analysis
+  //     const analysis = await githubAnalyzer.analyzeRepository(owner, repo);
+  //
+  //     console.log(`Repository analysis completed for ${owner}/${repo}`);
+  //     res.json({
+  //       success: true,
+  //       analysis: analysis
+  //     });
+  //   } catch (error) {
+  //     console.error('Error in repository analysis endpoint:', error);
+  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //     res.status(500).json({
+  //       success: false,
+  //       error: 'Failed to analyze repository',
+  //       details: errorMessage
+  //     });
+  //   }
+  // });
 
   app.post("/api/github/repos/:owner/:repo/index", async (req: Request, res: Response) => {
     try {
       const { owner, repo } = req.params;
       const { demandDescription } = req.body; // Extract demandDescription from body
+      console.log(`Starting repository indexing for ${owner}/${repo} with demand description: ${!!demandDescription}`);
+
+      // Check if GitHub token is available and valid before proceeding
+      const githubToken = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
+      if (!githubToken) {
+        throw new Error('GITHUB_ACCESS_TOKEN or GITHUB_TOKEN environment variable is not set.');
+      }
+
+      // Validate token format
+      if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
+        throw new Error('Invalid GitHub token format. Must start with "ghp_" or "github_pat_".');
+      }
+
+      console.log(`GitHub token validation passed for ${owner}/${repo}`);
 
       // Index the repository and store it in the database
       let indexedContent;
       try {
+        console.log(`Calling repoService.indexRepo for ${owner}/${repo}`);
         indexedContent = await repoService.indexRepo(owner, repo);
+        console.log(`Repository indexing completed for ${owner}/${repo}`);
       } catch (indexError: any) {
-        console.warn(`Repository indexing failed for ${owner}/${repo}, using fallback:`, indexError.message || indexError);
+        console.error(`Repository indexing failed for ${owner}/${repo}:`, indexError.message || indexError);
+        const errorStatus = (indexError as any)?.status || 'Unknown status';
+        console.error(`GitHub API error details - Status: ${errorStatus}`);
         // Create minimal repository data as fallback
         await repoService.getOrCreateRepo(owner, repo);
-        indexedContent = `# Repository: ${owner}/${repo}\n\nRepository content could not be fully indexed due to access restrictions or permissions.\n\nLast attempt: ${new Date().toISOString()}`;
+        indexedContent = `# Repository: ${owner}/${repo}\n\nRepository content could not be fully indexed due to access restrictions or permissions.\n\nLast attempt: ${new Date().toISOString()}\n\nError details: ${indexError.message || 'Unknown error'}`;
       }
 
       let userPrompt = '';
@@ -74,20 +132,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userPrompt = `Realize uma análise geral deste repositório para identificar possíveis funcionalidades, estrutura, e desafios. Considere que este é um modo de descoberta (discovery).`;
       }
 
-      const analysisResult = await codeAnalysisService.analyzeRepo(indexedContent, demandDescription || '', userPrompt);
+      let analysisResult = 'Análise do repositório não disponível.';
+      try {
+        console.log(`Starting repository analysis for ${owner}/${repo}`);
+        analysisResult = await codeAnalysisService.analyzeRepo(indexedContent, demandDescription || '', userPrompt);
+        console.log(`Repository analysis completed for ${owner}/${repo}`);
+      } catch (analysisError: any) {
+        console.error(`Repository analysis failed for ${owner}/${repo}:`, analysisError.message || analysisError);
+        analysisResult = `Análise do repositório não pôde ser realizada: ${analysisError.message || 'Erro desconhecido'}`;
+      }
 
+      console.log(`Sending successful response for ${owner}/${repo} indexing`);
       res.json({ content: indexedContent, analysisResult: analysisResult, demandDescription: demandDescription || null, repoName: `${owner}/${repo}` });
     } catch (error) {
       console.error('Error in repository indexing endpoint:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStatus = (error as any)?.status || 'Unknown status';
+      console.error(`GitHub API error details - Status: ${errorStatus}, Message: ${errorMessage}`);
       // Return minimal data instead of failing completely
       const { owner, repo } = req.params;
       const { demandDescription } = req.body;
-      res.json({
+      res.status(500).json({
         content: `# Repository: ${owner}/${repo}\n\nContent unavailable due to access restrictions.\n\nLast attempt: ${new Date().toISOString()}`,
-        analysisResult: 'Repository analysis could not be performed due to access restrictions.',
+        analysisResult: 'Repository analysis could not be performed due to access restrictions or errors.',
         demandDescription: demandDescription || null,
         repoName: `${owner}/${repo}`,
-        warning: 'Could not access repository content. This may be due to GitHub token permissions or private repository access.'
+        error: 'Could not access repository content. This may be due to GitHub token permissions, private repository access, or other errors.',
+        errorMessage: errorMessage,
+        errorStatus: errorStatus
       });
     }
   });
@@ -134,6 +206,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get demand classification
+  app.get("/api/demands/:id/classification", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      // Classify the demand using cognitive core
+      const classification = await demandClassifier.classifyDemand(demand);
+
+      res.json({
+        demandId: id,
+        classification: classification
+      });
+    } catch (error) {
+      console.error('Error classifying demand:', error);
+      res.status(500).json({ error: "Failed to classify demand" });
+    }
+  });
+
   // Get specific demand
   app.get("/api/demands/:id", async (req: Request, res: Response) => {
     try {
@@ -148,11 +242,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new demand with cognitive core
+  app.post("/api/demands/cognitive", upload.array('files'), async (req: Request, res: Response) => {
+    try {
+      const demandData = insertDemandSchema.parse(req.body);
+
+      // Check if repository information is included in the request
+      const { githubRepoOwner, githubRepoName, githubRepoDescription } = req.body;
+      let updatedDescription = demandData.description;
+
+      // If GitHub repository information is provided, incorporate it into the description
+      if (githubRepoOwner && githubRepoName) {
+        try {
+          // Attempt to fetch repository information to enrich the demand
+          const repoInfo = await repoService.getOrCreateRepo(githubRepoOwner, githubRepoName);
+
+          if (repoInfo && repoInfo.description) {
+            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${repoInfo.fullName}\nDescrição: ${repoInfo.description}\nLinguagem Principal: ${repoInfo.language || 'N/A'}\n`;
+          } else {
+            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+          }
+        } catch (repoError) {
+          console.warn(`Could not fetch GitHub repository info for ${githubRepoOwner}/${githubRepoName}:`, repoError);
+          // Still include the basic repo info even if we can't fetch details
+          updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+        }
+      }
+
+      // Create demand with potentially updated description
+      const demand = await storage.createDemand({
+        ...demandData,
+        description: updatedDescription
+      });
+
+      // Handle uploaded files
+      const files = req.files as Express.Multer.File[];
+      if (files && files.length > 0) {
+        for (const file of files) {
+          const fileData = insertFileSchema.parse({
+            demandId: demand.id,
+            filename: file.filename,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            path: file.path
+          });
+          await storage.createFile(fileData);
+        }
+      }
+
+      // Start processing with cognitive core in background with progress callback
+      aiSquadService.processDemandWithCognitiveCore(demand.id, async (message) => {
+        // Update demand with progress
+        await storage.updateDemand(demand.id, {
+          status: 'processing',
+          progress: message.progress || 0
+        });
+      }).catch(error => {
+        console.error(`Error processing demand ${demand.id} with cognitive core:`, error);
+        storage.updateDemand(demand.id, { status: 'error' });
+      });
+
+      res.json(demand);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid demand data" });
+    }
+  });
+
   // Create new demand
   app.post("/api/demands", upload.array('files'), async (req: Request, res: Response) => {
     try {
       const demandData = insertDemandSchema.parse(req.body);
-      const demand = await storage.createDemand(demandData);
+
+      // Check if repository information is included in the request
+      const { githubRepoOwner, githubRepoName, githubRepoDescription } = req.body;
+      let updatedDescription = demandData.description;
+
+      // If GitHub repository information is provided, incorporate it into the description
+      if (githubRepoOwner && githubRepoName) {
+        try {
+          // Attempt to fetch repository information to enrich the demand
+          const repoInfo = await repoService.getOrCreateRepo(githubRepoOwner, githubRepoName);
+
+          if (repoInfo && repoInfo.description) {
+            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${repoInfo.fullName}\nDescrição: ${repoInfo.description}\nLinguagem Principal: ${repoInfo.language || 'N/A'}\n`;
+          } else {
+            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+          }
+        } catch (repoError) {
+          console.warn(`Could not fetch GitHub repository info for ${githubRepoOwner}/${githubRepoName}:`, repoError);
+          // Still include the basic repo info even if we can't fetch details
+          updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+        }
+      }
+
+      // Create demand with potentially updated description
+      const demand = await storage.createDemand({
+        ...demandData,
+        description: updatedDescription
+      });
 
       // Handle uploaded files
       const files = req.files as Express.Multer.File[];
@@ -185,6 +373,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(demand);
     } catch (error) {
       res.status(400).json({ error: "Invalid demand data" });
+    }
+  });
+
+  // Get demand orchestration plan
+  app.get("/api/demands/:id/orchestration", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      // Create orchestration plan using cognitive core
+      const orchestrationPlan = await agentOrchestrator.createOrchestrationPlan(id);
+
+      res.json({
+        demandId: id,
+        orchestrationPlan: orchestrationPlan
+      });
+    } catch (error) {
+      console.error('Error creating orchestration plan:', error);
+      res.status(500).json({ error: "Failed to create orchestration plan" });
+    }
+  });
+
+  // Framework Manager Endpoints
+
+  // Get all available frameworks
+  app.get("/api/frameworks", async (req: Request, res: Response) => {
+    try {
+      const frameworks = frameworkManager.getAllFrameworks();
+      res.json({
+        success: true,
+        count: frameworks.length,
+        frameworks: frameworks
+      });
+    } catch (error) {
+      console.error('Error getting frameworks:', error);
+      res.status(500).json({ error: "Failed to get frameworks" });
+    }
+  });
+
+  // Get framework by ID
+  app.get("/api/frameworks/:id", async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const framework = frameworkManager.getFrameworkById(id);
+      if (!framework) {
+        return res.status(404).json({ error: "Framework not found" });
+      }
+      res.json(framework);
+    } catch (error) {
+      console.error('Error getting framework:', error);
+      res.status(500).json({ error: "Failed to get framework" });
+    }
+  });
+
+  // Get framework recommendation for a demand
+  app.get("/api/demands/:id/framework-recommendation", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      // Get AI-powered framework recommendation
+      const recommendation = await frameworkManager.recommendFramework(demand);
+
+      res.json({
+        demandId: id,
+        recommendation: recommendation
+      });
+    } catch (error) {
+      console.error('Error getting framework recommendation:', error);
+      res.status(500).json({ error: "Failed to get framework recommendation" });
+    }
+  });
+
+  // Execute a framework for a demand
+  app.post("/api/demands/:id/frameworks/:frameworkId/execute", async (req: Request, res: Response) => {
+    try {
+      const demandId = parseInt(req.params.id);
+      const frameworkId = req.params.frameworkId;
+      const demand = await storage.getDemand(demandId);
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      // Execute the framework
+      const executionResult = await frameworkManager.executeFramework(
+        demandId,
+        frameworkId,
+        (progress: number, message: string) => {
+          console.log(`Framework execution progress: ${progress}% - ${message}`);
+        }
+      );
+
+      res.json({
+        success: true,
+        executionResult: executionResult
+      });
+    } catch (error) {
+      console.error('Error executing framework:', error);
+      res.status(500).json({ error: "Failed to execute framework" });
+    }
+  });
+
+  // Get framework execution history for a demand
+  app.get("/api/demands/:id/framework-executions", async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const history = frameworkManager.getExecutionHistory(id);
+      
+      res.json({
+        demandId: id,
+        executionCount: history.length,
+        executions: history
+      });
+    } catch (error) {
+      console.error('Error getting framework execution history:', error);
+      res.status(500).json({ error: "Failed to get framework execution history" });
+    }
+  });
+
+  // Get framework metrics summary
+  app.get("/api/frameworks/metrics", async (req: Request, res: Response) => {
+    try {
+      const metrics = frameworkManager.getFrameworkMetricsSummary();
+      
+      res.json({
+        success: true,
+        metrics: metrics
+      });
+    } catch (error) {
+      console.error('Error getting framework metrics:', error);
+      res.status(500).json({ error: "Failed to get framework metrics" });
     }
   });
 
@@ -308,14 +633,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Demand is not completed yet" });
       }
 
-      // Find the markdown file
+      // Find the most recent markdown file
       const documentsDir = path.join(process.cwd(), 'documents');
       const searchType = type === 'prd' ? 'PRD' : 'Tasks';
 
       const files = fs.readdirSync(documentsDir);
-      const markdownFile = files.find(file =>
+      const markdownFiles = files.filter(file =>
         file.startsWith(`${searchType}_${id}_`) && file.endsWith('.md')
       );
+
+      // Sort files by timestamp (newest first) and get the most recent one
+      const markdownFile = markdownFiles
+        .sort((a, b) => {
+          const timestampA = parseInt(a.split('_')[2]?.replace('.md', '') || '0');
+          const timestampB = parseInt(b.split('_')[2]?.replace('.md', '') || '0');
+          return timestampB - timestampA; // Descending order (newest first)
+        })
+        .shift(); // Get the first (most recent) file
 
       if (!markdownFile) {
         return res.status(404).json({ error: `Markdown file for ${type} not found` });
@@ -435,26 +769,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/test-pdf", async (req: Request, res: Response) => {
     try {
       const testContent = `
-# Test PRD Document
+# PRD - Sistema de Geração de PDF Avançado
 
-## 1. Visão Geral
+## 📋 Visão Geral
 
-**Funcionalidade:** Test PDF Generation
-**Tipo:** Test
-**Prioridade:** High
-
-This is a test document to verify PDF generation works correctly.
-
-## 2. Requisitos Funcionais
-
-- Implementar funcionalidade principal
-- Criar testes automatizados
-- Documentar solução
-
-## 3. Requisitos Não Funcionais
-
-- Performance: < 2s response time
-- Security: Data encryption
+**Objetivo:** Implementar um sistema robusto de geração de documentos PDF para a plataforma AiChatFlow
+**Problema:** A plataforma atual não possui um sistema integrado de geração de documentos PDF que atenda aos requisitos de qualidade e padronização
+**Solução:** Desenvolver um módulo de geração de PDF que seja capaz de criar documentos profissionais com base em templates pré-definidos
 `;
 
       const tasksContent = `

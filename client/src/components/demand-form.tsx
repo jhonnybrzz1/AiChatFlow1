@@ -39,6 +39,8 @@ const priorities = [
 export function DemandForm() {
   const [selectedType, setSelectedType] = useState("nova_funcionalidade");
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [githubRepoOwner, setGithubRepoOwner] = useState<string | null>(null);
+  const [githubRepoName, setGithubRepoName] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isFocused, setIsFocused] = useState({
     title: false,
@@ -60,8 +62,35 @@ export function DemandForm() {
   });
 
   const createDemandMutation = useMutation({
-    mutationFn: ({ demand, files }: { demand: typeof insertDemandSchema._type, files?: FileList }) =>
-      api.demands.create(demand, files),
+    mutationFn: ({ demand, files, githubRepoOwner, githubRepoName }: {
+      demand: typeof insertDemandSchema._type,
+      files?: FileList,
+      githubRepoOwner?: string,
+      githubRepoName?: string
+    }) => {
+      // Create form data with repository information if available
+      const formData = new FormData();
+
+      // Add demand data
+      Object.entries(demand).forEach(([key, value]) => {
+        formData.append(key, value as string);
+      });
+
+      // Add GitHub repository information if available
+      if (githubRepoOwner && githubRepoName) {
+        formData.append('githubRepoOwner', githubRepoOwner);
+        formData.append('githubRepoName', githubRepoName);
+      }
+
+      // Add files if any
+      if (files) {
+        Array.from(files).forEach((file) => {
+          formData.append('files', file);
+        });
+      }
+
+      return api.demands.createWithFormData(formData);
+    },
     onSuccess: () => {
       toast({
         title: "Demanda criada com sucesso",
@@ -69,6 +98,8 @@ export function DemandForm() {
       });
       form.reset();
       setSelectedFiles(null);
+      setGithubRepoOwner(null);
+      setGithubRepoName(null);
       setIsCollapsed(true); // Minimizar formulário após envio
       queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
 
@@ -90,14 +121,14 @@ export function DemandForm() {
   });
 
   const onSubmit = (data: typeof insertDemandSchema._type) => {
-    createDemandMutation.mutate({ demand: data, files: selectedFiles || undefined });
+    createDemandMutation.mutate({ demand: data, files: selectedFiles || undefined, githubRepoOwner, githubRepoName });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(event.target.files);
   };
 
-  const handleGitHubImport = (indexedContent: string, analysisResult: string) => {
+  const handleGitHubImport = (indexedContent: string, analysisResult: string, repoName?: string) => {
     form.setValue('description', analysisResult || indexedContent); // Use analysisResult if available, otherwise indexedContent
     form.setValue(
       'title',
@@ -105,6 +136,14 @@ export function DemandForm() {
         ? 'Análise de Repositório GitHub (Contextualizada)'
         : 'Análise de Repositório GitHub (Discovery)'
     );
+
+    // Extract owner and repo name from repoName (format: owner/repo)
+    if (repoName) {
+      const [owner, repo] = repoName.split('/');
+      setGithubRepoOwner(owner);
+      setGithubRepoName(repo);
+    }
+
     toast({
       title: "Conteúdo do GitHub carregado",
       description: "A descrição da demanda foi preenchida com o conteúdo do repositório.",

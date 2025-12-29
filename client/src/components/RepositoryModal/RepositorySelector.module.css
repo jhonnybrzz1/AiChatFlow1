@@ -1,0 +1,58 @@
+/* Repository Selector Styles */
+
+.selectorContainer {
+  position: relative;
+}
+
+.legacyWrapper {
+  padding: 20px;
+}
+
+.methodToggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1100;
+}
+
+.toggleButton {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.toggleButton:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .methodToggle {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .toggleButton {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+}

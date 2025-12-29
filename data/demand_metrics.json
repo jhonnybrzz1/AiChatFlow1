@@ -950,5 +950,308 @@
         "resultSize": 2104
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "media",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 720,
+    "estimatedSuccessRate": 63,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-27T18:20:42.293Z",
+    "completedAt": "2025-12-27T18:20:42.294Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "baixa",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 922,
+    "estimatedSuccessRate": 51,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-27T20:52:40.462Z",
+    "completedAt": "2025-12-27T20:52:40.463Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 864,
+    "estimatedSuccessRate": 55,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-27T21:19:19.160Z",
+    "completedAt": "2025-12-27T21:19:19.161Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 864,
+    "estimatedSuccessRate": 55,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-28T01:10:14.505Z",
+    "completedAt": "2025-12-28T01:10:14.506Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "discovery",
+    "priority": "baixa",
+    "routingTeam": "research",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 605,
+    "estimatedSuccessRate": 49,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-28T01:50:48.934Z",
+    "completedAt": "2025-12-28T01:50:48.934Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 15131,
+        "success": true,
+        "resultSize": 2166
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "alta",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1166,
+    "estimatedSuccessRate": 48,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-28T15:49:01.172Z",
+    "completedAt": "2025-12-28T15:49:01.173Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 16815,
+        "success": true,
+        "resultSize": 2428
+      }
+    ]
+  },
+  {
+    "demandId": 2,
+    "type": "analise_exploratoria",
+    "priority": "media",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1224,
+    "estimatedSuccessRate": 50,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-28T15:54:12.904Z",
+    "completedAt": "2025-12-28T15:54:12.904Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 15366,
+        "success": true,
+        "resultSize": 2277
+      }
+    ]
+  },
+  {
+    "demandId": 3,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 778,
+    "estimatedSuccessRate": 58,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-28T16:15:33.166Z",
+    "completedAt": "2025-12-28T16:15:33.166Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 4,
+    "type": "analise_exploratoria",
+    "priority": "alta",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1296,
+    "estimatedSuccessRate": 45,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-28T16:37:09.886Z",
+    "completedAt": "2025-12-28T16:37:09.886Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 25553,
+        "success": true,
+        "resultSize": 2057
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "discovery",
+    "priority": "media",
+    "routingTeam": "research",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 504,
+    "estimatedSuccessRate": 59,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T06:26:35.788Z",
+    "completedAt": "2025-12-29T06:26:35.789Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 97418,
+        "success": true,
+        "resultSize": 1845
+      }
+    ]
+  },
+  {
+    "demandId": 2,
+    "type": "analise_exploratoria",
+    "priority": "media",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1152,
+    "estimatedSuccessRate": 51,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T06:31:24.300Z",
+    "completedAt": "2025-12-29T06:31:24.301Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 15439,
+        "success": true,
+        "resultSize": 1678
+      }
+    ]
+  },
+  {
+    "demandId": 3,
+    "type": "discovery",
+    "priority": "alta",
+    "routingTeam": "research",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 648,
+    "estimatedSuccessRate": 50,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T06:52:54.326Z",
+    "completedAt": "2025-12-29T06:52:54.327Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 38088,
+        "success": true,
+        "resultSize": 2391
+      }
+    ]
+  },
+  {
+    "demandId": 4,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 821,
+    "estimatedSuccessRate": 57,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T06:59:56.091Z",
+    "completedAt": "2025-12-29T06:59:56.091Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "media",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 816,
+    "estimatedSuccessRate": 60,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T18:13:40.778Z",
+    "completedAt": "2025-12-29T18:13:40.779Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "melhoria",
+    "priority": "baixa",
+    "routingTeam": "fullstack",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 403,
+    "estimatedSuccessRate": 64,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T19:08:27.089Z",
+    "completedAt": "2025-12-29T19:08:27.089Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "ImprovementPlugin",
+        "executionTime": 17872,
+        "success": true,
+        "resultSize": 707
+      }
+    ]
+  },
+  {
+    "demandId": 2,
+    "type": "analise_exploratoria",
+    "priority": "baixa",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1469,
+    "estimatedSuccessRate": 40,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2025-12-29T19:21:25.629Z",
+    "completedAt": "2025-12-29T19:21:25.629Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 55643,
+        "success": true,
+        "resultSize": 1904
+      }
+    ]
   }
 ]

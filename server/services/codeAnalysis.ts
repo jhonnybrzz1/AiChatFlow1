@@ -19,7 +19,9 @@ ${indexedContent}`;
       return analysis;
     } catch (error) {
       console.error('Error analyzing repository:', error);
-      throw new Error(`Failed to analyze repository: ${error}`);
+      // Provide more specific error information
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to analyze repository: ${errorMessage}`);
     }
   }
 }

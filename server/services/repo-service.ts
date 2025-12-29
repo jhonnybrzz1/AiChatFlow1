@@ -7,7 +7,15 @@ export class RepoService {
   private gitHubService: GitHubService;
 
   constructor() {
-    const githubToken = process.env.GITHUB_TOKEN;
+    const githubToken = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
+    console.log('RepoService initializing GitHubService with token availability:', !!githubToken);
+    if (githubToken) {
+      console.log('GitHub token is available, first 5 chars:', githubToken.substring(0, 5) + '...');
+      // Validate token format
+      if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
+        console.warn('Warning: GitHub token may be in an incorrect format. Should start with "ghp_" or "github_pat_".');
+      }
+    }
     this.gitHubService = new GitHubService(githubToken || undefined);
   }
 
@@ -22,20 +30,24 @@ export class RepoService {
     const existingRepo = await db.select().from(repos).where(
       eq(repos.fullName, `${owner}/${name}`)
     ).limit(1);
-    
+
     if (existingRepo.length > 0) {
       return existingRepo[0];
     }
-    
+
     // If repo doesn't exist, try to fetch from GitHub and create
     let repoData;
     try {
+      console.log(`Fetching repository metadata for ${owner}/${name} from GitHub`);
       repoData = await this.gitHubService.client.repos.get({
         owner,
         repo: name
       });
+      console.log(`Successfully fetched repository metadata for ${owner}/${name}`);
     } catch (error: any) {
-      console.warn(`Could not fetch repository metadata for ${owner}/${name} from GitHub. Creating with minimal data:`, error.message || error);
+      console.error(`Could not fetch repository metadata for ${owner}/${name} from GitHub:`, error.message || error);
+      const errorStatus = (error as any)?.status || 'Unknown status';
+      console.error(`GitHub API error details - Status: ${errorStatus}`);
       // Create a minimal repo object with basic information
       repoData = {
         data: {
@@ -61,7 +73,7 @@ export class RepoService {
         }
       };
     }
-    
+
     const newRepo: InsertRepo = {
       owner,
       name,
@@ -81,7 +93,7 @@ export class RepoService {
       indexedContent: null, // Will be populated later
       lastCommit: null, // Will be populated later
     };
-    
+
     const [createdRepo] = await db.insert(repos).values(newRepo).returning();
     return createdRepo;
   }
@@ -93,20 +105,58 @@ export class RepoService {
    * @returns The indexed repository content
    */
   async indexRepo(owner: string, name: string): Promise<string> {
+    console.log(`Starting repository indexing for ${owner}/${name}`);
     // Get or create the repo record
     const repo = await this.getOrCreateRepo(owner, name);
+    console.log(`Repository record retrieved/created for ${owner}/${name}, ID: ${repo.id}`);
 
     // Index the repository content using the GitHub service
     let indexedContent;
     try {
+      console.log(`Calling GitHubService.indexRepo for ${owner}/${name}`);
       indexedContent = await this.gitHubService.indexRepo(owner, name);
+      console.log(`Successfully indexed repository content for ${owner}/${name}`);
     } catch (error: any) {
-      console.warn(`Could not index repository ${owner}/${name} from GitHub. Using fallback approach:`, error.message || error);
+      console.error(`Could not index repository ${owner}/${name} from GitHub. Using fallback approach.`);
+      
+      // Enhanced error logging
+      let errorMessage = 'Unknown error';
+      let errorType = 'unknown';
+      let errorDetails = {};
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        errorType = 'Error';
+        errorDetails = {
+          message: error.message,
+          name: error.name,
+          stack: error.stack?.substring(0, 200) + '...'
+        };
+      } else if (error && typeof error === 'object') {
+        errorMessage = error.message || 'Unknown error';
+        errorType = error.type || 'unknown';
+        errorDetails = {
+          type: error.type,
+          message: error.message,
+          timeStamp: error.timeStamp,
+          defaultPrevented: error.defaultPrevented,
+          cancelable: error.cancelable
+        };
+        
+        if (error.type === 'error') {
+          console.error('ErrorEvent detected in repoService:', errorDetails);
+        }
+      }
+      
+      console.error(`Error details - Type: ${errorType}, Message: ${errorMessage}`);
+      console.error('Full error object:', error);
+      
       // Fallback: create minimal content if indexing fails
-      indexedContent = `# Repository: ${owner}/${name}\n\nRepository content could not be indexed. This may be due to:\n- GitHub token permissions\n- Private repository access\n- Network connectivity issues\n\nConsider uploading repository files directly or ensuring proper GitHub token permissions.\n\nLast attempt: ${new Date().toISOString()}`;
+      indexedContent = `# Repository: ${owner}/${name}\n\nRepository content could not be indexed. This may be due to:\n- GitHub token permissions\n- Private repository access\n- Network connectivity issues\n\nConsider uploading repository files directly or ensuring proper GitHub token permissions.\n\nLast attempt: ${new Date().toISOString()}\n\nError type: ${errorType}\nError details: ${JSON.stringify(errorDetails, null, 2)}`;
     }
 
     // Update the repo with indexed content and timestamp
+    console.log(`Updating repository record with indexed content for ${owner}/${name}`);
     await db.update(repos).set({
       indexedContent,
       indexedAt: new Date(),
@@ -114,8 +164,16 @@ export class RepoService {
     }).where(eq(repos.id, repo.id));
 
     // Parse and store individual files
-    await this.storeRepoFiles(owner, name, indexedContent, repo.id);
+    try {
+      console.log(`Storing repository files for ${owner}/${name}`);
+      await this.storeRepoFiles(owner, name, indexedContent, repo.id);
+      console.log(`Successfully stored repository files for ${owner}/${name}`);
+    } catch (error: any) {
+      console.error(`Could not store repository files for ${owner}/${name}:`, error.message || error);
+      // Continue with the indexed content even if file storage fails
+    }
 
+    console.log(`Completed repository indexing for ${owner}/${name}`);
     return indexedContent;
   }
 

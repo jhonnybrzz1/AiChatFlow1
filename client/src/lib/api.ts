@@ -13,13 +13,19 @@ export const api = {
       return response.json();
     },
 
-    create: async (demand: InsertDemand, files?: FileList): Promise<Demand> => {
+    create: async (demand: InsertDemand, files?: FileList, githubRepoOwner?: string, githubRepoName?: string): Promise<Demand> => {
       const formData = new FormData();
 
       // Add demand data
       Object.entries(demand).forEach(([key, value]) => {
         formData.append(key, value as string);
       });
+
+      // Add GitHub repository information if provided
+      if (githubRepoOwner && githubRepoName) {
+        formData.append('githubRepoOwner', githubRepoOwner);
+        formData.append('githubRepoName', githubRepoName);
+      }
 
       // Add files if any
       if (files) {
@@ -28,6 +34,18 @@ export const api = {
         });
       }
 
+      const response = await fetch("/api/demands", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+
+      return response.json();
+    },
+    createWithFormData: async (formData: FormData): Promise<Demand> => {
       const response = await fetch("/api/demands", {
         method: "POST",
         body: formData,

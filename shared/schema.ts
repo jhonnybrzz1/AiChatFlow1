@@ -13,6 +13,12 @@ export const demands = pgTable("demands", {
   chatMessages: jsonb("chat_messages").$type<ChatMessage[]>().default([]),
   prdUrl: text("prd_url"),
   tasksUrl: text("tasks_url"),
+  classification: jsonb("classification").$type<any>(), // Cognitive Core classification
+  orchestration: jsonb("orchestration").$type<any>(), // Cognitive Core orchestration
+  currentAgent: text("current_agent"), // Current agent being executed
+  errorMessage: text("error_message"), // Error message if any
+  validationNotes: text("validation_notes"), // Validation notes
+  completedAt: timestamp("completed_at"), // When demand was completed
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -126,7 +132,9 @@ export type InsertRepo = z.infer<typeof insertRepoSchema>;
 export type InsertRepoFile = z.infer<typeof insertRepoFileSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type Demand = typeof demands.$inferSelect;
+export type Demand = typeof demands.$inferSelect & {
+  frameworkExecution?: any;
+};
 export type Repo = typeof repos.$inferSelect;
 export type RepoFile = typeof repoFiles.$inferSelect;
 export type File = typeof files.$inferSelect;

@@ -46,6 +46,160 @@ O AiChatFlow conta com uma equipe de agentes especializados, cada um com um perf
 -   **Banco de Dados**: SQLite (via Drizzle ORM)
 -   **Integrações**: GitHub API, PDF-lib
 
+## Núcleo Cognitivo do AICHATflow
+
+O **Núcleo Cognitivo do AICHATflow** é um sistema automatizado que otimiza o processamento de demandas através de dois módulos principais:
+
+### 1. Classificador Inteligente de Demanda
+
+Analisa e categoriza demandas com base em critérios como:
+
+-   **Ambiguidade**: Medida de quão vaga ou clara é a demanda
+-   **Risco de Interpretação**: Potencial para mal-entendidos
+-   **Profundidade Necessária**: Nível de análise requerido
+-   **Complexidade**: Escopo técnico e desafios
+-   **Urgência**: Prioridade e sensibilidade temporal
+
+**Categorias Suportadas**:
+-   Técnica (API, banco de dados, integração)
+-   Jurídica (contratos, conformidade, regulamentações)
+-   Criativa (design, UX, branding)
+-   Negócios (estratégia, mercado, vendas)
+-   Analítica (dados, métricas, insights)
+-   Suporte (ajuda, bugs, resolução de problemas)
+-   Pesquisa (estudos, exploração, investigação)
+
+### 2. Orquestrador de Agentes
+
+Define a ordem ótima de execução dos agentes especializados e aplica validação cruzada em casos críticos:
+
+-   **Sequenciamento Inteligente**: Ordena agentes com base nos requisitos da demanda
+-   **Validação Cruzada**: Valida resultados para demandas de alto risco
+-   **Estimativa de Tempo**: Prediz tempo de conclusão baseado na complexidade
+-   **Monitoramento em Tempo Real**: Acompanha progresso e fornece atualizações
+
+### Benefícios
+
+1.  **Precisão Aprimorada**: Classificação inteligente reduz erros de roteamento
+2.  **Fluxo de Trabalho Otimizado**: Agentes executam na ordem ideal
+3.  **Redução de Riscos**: Validação cruzada para demandas críticas
+4.  **Eficiência Temporal**: Melhor alocação de recursos e sequenciamento
+5.  **Adaptabilidade**: Ajusta-se a diferentes tipos e complexidades de demanda
+6.  **Transparência**: Notas claras de classificação e orquestração
+
+### Endpoints da API
+
+-   **POST** `/api/demands/cognitive` - Cria demanda com processamento cognitivo
+-   **GET** `/api/demands/:id/classification` - Obtém classificação da demanda
+-   **GET** `/api/demands/:id/orchestration` - Obtém plano de orquestração
+
+Para mais detalhes, consulte a [documentação completa do Núcleo Cognitivo](COGNITIVE_CORE.md).
+
+## Frameworks de Gestão de Demandas
+
+O AICHATflow inclui um **Framework Manager** com 6 frameworks especializados para diferentes tipos de demandas:
+
+### 1. Jobs-to-be-Done (JTBD)
+
+**Melhor para:** Novas funcionalidades, desenvolvimento centrado no cliente
+
+**Descrição:** Framework para entender os "trabalhos" que os clientes precisam realizar e projetar soluções que atendam às necessidades reais.
+
+**Métricas de Sucesso:**
+-   Taxa de conclusão de trabalhos
+-   Satisfação do cliente
+-   Tempo para conclusão
+
+**Integrações:** SurveyMonkey, Typeform, ferramentas de pesquisa
+
+### 2. HEART Framework
+
+**Melhor para:** Melhorias de UX, métricas de experiência do usuário
+
+**Descrição:** Framework de métricas de UX focado em Felicidade, Engajamento, Adoção, Retenção e Sucesso de Tarefas.
+
+**Métricas de Sucesso:**
+-   Pontuações de usabilidade
+-   Conformidade de acessibilidade
+-   Sentimento de feedback do usuário
+
+**Integrações:** Google Analytics, Hotjar, Mixpanel
+
+### 3. Matriz de Severidade x Prioridade
+
+**Melhor para:** Triagem de bugs, priorização de issues
+
+**Descrição:** Matriz para priorizar bugs com base em severidade (impacto) e prioridade (urgência) com SLAs claros.
+
+**Métricas de Sucesso:**
+-   Tempo de resolução
+-   Taxa de reabertura
+-   Redução de impacto no cliente
+
+**Integrações:** Jira, Bugzilla, Sentry
+
+### 4. Double Diamond
+
+**Melhor para:** Discovery, design thinking, inovação
+
+**Descrição:** Framework de design thinking com fases de Descoberta, Definição, Desenvolvimento e Entrega.
+
+**Métricas de Sucesso:**
+-   Insights gerados
+-   Entrevistas com usuários
+-   Profundidade de pesquisa
+-   Taxa de validação de protótipos
+
+**Integrações:** Miro, Figma, UserTesting
+
+### 5. CRISP-DM
+
+**Melhor para:** Análise de dados, machine learning, analytics exploratório
+
+**Descrição:** Metodologia para projetos de ciência de dados com fases de Compreensão de Negócios, Dados, Preparação, Modelagem, Avaliação e Implantação.
+
+**Métricas de Sucesso:**
+-   Precisão do modelo
+-   Cobertura de dados
+-   Valor dos insights
+-   Impacto nos negócios
+
+**Integrações:** Snowflake, BigQuery, TensorFlow, Tableau
+
+### 6. Sugestão Automática de Frameworks (Transversal)
+
+**Melhor para:** Todos os tipos de demanda, recomendação inteligente
+
+**Descrição:** Framework com IA que analisa características da demanda e recomenda o framework mais adequado com pontuação de confiança.
+
+**Métricas de Sucesso:**
+-   Precisão da recomendação
+-   Taxa de adoção
+-   Satisfação do usuário com sugestões
+
+**Integrações:** Mistral AI, bases de conhecimento
+
+### Seleção de Frameworks
+
+| Tipo de Demanda | Framework Primário | Opções Secundárias | Racional |
+|-----------------|-------------------|--------------------|----------|
+| Nova Funcionalidade | JTBD | Double Diamond, HEART | Abordagem centrada no cliente |
+| Melhoria | HEART | JTBD, CRISP-DM | Métricas focadas em UX |
+| Bug | Severity-Priority | JTBD, HEART | Priorização clara de issues |
+| Discovery | Double Diamond | JTBD, HEART | Pesquisa exploratória |
+| Análise | CRISP-DM | Double Diamond, JTBD | Abordagem orientada por dados |
+
+### Endpoints da API
+
+-   **GET** `/api/frameworks` - Lista todos os frameworks disponíveis
+-   **GET** `/api/frameworks/:id` - Obtém detalhes de um framework específico
+-   **GET** `/api/demands/:id/framework-recommendation` - Recomendação de framework com IA
+-   **POST** `/api/demands/:id/frameworks/:frameworkId/execute` - Executa um framework para uma demanda
+-   **GET** `/api/demands/:id/framework-executions` - Histórico de execuções de frameworks
+-   **GET** `/api/frameworks/metrics` - Métricas de desempenho dos frameworks
+
+Para mais detalhes, consulte a [documentação completa dos Frameworks](FRAMEWORKS.md).
+
 ## Configuração do Ambiente
 
 1.  **Clone o repositório:**

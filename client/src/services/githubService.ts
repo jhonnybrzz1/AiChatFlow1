@@ -1,0 +1,378 @@
+// GitHub Service
+// Service for interacting with GitHub API
+import { useState, useEffect } from 'react';
+import { Repository } from '../types/github';
+
+// Mock GitHub service - in a real implementation, this would call the actual GitHub API
+const mockRepositories: Repository[] = [
+  {
+    id: 1,
+    node_id: 'MDEwOlJlcG9zaXRvcnkx',
+    name: 'AiChatFlow',
+    full_name: 'user/AiChatFlow',
+    private: false,
+    owner: {
+      login: 'user',
+      id: 1,
+      node_id: 'MDQ6VXNlcjE=',
+      avatar_url: 'https://github.com/user.png',
+      gravatar_id: '',
+      url: 'https://api.github.com/users/user',
+      html_url: 'https://github.com/user',
+      followers_url: 'https://api.github.com/users/user/followers',
+      following_url: 'https://api.github.com/users/user/following{/other_user}',
+      gists_url: 'https://api.github.com/users/user/gists{/gist_id}',
+      starred_url: 'https://api.github.com/users/user/starred{/owner}{/repo}',
+      subscriptions_url: 'https://api.github.com/users/user/subscriptions',
+      organizations_url: 'https://api.github.com/users/user/orgs',
+      repos_url: 'https://api.github.com/users/user/repos',
+      events_url: 'https://api.github.com/users/user/events{/privacy}',
+      received_events_url: 'https://api.github.com/users/user/received_events',
+      type: 'User',
+      site_admin: false
+    },
+    html_url: 'https://github.com/user/AiChatFlow',
+    description: 'AI-powered chat flow management platform',
+    fork: false,
+    url: 'https://api.github.com/repos/user/AiChatFlow',
+    forks_url: 'https://api.github.com/repos/user/AiChatFlow/forks',
+    keys_url: 'https://api.github.com/repos/user/AiChatFlow/keys{/key_id}',
+    collaborators_url: 'https://api.github.com/repos/user/AiChatFlow/collaborators{/collaborator}',
+    teams_url: 'https://api.github.com/repos/user/AiChatFlow/teams',
+    hooks_url: 'https://api.github.com/repos/user/AiChatFlow/hooks',
+    issue_events_url: 'https://api.github.com/repos/user/AiChatFlow/issues/events{/number}',
+    events_url: 'https://api.github.com/repos/user/AiChatFlow/events',
+    assignees_url: 'https://api.github.com/repos/user/AiChatFlow/assignees{/user}',
+    branches_url: 'https://api.github.com/repos/user/AiChatFlow/branches{/branch}',
+    tags_url: 'https://api.github.com/repos/user/AiChatFlow/tags',
+    blobs_url: 'https://api.github.com/repos/user/AiChatFlow/git/blobs{/sha}',
+    git_tags_url: 'https://api.github.com/repos/user/AiChatFlow/git/tags{/sha}',
+    git_refs_url: 'https://api.github.com/repos/user/AiChatFlow/git/refs{/sha}',
+    trees_url: 'https://api.github.com/repos/user/AiChatFlow/git/trees{/sha}',
+    statuses_url: 'https://api.github.com/repos/user/AiChatFlow/statuses/{sha}',
+    languages_url: 'https://api.github.com/repos/user/AiChatFlow/languages',
+    stargazers_url: 'https://api.github.com/repos/user/AiChatFlow/stargazers',
+    contributors_url: 'https://api.github.com/repos/user/AiChatFlow/contributors',
+    subscribers_url: 'https://api.github.com/repos/user/AiChatFlow/subscribers',
+    subscription_url: 'https://api.github.com/repos/user/AiChatFlow/subscription',
+    commits_url: 'https://api.github.com/repos/user/AiChatFlow/commits{/sha}',
+    git_commits_url: 'https://api.github.com/repos/user/AiChatFlow/git/commits{/sha}',
+    comments_url: 'https://api.github.com/repos/user/AiChatFlow/comments{/number}',
+    issue_comment_url: 'https://api.github.com/repos/user/AiChatFlow/issues/comments{/number}',
+    contents_url: 'https://api.github.com/repos/user/AiChatFlow/contents/{+path}',
+    compare_url: 'https://api.github.com/repos/user/AiChatFlow/compare/{base}...{head}',
+    merges_url: 'https://api.github.com/repos/user/AiChatFlow/merges',
+    archive_url: 'https://api.github.com/repos/user/AiChatFlow/{archive_format}{/ref}',
+    downloads_url: 'https://api.github.com/repos/user/AiChatFlow/downloads',
+    issues_url: 'https://api.github.com/repos/user/AiChatFlow/issues{/number}',
+    pulls_url: 'https://api.github.com/repos/user/AiChatFlow/pulls{/number}',
+    milestones_url: 'https://api.github.com/repos/user/AiChatFlow/milestones{/number}',
+    notifications_url: 'https://api.github.com/repos/user/AiChatFlow/notifications{?since,all,participating}',
+    labels_url: 'https://api.github.com/repos/user/AiChatFlow/labels{/name}',
+    releases_url: 'https://api.github.com/repos/user/AiChatFlow/releases{/id}',
+    deployments_url: 'https://api.github.com/repos/user/AiChatFlow/deployments',
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: '2023-11-15T10:00:00Z',
+    pushed_at: '2023-11-14T15:30:00Z',
+    git_url: 'git://github.com/user/AiChatFlow.git',
+    ssh_url: 'git@github.com:user/AiChatFlow.git',
+    clone_url: 'https://github.com/user/AiChatFlow.git',
+    svn_url: 'https://github.com/user/AiChatFlow',
+    homepage: 'https://aichatflow.com',
+    size: 1024,
+    stargazers_count: 42,
+    watchers_count: 42,
+    language: 'TypeScript',
+    has_issues: true,
+    has_projects: true,
+    has_downloads: true,
+    has_wiki: true,
+    has_pages: false,
+    has_discussions: false,
+    forks_count: 5,
+    mirror_url: null,
+    archived: false,
+    disabled: false,
+    open_issues_count: 3,
+    license: {
+      key: 'mit',
+      name: 'MIT License',
+      spdx_id: 'MIT',
+      url: 'https://api.github.com/licenses/mit',
+      node_id: 'MDc6TGljZW5zZTEz'
+    },
+    allow_forking: true,
+    is_template: false,
+    web_commit_signoff_required: false,
+    topics: ['ai', 'chatbot', 'automation', 'productivity'],
+    visibility: 'public',
+    forks: 5,
+    open_issues: 3,
+    watchers: 42,
+    default_branch: 'main'
+  },
+  {
+    id: 2,
+    node_id: 'MDEwOlJlcG9zaXRvcnky',
+    name: 'design-system',
+    full_name: 'user/design-system',
+    private: true,
+    owner: {
+      login: 'user',
+      id: 1,
+      node_id: 'MDQ6VXNlcjE=',
+      avatar_url: 'https://github.com/user.png',
+      gravatar_id: '',
+      url: 'https://api.github.com/users/user',
+      html_url: 'https://github.com/user',
+      followers_url: 'https://api.github.com/users/user/followers',
+      following_url: 'https://api.github.com/users/user/following{/other_user}',
+      gists_url: 'https://api.github.com/users/user/gists{/gist_id}',
+      starred_url: 'https://api.github.com/users/user/starred{/owner}{/repo}',
+      subscriptions_url: 'https://api.github.com/users/user/subscriptions',
+      organizations_url: 'https://api.github.com/users/user/orgs',
+      repos_url: 'https://api.github.com/users/user/repos',
+      events_url: 'https://api.github.com/users/user/events{/privacy}',
+      received_events_url: 'https://api.github.com/users/user/received_events',
+      type: 'User',
+      site_admin: false
+    },
+    html_url: 'https://github.com/user/design-system',
+    description: 'Company design system and component library',
+    fork: false,
+    url: 'https://api.github.com/repos/user/design-system',
+    forks_url: 'https://api.github.com/repos/user/design-system/forks',
+    keys_url: 'https://api.github.com/repos/user/design-system/keys{/key_id}',
+    collaborators_url: 'https://api.github.com/repos/user/design-system/collaborators{/collaborator}',
+    teams_url: 'https://api.github.com/repos/user/design-system/teams',
+    hooks_url: 'https://api.github.com/repos/user/design-system/hooks',
+    issue_events_url: 'https://api.github.com/repos/user/design-system/issues/events{/number}',
+    events_url: 'https://api.github.com/repos/user/design-system/events',
+    assignees_url: 'https://api.github.com/repos/user/design-system/assignees{/user}',
+    branches_url: 'https://api.github.com/repos/user/design-system/branches{/branch}',
+    tags_url: 'https://api.github.com/repos/user/design-system/tags',
+    blobs_url: 'https://api.github.com/repos/user/design-system/git/blobs{/sha}',
+    git_tags_url: 'https://api.github.com/repos/user/design-system/git/tags{/sha}',
+    git_refs_url: 'https://api.github.com/repos/user/design-system/git/refs{/sha}',
+    trees_url: 'https://api.github.com/repos/user/design-system/git/trees{/sha}',
+    statuses_url: 'https://api.github.com/repos/user/design-system/statuses/{sha}',
+    languages_url: 'https://api.github.com/repos/user/design-system/languages',
+    stargazers_url: 'https://api.github.com/repos/user/design-system/stargazers',
+    contributors_url: 'https://api.github.com/repos/user/design-system/contributors',
+    subscribers_url: 'https://api.github.com/repos/user/design-system/subscribers',
+    subscription_url: 'https://api.github.com/repos/user/design-system/subscription',
+    commits_url: 'https://api.github.com/repos/user/design-system/commits{/sha}',
+    git_commits_url: 'https://api.github.com/repos/user/design-system/git/commits{/sha}',
+    comments_url: 'https://api.github.com/repos/user/design-system/comments{/number}',
+    issue_comment_url: 'https://api.github.com/repos/user/design-system/issues/comments{/number}',
+    contents_url: 'https://api.github.com/repos/user/design-system/contents/{+path}',
+    compare_url: 'https://api.github.com/repos/user/design-system/compare/{base}...{head}',
+    merges_url: 'https://api.github.com/repos/user/design-system/merges',
+    archive_url: 'https://api.github.com/repos/user/design-system/{archive_format}{/ref}',
+    downloads_url: 'https://api.github.com/repos/user/design-system/downloads',
+    issues_url: 'https://api.github.com/repos/user/design-system/issues{/number}',
+    pulls_url: 'https://api.github.com/repos/user/design-system/pulls{/number}',
+    milestones_url: 'https://api.github.com/repos/user/design-system/milestones{/number}',
+    notifications_url: 'https://api.github.com/repos/user/design-system/notifications{?since,all,participating}',
+    labels_url: 'https://api.github.com/repos/user/design-system/labels{/name}',
+    releases_url: 'https://api.github.com/repos/user/design-system/releases{/id}',
+    deployments_url: 'https://api.github.com/repos/user/design-system/deployments',
+    created_at: '2022-06-15T00:00:00Z',
+    updated_at: '2023-11-10T09:00:00Z',
+    pushed_at: '2023-11-09T14:20:00Z',
+    git_url: 'git://github.com/user/design-system.git',
+    ssh_url: 'git@github.com:user/design-system.git',
+    clone_url: 'https://github.com/user/design-system.git',
+    svn_url: 'https://github.com/user/design-system',
+    homepage: '',
+    size: 512,
+    stargazers_count: 8,
+    watchers_count: 8,
+    language: 'JavaScript',
+    has_issues: true,
+    has_projects: true,
+    has_downloads: true,
+    has_wiki: true,
+    has_pages: false,
+    has_discussions: false,
+    forks_count: 2,
+    mirror_url: null,
+    archived: false,
+    disabled: false,
+    open_issues_count: 1,
+    license: {
+      key: 'mit',
+      name: 'MIT License',
+      spdx_id: 'MIT',
+      url: 'https://api.github.com/licenses/mit',
+      node_id: 'MDc6TGljZW5zZTEz'
+    },
+    allow_forking: true,
+    is_template: false,
+    web_commit_signoff_required: false,
+    topics: ['design', 'react', 'storybook', 'figma'],
+    visibility: 'private',
+    forks: 2,
+    open_issues: 1,
+    watchers: 8,
+    default_branch: 'main'
+  },
+  {
+    id: 3,
+    node_id: 'MDEwOlJlcG9zaXRvcnkz',
+    name: 'data-pipeline',
+    full_name: 'user/data-pipeline',
+    private: false,
+    owner: {
+      login: 'user',
+      id: 1,
+      node_id: 'MDQ6VXNlcjE=',
+      avatar_url: 'https://github.com/user.png',
+      gravatar_id: '',
+      url: 'https://api.github.com/users/user',
+      html_url: 'https://github.com/user',
+      followers_url: 'https://api.github.com/users/user/followers',
+      following_url: 'https://api.github.com/users/user/following{/other_user}',
+      gists_url: 'https://api.github.com/users/user/gists{/gist_id}',
+      starred_url: 'https://api.github.com/users/user/starred{/owner}{/repo}',
+      subscriptions_url: 'https://api.github.com/users/user/subscriptions',
+      organizations_url: 'https://api.github.com/users/user/orgs',
+      repos_url: 'https://api.github.com/users/user/repos',
+      events_url: 'https://api.github.com/users/user/events{/privacy}',
+      received_events_url: 'https://api.github.com/users/user/received_events',
+      type: 'User',
+      site_admin: false
+    },
+    html_url: 'https://github.com/user/data-pipeline',
+    description: 'ETL pipelines and data processing scripts',
+    fork: false,
+    url: 'https://api.github.com/repos/user/data-pipeline',
+    forks_url: 'https://api.github.com/repos/user/data-pipeline/forks',
+    keys_url: 'https://api.github.com/repos/user/data-pipeline/keys{/key_id}',
+    collaborators_url: 'https://api.github.com/repos/user/data-pipeline/collaborators{/collaborator}',
+    teams_url: 'https://api.github.com/repos/user/data-pipeline/teams',
+    hooks_url: 'https://api.github.com/repos/user/data-pipeline/hooks',
+    issue_events_url: 'https://api.github.com/repos/user/data-pipeline/issues/events{/number}',
+    events_url: 'https://api.github.com/repos/user/data-pipeline/events',
+    assignees_url: 'https://api.github.com/repos/user/data-pipeline/assignees{/user}',
+    branches_url: 'https://api.github.com/repos/user/data-pipeline/branches{/branch}',
+    tags_url: 'https://api.github.com/repos/user/data-pipeline/tags',
+    blobs_url: 'https://api.github.com/repos/user/data-pipeline/git/blobs{/sha}',
+    git_tags_url: 'https://api.github.com/repos/user/data-pipeline/git/tags{/sha}',
+    git_refs_url: 'https://api.github.com/repos/user/data-pipeline/git/refs{/sha}',
+    trees_url: 'https://api.github.com/repos/user/data-pipeline/git/trees{/sha}',
+    statuses_url: 'https://api.github.com/repos/user/data-pipeline/statuses/{sha}',
+    languages_url: 'https://api.github.com/repos/user/data-pipeline/languages',
+    stargazers_url: 'https://api.github.com/repos/user/data-pipeline/stargazers',
+    contributors_url: 'https://api.github.com/repos/user/data-pipeline/contributors',
+    subscribers_url: 'https://api.github.com/repos/user/data-pipeline/subscribers',
+    subscription_url: 'https://api.github.com/repos/user/data-pipeline/subscription',
+    commits_url: 'https://api.github.com/repos/user/data-pipeline/commits{/sha}',
+    git_commits_url: 'https://api.github.com/repos/user/data-pipeline/git/commits{/sha}',
+    comments_url: 'https://api/user/data-pipeline/comments{/number}',
+    issue_comment_url: 'https://api.github.com/repos/user/data-pipeline/issues/comments{/number}',
+    contents_url: 'https://api.github.com/repos/user/data-pipeline/contents/{+path}',
+    compare_url: 'https://api.github.com/repos/user/data-pipeline/compare/{base}...{head}',
+    merges_url: 'https://api.github.com/repos/user/data-pipeline/merges',
+    archive_url: 'https://api.github.com/repos/user/data-pipeline/{archive_format}{/ref}',
+    downloads_url: 'https://api.github.com/repos/user/data-pipeline/downloads',
+    issues_url: 'https://api.github.com/repos/user/data-pipeline/issues{/number}',
+    pulls_url: 'https://api.github.com/repos/user/data-pipeline/pulls{/number}',
+    milestones_url: 'https://api.github.com/repos/user/data-pipeline/milestones{/number}',
+    notifications_url: 'https://api.github.com/repos/user/data-pipeline/notifications{?since,all,participating}',
+    labels_url: 'https://api.github.com/repos/user/data-pipeline/labels{/name}',
+    releases_url: 'https://api.github.com/repos/user/data-pipeline/releases{/id}',
+    deployments_url: 'https://api.github.com/repos/user/data-pipeline/deployments',
+    created_at: '2022-03-10T00:00:00Z',
+    updated_at: '2023-10-25T08:00:00Z',
+    pushed_at: '2023-10-24T13:15:00Z',
+    git_url: 'git://github.com/user/data-pipeline.git',
+    ssh_url: 'git@github.com:user/data-pipeline.git',
+    clone_url: 'https://github.com/user/data-pipeline.git',
+    svn_url: 'https://github.com/user/data-pipeline',
+    homepage: '',
+    size: 256,
+    stargazers_count: 3,
+    watchers_count: 3,
+    language: 'Python',
+    has_issues: true,
+    has_projects: true,
+    has_downloads: true,
+    has_wiki: true,
+    has_pages: false,
+    has_discussions: false,
+    forks_count: 1,
+    mirror_url: null,
+    archived: false,
+    disabled: false,
+    open_issues_count: 2,
+    license: {
+      key: 'mit',
+      name: 'MIT License',
+      spdx_id: 'MIT',
+      url: 'https://api.github.com/licenses/mit',
+      node_id: 'MDc6TGljZW5zZTEz'
+    },
+    allow_forking: true,
+    is_template: false,
+    web_commit_signoff_required: false,
+    topics: ['etl', 'data', 'python', 'airflow'],
+    visibility: 'public',
+    forks: 1,
+    open_issues: 2,
+    watchers: 3,
+    default_branch: 'main'
+  }
+];
+
+export const useGitHubService = () => {
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Simulate API call with delay
+  const fetchUserRepos = async (): Promise<Repository[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(mockRepositories);
+      }, 800); // Simulate network delay
+    });
+  };
+
+  const fetchRepoDetails = async (owner: string, repoName: string): Promise<Repository> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const repo = mockRepositories.find(r => r.name === repoName && r.owner.login === owner);
+        if (repo) {
+          resolve(repo);
+        } else {
+          throw new Error('Repository not found');
+        }
+      }, 400); // Simulate network delay
+    });
+  };
+
+  const loadRepositories = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const repos = await fetchUserRepos();
+      setRepositories(repos);
+      return repos;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load repositories');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    repositories,
+    loading,
+    error,
+    fetchUserRepos,
+    fetchRepoDetails,
+    loadRepositories
+  };
+};

@@ -517,8 +517,11 @@ ${summaryContent || 'No summary available.'}
    * Format content to follow standard PRD structure
    */
   private formatPRDContent(content: string): string {
+    console.log('[PDF-GENERATOR] formatPRDContent called with content length:', content.length);
+    
     // Check if content already has standard structure
     if (content.includes('## 1. Visão Geral') || content.includes('## 2. Requisitos Funcionais')) {
+      console.log('[PDF-GENERATOR] Content already has standard structure, returning as-is');
       return content;
     }
 
@@ -527,42 +530,62 @@ ${summaryContent || 'No summary available.'}
     const summaryContent = summaryMatch ? summaryMatch[1].trim() : '';
 
     // Format content into standard PRD structure
+    const section1 = this.extractSection(content, 'overview', 'objectives', 'scope');
+    const section2 = this.extractSection(content, 'functional requirements', 'features', 'user flows');
+    const section3 = this.extractSection(content, 'non-functional requirements', 'performance', 'security', 'usability');
+    const section4 = this.extractSection(content, 'acceptance criteria', 'success metrics');
+    const section5 = this.extractSection(content, 'dependencies', 'risks');
+    const section6 = this.extractSection(content, 'timeline', 'schedule', 'milestones');
+    const section7 = this.extractSection(content, 'approvals', 'stakeholders');
+    
+    console.log('[PDF-GENERATOR] Extracted sections:', {
+      section1Length: section1.length,
+      section2Length: section2.length,
+      section3Length: section3.length,
+      section4Length: section4.length,
+      section5Length: section5.length,
+      section6Length: section6.length,
+      section7Length: section7.length,
+      summaryContentLength: summaryContent?.length || 0
+    });
+    
     const formattedContent = `
 # Product Requirements Document (PRD)
 
 ## 1. Visão Geral
 
-${this.extractSection(content, 'overview', 'objectives', 'scope')}
+${section1}
 
 ## 2. Requisitos Funcionais
 
-${this.extractSection(content, 'functional requirements', 'features', 'user flows')}
+${section2}
 
 ## 3. Requisitos Não Funcionais
 
-${this.extractSection(content, 'non-functional requirements', 'performance', 'security', 'usability')}
+${section3}
 
 ## 4. Critérios de Aceitação
 
-${this.extractSection(content, 'acceptance criteria', 'success metrics')}
+${section4}
 
 ## 5. Dependências e Riscos
 
-${this.extractSection(content, 'dependencies', 'risks')}
+${section5}
 
 ## 6. Cronograma
 
-${this.extractSection(content, 'timeline', 'schedule', 'milestones')}
+${section6}
 
 ## 7. Aprovações
 
-${this.extractSection(content, 'approvals', 'stakeholders')}
+${section7}
 
 ## 8. Resumo das Discussões dos Agentes
 
 ${summaryContent || 'Nenhum resumo disponível.'}
 `;
 
+    console.log('[PDF-GENERATOR] Formatted content length:', formattedContent.length);
     return formattedContent.trim();
   }
 
@@ -570,11 +593,13 @@ ${summaryContent || 'Nenhum resumo disponível.'}
    * Extract section content based on keywords
    */
   private extractSection(content: string, ...keywords: string[]): string {
-    const lines = content.toLowerCase().split('\n');
+    const lines = content.split('\n');
     const resultLines = [];
+    const lowerCaseKeywords = keywords.map(k => k.toLowerCase());
 
     for (const line of lines) {
-      if (keywords.some(keyword => line.includes(keyword))) {
+      const lowerLine = line.toLowerCase();
+      if (lowerCaseKeywords.some(keyword => lowerLine.includes(keyword))) {
         resultLines.push(line);
       }
     }
@@ -593,6 +618,13 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     demandId: number,
     docType: string
   ): Promise<void> {
+    console.log('[PDF-GENERATOR] Starting drawMultiPageContent', {
+      demandId,
+      contentLength: content.length,
+      docType,
+      timestamp: new Date().toISOString()
+    });
+    
     const pageWidth = 612;
     const pageHeight = 792;
     const margin = 50;
@@ -605,6 +637,13 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     // Remove emojis from content
     const cleanContent = this.removeEmojis(content);
     const lines = cleanContent.split('\n');
+    
+    console.log('[PDF-GENERATOR] Content split into lines', {
+      demandId,
+      lineCount: lines.length,
+      firstLine: lines[0]?.substring(0, 50),
+      timestamp: new Date().toISOString()
+    });
 
     // Create first page
     let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -736,15 +775,19 @@ ${summaryContent || 'Nenhum resumo disponível.'}
    * Wrap text to fit within a specific width
    */
   private wrapText(text: string, maxWidth: number, font: any, fontSize: number): string[] {
+    // Simple word wrapping - approximate character count
+    // Note: For accurate wrapping, we'd need font metrics, but this is a reasonable approximation
     const words = text.split(' ');
     const lines: string[] = [];
     let currentLine = '';
+    const avgCharWidth = fontSize * 0.6; // Approximate average character width
+    const maxCharsPerLine = Math.floor(maxWidth / avgCharWidth);
 
     for (const word of words) {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+      const estimatedWidth = testLine.length * avgCharWidth;
 
-      if (testWidth > maxWidth && currentLine) {
+      if (estimatedWidth > maxWidth && currentLine) {
         lines.push(currentLine);
         currentLine = word;
       } else {

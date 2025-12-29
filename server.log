@@ -1,380 +1,2163 @@
-nohup: ignoring input
 
 > rest-express@1.0.0 dev
-> NODE_ENV=development tsx server/index.ts
+> NODE_ENV=development tsx --env-file .env server/index.ts
 
-No Mistral API key provided. Please set MISTRAL_API_KEY environment variable.
 Loaded agent configurations: [
   'refinador',
   'analista de dados',
-  'product manager',
+  'product owner',
   'qa',
   'scrum master',
   'tech lead',
-  'ux designer',
-  'pm'
+  'ux designer'
 ]
-11:01:58 PM [express] serving on port 5000
-11:02:27 PM [express] GET /api/health 200 in 20ms
-Browserslist: browsers data (caniuse-lite) is 12 months old. Please run:
-  npx update-browserslist-db@latest
-  Why you should do it regularly: https://github.com/browserslist/update-db#readme
-11:02:31 PM [express] GET /api/health 200 in 5ms
-11:02:35 PM [express] GET /api/health 200 in 4ms
-11:02:38 PM [express] GET /api/health 200 in 4ms
-11:02:42 PM [express] GET /api/health 200 in 4ms
-11:02:45 PM [express] GET /api/health 200 in 5ms
-11:02:48 PM [express] GET /api/health 200 in 3ms
-11:02:50 PM [express] GET /api/health 200 in 4ms
-11:02:55 PM [express] GET /api/health 200 in 6ms
-11:02:58 PM [express] GET /api/health 200 in 4ms
-11:03:00 PM [express] GET /api/health 200 in 3ms
-11:03:04 PM [express] GET /api/health 200 in 4ms
-11:03:07 PM [express] GET /api/health 200 in 2ms
-11:03:10 PM [express] GET /api/health 200 in 2ms
-11:03:12 PM [express] GET /api/health 200 in 4ms
-11:03:15 PM [express] GET /api/health 200 in 4ms
-11:03:18 PM [express] GET /api/health 200 in 3ms
-11:03:21 PM [express] GET /api/health 200 in 3ms
-11:03:32 PM [express] GET /api/health 200 in 3ms
-11:03:35 PM [express] GET /api/health 200 in 2ms
-11:03:37 PM [express] GET /api/health 200 in 3ms
-11:03:39 PM [express] GET /api/health 200 in 3ms
-11:03:42 PM [express] GET /api/health 200 in 3ms
-11:03:45 PM [express] GET /api/health 200 in 2ms
-11:03:48 PM [express] GET /api/health 200 in 2ms
-11:03:50 PM [express] GET /api/health 200 in 4ms
-11:03:53 PM [express] GET /api/health 200 in 3ms
-11:03:55 PM [express] GET /api/health 200 in 3ms
-11:04:00 PM [express] GET /api/health 200 in 5ms
-11:04:13 PM [express] GET /api/health 200 in 3ms
-11:04:15 PM [express] GET /api/health 200 in 2ms
-11:04:17 PM [express] GET /api/health 200 in 3ms
-11:04:22 PM [express] GET /api/health 200 in 2ms
-11:04:24 PM [express] GET /api/health 200 in 2ms
-11:04:27 PM [express] GET /api/health 200 in 3ms
-11:04:30 PM [express] GET /api/health 200 in 3ms
-11:04:32 PM [express] GET /api/health 200 in 3ms
-11:04:35 PM [express] GET /api/health 200 in 3ms
-11:04:37 PM [express] GET /api/health 200 in 3ms
-11:04:39 PM [express] GET /api/health 200 in 2ms
-11:04:42 PM [express] GET /api/health 200 in 3ms
-11:04:45 PM [express] GET /api/health 200 in 3ms
-11:04:47 PM [express] GET /api/health 200 in 3ms
-11:04:50 PM [express] GET /api/health 200 in 2ms
-11:04:52 PM [express] GET /api/health 200 in 3ms
-11:04:55 PM [express] GET /api/health 200 in 4ms
-11:04:57 PM [express] GET /api/health 200 in 4ms
-11:04:59 PM [express] GET /api/health 200 in 4ms
-11:05:02 PM [express] GET /api/health 200 in 2ms
-11:05:04 PM [express] GET /api/health 200 in 2ms
-11:05:07 PM [express] GET /api/health 200 in 2ms
-11:05:09 PM [express] GET /api/health 200 in 3ms
-11:05:12 PM [express] GET /api/health 200 in 2ms
-11:05:14 PM [express] GET /api/health 200 in 4ms
-11:05:17 PM [express] GET /api/health 200 in 3ms
-11:05:19 PM [express] GET /api/health 200 in 3ms
-11:05:22 PM [express] GET /api/health 200 in 3ms
-11:05:24 PM [express] GET /api/health 200 in 3ms
-11:05:26 PM [express] GET /api/health 200 in 3ms
-11:05:29 PM [express] GET /api/health 200 in 3ms
-11:05:35 PM [express] GET /api/health 200 in 3ms
-11:05:38 PM [express] GET /api/health 200 in 3ms
-11:05:40 PM [express] GET /api/health 200 in 2ms
-11:05:43 PM [express] GET /api/health 200 in 3ms
-11:05:45 PM [express] GET /api/health 200 in 2ms
-11:05:48 PM [express] GET /api/health 200 in 3ms
-11:05:50 PM [express] GET /api/health 200 in 2ms
-11:05:52 PM [express] GET /api/health 200 in 3ms
-11:05:55 PM [express] GET /api/health 200 in 2ms
-11:05:57 PM [express] GET /api/health 200 in 3ms
-11:06:00 PM [express] GET /api/health 200 in 3ms
-11:06:03 PM [express] GET /api/health 200 in 4ms
-11:06:05 PM [express] GET /api/health 200 in 3ms
-11:06:07 PM [express] GET /api/health 200 in 3ms
-11:06:10 PM [express] GET /api/health 200 in 3ms
-11:06:12 PM [express] GET /api/health 200 in 3ms
-11:06:15 PM [express] GET /api/health 200 in 2ms
-11:06:17 PM [express] GET /api/health 200 in 3ms
-11:06:19 PM [express] GET /api/health 200 in 2ms
-11:06:23 PM [express] GET /api/health 200 in 2ms
-11:06:25 PM [express] GET /api/health 200 in 3ms
-11:06:28 PM [express] GET /api/health 200 in 3ms
-11:06:30 PM [express] GET /api/health 200 in 2ms
-11:06:33 PM [express] GET /api/health 200 in 3ms
-11:06:36 PM [express] GET /api/health 200 in 2ms
-11:06:38 PM [express] GET /api/health 200 in 2ms
-11:06:40 PM [express] GET /api/health 200 in 3ms
-11:06:43 PM [express] GET /api/health 200 in 3ms
-11:06:45 PM [express] GET /api/health 200 in 3ms
-11:06:48 PM [express] GET /api/health 200 in 3ms
-11:06:51 PM [express] GET /api/health 200 in 3ms
-11:06:57 PM [express] GET /api/health 200 in 3ms
-11:07:00 PM [express] GET /api/health 200 in 3ms
-11:07:02 PM [express] GET /api/health 200 in 3ms
-11:07:05 PM [express] GET /api/health 200 in 3ms
-11:07:07 PM [express] GET /api/health 200 in 2ms
-11:07:10 PM [express] GET /api/health 200 in 2ms
-11:07:13 PM [express] GET /api/health 200 in 3ms
-11:07:15 PM [express] GET /api/health 200 in 3ms
-11:07:17 PM [express] GET /api/health 200 in 4ms
-11:07:20 PM [express] GET /api/health 200 in 4ms
-11:07:23 PM [express] GET /api/health 200 in 2ms
-11:07:25 PM [express] GET /api/health 200 in 2ms
-11:07:27 PM [express] GET /api/health 200 in 2ms
-11:07:30 PM [express] GET /api/health 200 in 2ms
-11:07:32 PM [express] GET /api/health 200 in 2ms
-11:07:35 PM [express] GET /api/health 200 in 4ms
-11:07:37 PM [express] GET /api/health 200 in 1ms
-11:07:40 PM [express] GET /api/health 200 in 3ms
-11:07:42 PM [express] GET /api/health 200 in 2ms
-11:07:44 PM [express] GET /api/health 200 in 2ms
-11:07:47 PM [express] GET /api/health 200 in 2ms
-11:07:49 PM [express] GET /api/health 200 in 4ms
-11:07:52 PM [express] GET /api/health 200 in 3ms
-11:07:54 PM [express] GET /api/health 200 in 3ms
-11:07:56 PM [express] GET /api/health 200 in 2ms
-11:07:58 PM [express] GET /api/health 200 in 3ms
-11:08:01 PM [express] GET /api/health 200 in 3ms
-11:08:03 PM [express] GET /api/health 200 in 8ms
-11:08:06 PM [express] GET /api/health 200 in 3ms
-11:08:08 PM [express] GET /api/health 200 in 3ms
-11:08:11 PM [express] GET /api/health 200 in 2ms
-11:08:18 PM [express] GET /api/health 200 in 5ms
-11:08:20 PM [express] GET /api/health 200 in 2ms
-11:08:22 PM [express] GET /api/health 200 in 4ms
-11:08:25 PM [express] GET /api/health 200 in 3ms
-11:08:27 PM [express] GET /api/health 200 in 3ms
-11:08:30 PM [express] GET /api/health 200 in 3ms
-11:08:32 PM [express] GET /api/health 200 in 4ms
-11:08:35 PM [express] GET /api/health 200 in 2ms
-11:08:37 PM [express] GET /api/health 200 in 3ms
-11:08:39 PM [express] GET /api/health 200 in 2ms
-11:08:42 PM [express] GET /api/health 200 in 2ms
-11:08:44 PM [express] GET /api/health 200 in 2ms
-11:08:47 PM [express] GET /api/health 200 in 2ms
-11:08:49 PM [express] GET /api/health 200 in 2ms
-11:08:52 PM [express] GET /api/health 200 in 2ms
-11:08:54 PM [express] GET /api/health 200 in 3ms
-11:08:56 PM [express] GET /api/health 200 in 3ms
-11:08:59 PM [express] GET /api/health 200 in 2ms
-11:09:01 PM [express] GET /api/health 200 in 2ms
-11:09:03 PM [express] GET /api/health 200 in 4ms
-11:09:06 PM [express] GET /api/health 200 in 3ms
-11:09:08 PM [express] GET /api/health 200 in 3ms
-11:09:11 PM [express] GET /api/health 200 in 2ms
-11:09:13 PM [express] GET /api/health 200 in 2ms
-11:09:16 PM [express] GET /api/health 200 in 4ms
-11:09:18 PM [express] GET /api/health 200 in 1ms
-11:09:21 PM [express] GET /api/health 200 in 3ms
-11:09:23 PM [express] GET /api/health 200 in 2ms
-11:09:25 PM [express] GET /api/health 200 in 3ms
-11:09:28 PM [express] GET /api/health 200 in 2ms
-11:09:30 PM [express] GET /api/health 200 in 3ms
-11:09:38 PM [express] GET /api/health 200 in 2ms
-11:09:41 PM [express] GET /api/health 200 in 2ms
-11:09:43 PM [express] GET /api/health 200 in 1ms
-11:09:46 PM [express] GET /api/health 200 in 2ms
-11:09:48 PM [express] GET /api/health 200 in 3ms
-11:09:51 PM [express] GET /api/health 200 in 3ms
-11:09:54 PM [express] GET /api/health 200 in 2ms
-11:09:57 PM [express] GET /api/health 200 in 2ms
-11:09:59 PM [express] GET /api/health 200 in 2ms
-11:10:02 PM [express] GET /api/health 200 in 2ms
-11:10:04 PM [express] GET /api/health 200 in 4ms
-11:10:07 PM [express] GET /api/health 200 in 3ms
-11:10:09 PM [express] GET /api/health 200 in 3ms
-11:10:13 PM [express] GET /api/health 200 in 3ms
-11:10:15 PM [express] GET /api/health 200 in 3ms
-11:10:17 PM [express] GET /api/health 200 in 4ms
-11:10:20 PM [express] GET /api/health 200 in 2ms
-11:10:22 PM [express] GET /api/health 200 in 2ms
-11:10:24 PM [express] GET /api/health 200 in 2ms
-11:10:27 PM [express] GET /api/health 200 in 3ms
-11:10:30 PM [express] GET /api/health 200 in 3ms
-11:10:32 PM [express] GET /api/health 200 in 2ms
-11:10:35 PM [express] GET /api/health 200 in 3ms
-11:10:37 PM [express] GET /api/health 200 in 2ms
-11:10:40 PM [express] GET /api/health 200 in 3ms
-11:10:42 PM [express] GET /api/health 200 in 3ms
-11:10:44 PM [express] GET /api/health 200 in 3ms
-11:10:47 PM [express] GET /api/health 200 in 2ms
-11:10:49 PM [express] GET /api/health 200 in 2ms
-11:10:51 PM [express] GET /api/health 200 in 3ms
-11:10:54 PM [express] GET /api/health 200 in 2ms
-11:11:01 PM [express] GET /api/health 200 in 2ms
-11:11:04 PM [express] GET /api/health 200 in 3ms
-11:11:07 PM [express] GET /api/health 200 in 3ms
-11:11:09 PM [express] GET /api/health 200 in 3ms
-11:11:12 PM [express] GET /api/health 200 in 4ms
-11:11:17 PM [express] GET /api/health 200 in 1ms
-11:11:19 PM [express] GET /api/health 200 in 4ms
-11:11:22 PM [express] GET /api/health 200 in 3ms
-11:11:24 PM [express] GET /api/health 200 in 3ms
-11:11:27 PM [express] GET /api/health 200 in 3ms
-11:11:29 PM [express] GET /api/health 200 in 3ms
-11:11:31 PM [express] GET /api/health 200 in 4ms
-11:11:33 PM [express] GET /api/health 200 in 7ms
-11:11:36 PM [express] GET /api/health 200 in 3ms
-11:11:38 PM [express] GET /api/health 200 in 2ms
-11:11:41 PM [express] GET /api/health 200 in 3ms
-11:11:43 PM [express] GET /api/health 200 in 2ms
-11:11:46 PM [express] GET /api/health 200 in 2ms
-11:11:49 PM [express] GET /api/health 200 in 3ms
-11:11:51 PM [express] GET /api/health 200 in 3ms
-11:11:54 PM [express] GET /api/health 200 in 2ms
-11:11:56 PM [express] GET /api/health 200 in 2ms
-11:11:59 PM [express] GET /api/health 200 in 2ms
-11:12:01 PM [express] GET /api/health 200 in 2ms
-11:12:07 PM [express] GET /api/health 200 in 3ms
-11:12:35 PM [express] GET /api/health 200 in 3ms
-11:12:38 PM [express] GET /api/health 200 in 2ms
-11:12:40 PM [express] GET /api/health 200 in 3ms
-11:12:47 PM [express] GET /api/health 200 in 3ms
-11:12:49 PM [express] GET /api/health 200 in 3ms
-11:12:52 PM [express] GET /api/health 200 in 3ms
-11:12:54 PM [express] GET /api/health 200 in 2ms
-11:12:56 PM [express] GET /api/health 200 in 3ms
-11:12:59 PM [express] GET /api/health 200 in 2ms
-11:13:01 PM [express] GET /api/health 200 in 2ms
-11:13:04 PM [express] GET /api/health 200 in 3ms
-11:13:07 PM [express] GET /api/health 200 in 2ms
-11:13:09 PM [express] GET /api/health 200 in 2ms
-11:13:12 PM [express] GET /api/health 200 in 3ms
-11:13:14 PM [express] GET /api/health 200 in 2ms
-11:13:16 PM [express] GET /api/health 200 in 3ms
-11:13:18 PM [express] GET /api/health 200 in 2ms
-11:13:21 PM [express] GET /api/health 200 in 3ms
-11:13:23 PM [express] GET /api/health 200 in 2ms
-11:13:46 PM [express] GET /api/health 200 in 4ms
-11:13:48 PM [express] GET /api/health 200 in 3ms
-11:13:51 PM [express] GET /api/health 200 in 3ms
-11:13:54 PM [express] GET /api/health 200 in 2ms
-11:13:56 PM [express] GET /api/health 200 in 3ms
-11:13:59 PM [express] GET /api/health 200 in 1ms
-11:14:02 PM [express] GET /api/health 200 in 2ms
-11:14:04 PM [express] GET /api/health 200 in 3ms
-11:14:10 PM [express] GET /api/health 200 in 2ms
-11:14:13 PM [express] GET /api/health 200 in 5ms
-11:14:14 PM [express] GET /api/health 200 in 3ms
-11:14:17 PM [express] GET /api/health 200 in 2ms
-11:14:18 PM [express] GET /api/health 200 in 2ms
-11:14:20 PM [express] GET /api/health 200 in 1ms
-11:14:23 PM [express] GET /api/health 200 in 4ms
-11:14:26 PM [express] GET /api/health 200 in 3ms
-11:14:29 PM [express] GET /api/health 200 in 3ms
-11:14:31 PM [express] GET /api/health 200 in 3ms
-11:14:34 PM [express] GET /api/health 200 in 4ms
-11:14:37 PM [express] GET /api/health 200 in 3ms
-11:14:39 PM [express] GET /api/health 200 in 2ms
-11:14:42 PM [express] GET /api/health 200 in 1ms
-11:16:14 PM [express] GET /api/health 200 in 5ms
-11:16:17 PM [express] GET /api/health 200 in 4ms
-11:16:19 PM [express] GET /api/health 200 in 3ms
-11:16:22 PM [express] GET /api/health 200 in 4ms
-11:16:25 PM [express] GET /api/health 200 in 3ms
-11:16:27 PM [express] GET /api/health 200 in 2ms
-11:16:30 PM [express] GET /api/health 200 in 3ms
-11:16:33 PM [express] GET /api/health 200 in 2ms
-11:16:36 PM [express] GET /api/health 200 in 3ms
-11:16:39 PM [express] GET /api/health 200 in 3ms
-11:16:41 PM [express] GET /api/health 200 in 5ms
-11:16:44 PM [express] GET /api/health 200 in 3ms
-11:16:46 PM [express] GET /api/health 200 in 2ms
-11:16:49 PM [express] GET /api/health 200 in 2ms
-11:16:56 PM [express] GET /api/health 200 in 4ms
-11:16:58 PM [express] GET /api/health 200 in 3ms
-11:17:00 PM [express] GET /api/health 200 in 3ms
-11:17:03 PM [express] GET /api/health 200 in 2ms
-11:17:06 PM [express] GET /api/health 200 in 2ms
-11:17:09 PM [express] GET /api/health 200 in 2ms
-11:17:11 PM [express] GET /api/health 200 in 3ms
-11:17:14 PM [express] GET /api/health 200 in 2ms
-11:17:16 PM [express] GET /api/health 200 in 2ms
-11:17:19 PM [express] GET /api/health 200 in 3ms
-11:17:21 PM [express] GET /api/health 200 in 2ms
-11:17:24 PM [express] GET /api/health 200 in 3ms
-11:17:27 PM [express] GET /api/health 200 in 2ms
-11:17:29 PM [express] GET /api/health 200 in 3ms
-11:17:32 PM [express] GET /api/health 200 in 2ms
-11:17:35 PM [express] GET /api/health 200 in 3ms
-11:17:38 PM [express] GET /api/health 200 in 3ms
-11:17:40 PM [express] GET /api/health 200 in 2ms
-11:17:43 PM [express] GET /api/health 200 in 3ms
-11:17:46 PM [express] GET /api/health 200 in 3ms
-11:17:49 PM [express] GET /api/health 200 in 2ms
-11:17:51 PM [express] GET /api/health 200 in 2ms
-11:17:54 PM [express] GET /api/health 200 in 3ms
-11:17:56 PM [express] GET /api/health 200 in 2ms
-11:17:59 PM [express] GET /api/health 200 in 4ms
-11:18:02 PM [express] GET /api/health 200 in 3ms
-11:18:05 PM [express] GET /api/health 200 in 3ms
-11:18:08 PM [express] GET /api/health 200 in 2ms
-11:18:10 PM [express] GET /api/health 200 in 2ms
-11:18:14 PM [express] GET /api/health 200 in 3ms
-11:18:16 PM [express] GET /api/health 200 in 2ms
-11:18:24 PM [express] GET /api/health 200 in 3ms
-11:18:26 PM [express] GET /api/health 200 in 3ms
-11:18:29 PM [express] GET /api/health 200 in 2ms
-11:18:31 PM [express] GET /api/health 200 in 2ms
-11:18:34 PM [express] GET /api/health 200 in 1ms
-11:18:37 PM [express] GET /api/health 200 in 3ms
-11:18:40 PM [express] GET /api/health 200 in 3ms
-11:18:43 PM [express] GET /api/health 200 in 2ms
-11:18:47 PM [express] GET /api/health 200 in 3ms
-11:18:49 PM [express] GET /api/health 200 in 2ms
-11:18:52 PM [express] GET /api/health 200 in 3ms
-11:18:55 PM [express] GET /api/health 200 in 2ms
-11:18:58 PM [express] GET /api/health 200 in 2ms
-11:19:00 PM [express] GET /api/health 200 in 3ms
-11:19:03 PM [express] GET /api/health 200 in 3ms
-11:19:05 PM [express] GET /api/health 200 in 4ms
-11:19:08 PM [express] GET /api/health 200 in 2ms
-11:30:21 PM [express] GET /api/health 200 in 8ms
-11:30:24 PM [express] GET /api/health 200 in 3ms
-11:30:26 PM [express] GET /api/health 200 in 5ms
-11:30:29 PM [express] GET /api/health 200 in 2ms
-11:30:31 PM [express] GET /api/health 200 in 3ms
-11:30:34 PM [express] GET /api/health 200 in 1ms
-11:30:36 PM [express] GET /api/health 200 in 2ms
-11:30:43 PM [express] GET /api/health 200 in 3ms
-11:30:46 PM [express] GET /api/health 200 in 2ms
-11:30:48 PM [express] GET /api/health 200 in 2ms
-11:30:53 PM [express] GET /api/health 200 in 3ms
-11:30:55 PM [express] GET /api/health 200 in 4ms
-11:30:57 PM [express] GET /api/health 200 in 3ms
-11:31:00 PM [express] GET /api/health 200 in 2ms
-11:31:03 PM [express] GET /api/health 200 in 3ms
-11:31:05 PM [express] GET /api/health 200 in 2ms
-11:31:07 PM [express] GET /api/health 200 in 3ms
-11:31:10 PM [express] GET /api/health 200 in 2ms
-11:31:13 PM [express] GET /api/health 200 in 5ms
-11:31:15 PM [express] GET /api/health 200 in 3ms
-11:31:17 PM [express] GET /api/health 200 in 2ms
-11:31:19 PM [express] GET /api/health 200 in 3ms
-11:31:22 PM [express] GET /api/health 200 in 2ms
-11:31:24 PM [express] GET /api/health 200 in 2ms
-11:31:26 PM [express] GET /api/health 200 in 3ms
-11:31:29 PM [express] GET /api/health 200 in 3ms
-11:31:31 PM [express] GET /api/health 200 in 3ms
-11:31:33 PM [express] GET /api/health 200 in 2ms
-11:31:36 PM [express] GET /api/health 200 in 3ms
-11:31:38 PM [express] GET /api/health 200 in 2ms
-11:31:41 PM [express] GET /api/health 200 in 2ms
-11:31:43 PM [express] GET /api/health 200 in 2ms
-11:31:46 PM [express] GET /api/health 200 in 3ms
-11:31:48 PM [express] GET /api/health 200 in 3ms
-11:31:51 PM [express] GET /api/health 200 in 2ms
-11:31:53 PM [express] GET /api/health 200 in 3ms
-11:31:55 PM [express] GET /api/health 200 in 3ms
-11:31:57 PM [express] GET /api/health 200 in 2ms
-11:32:05 PM [express] GET /api/health 200 in 3ms
-11:32:08 PM [express] GET /api/health 200 in 2ms
-11:32:10 PM [express] GET /api/health 200 in 3ms
-11:32:13 PM [express] GET /api/health 200 in 3ms
-11:32:15 PM [express] GET /api/health 200 in 4ms
-11:32:17 PM [express] GET /api/health 200 in 2ms
-11:32:20 PM [express] GET /api/health 200 in 2ms
-11:32:23 PM [express] GET /api/health 200 in 3ms
-11:32:25 PM [express] GET /api/health 200 in 8ms
-11:32:27 PM [express] GET /api/health 200 in 3ms
+Agent configs (excluding PM): [
+  'analista de dados',
+  'product owner',
+  'qa',
+  'refinador',
+  'scrum master',
+  'tech lead',
+  'ux designer'
+]
+Initializing demand routing system...
+Trained ML model loaded successfully
+--- GitHubService Initialization ---
+process.env.GITHUB_ACCESS_TOKEN: githu...
+process.env.GITHUB_TOKEN: undefined
+process.env.NODE_ENV: development
+------------------------------------
+GitHub API Key loaded (first 5 chars): githu...
+Octokit client initialized successfully
+Testing Octokit client with authenticated request...
+simple-git initialized successfully
+RepoService initializing GitHubService with token availability: true
+GitHub token is available, first 5 chars: githu...
+--- GitHubService Initialization ---
+process.env.GITHUB_ACCESS_TOKEN: githu...
+process.env.GITHUB_TOKEN: undefined
+process.env.NODE_ENV: development
+------------------------------------
+GitHub API Key loaded (first 5 chars): githu...
+Octokit client initialized successfully
+Testing Octokit client with authenticated request...
+simple-git initialized successfully
+Demand routing system initialized successfully
+Registered plugin: DiscoveryPlugin with priority: 10
+Registered plugin: BugPlugin with priority: 10
+Registered plugin: ImprovementPlugin with priority: 10
+Routing system initialized with plugins
+12:43:29 PM [express] serving on port 49206
+12:44:03 PM [express] GET /api/demands 200 in 1ms :: []
+Fetching user repositories from GitHub API
+Listing user repositories from GitHub API
+Successfully listed 15 repositories from GitHub API
+Successfully fetched 15 repositories from GitHub API
+12:44:06 PM [express] GET /api/github/repos 200 in 420ms :: [{"id":1022857613,"node_id":"R_kgDOPPeRjQ…
+Starting repository indexing for jhonnybrzz1/AiChatFlow1 with demand description: true
+GitHub token validation passed for jhonnybrzz1/AiChatFlow1
+Calling repoService.indexRepo for jhonnybrzz1/AiChatFlow1
+Starting repository indexing for jhonnybrzz1/AiChatFlow1
+Repository indexing failed for jhonnybrzz1/AiChatFlow1: ErrorEvent {
+  type: 'error',
+  defaultPrevented: false,
+  cancelable: false,
+  timeStamp: 44472.937375
+}
+GitHub API error details - Status: Unknown status
+Error in repository indexing endpoint: ErrorEvent {
+  type: 'error',
+  defaultPrevented: false,
+  cancelable: false,
+  timeStamp: 44476.363708
+}
+GitHub API error details - Status: Unknown status, Message: Unknown error
+12:44:12 PM [express] POST /api/github/repos/jhonnybrzz1/AiChatFlow1/index 500 in 9ms :: {"content":"…
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:11:38.427Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:11:38.427Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:11:38.428Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:11:38.429Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:11:38.449Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:11:38.449Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:11:38.449Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:11:38.450Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:11:38 PM [express] GET /api/test-pdf 200 in 27ms :: {"message":"PDF generation test completed succ…
+1:11:42 PM [express] GET /api/documents/test_prd.pdf 200 in 1ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:12:19.528Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:12:19.528Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:12:19.528Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:12:19.529Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:12:19.530Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:12:19.530Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:12:19.530Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:12:19.530Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:12:19 PM [express] GET /api/test-pdf 200 in 5ms :: {"message":"PDF generation test completed succe…
+1:12:25 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:13:45.738Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:13:45.738Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:13:45.738Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:13:45.739Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:13:45.741Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:13:45.741Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:13:45.741Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:13:45.741Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:13:45 PM [express] GET /api/test-pdf 200 in 7ms :: {"message":"PDF generation test completed succe…
+1:13:55 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:14:31.900Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:14:31.901Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:14:31.901Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:14:31.901Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:14:31.903Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:14:31.903Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:14:31.903Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:14:31.903Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:14:31 PM [express] GET /api/test-pdf 200 in 6ms :: {"message":"PDF generation test completed succe…
+1:14:34 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:15:15.234Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:15.234Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:15.234Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:15:15.234Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:15:15.236Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:15.236Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:15.236Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:15:15.236Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:15:15 PM [express] GET /api/test-pdf 200 in 4ms :: {"message":"PDF generation test completed succe…
+1:15:18 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:15:40.619Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:40.619Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:40.620Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:15:40.620Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:15:40.621Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:40.621Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:40.621Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:15:40.621Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:15:40 PM [express] GET /api/test-pdf 200 in 4ms :: {"message":"PDF generation test completed succe…
+1:15:43 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:15:59.887Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:59.887Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:59.887Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:15:59.887Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:15:59.889Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:59.889Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:15:59.889Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:15:59.889Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:15:59 PM [express] GET /api/test-pdf 200 in 4ms :: {"message":"PDF generation test completed succe…
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:16:40.806Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:16:40.806Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:16:40.806Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:16:40.806Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:16:40.808Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:16:40.808Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:16:40.808Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:16:40.808Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:16:40 PM [express] GET /api/test-pdf 200 in 3ms :: {"message":"PDF generation test completed succe…
+1:16:44 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:17:00.057Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:17:00.057Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:17:00.057Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:17:00.057Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:17:00.059Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:17:00.059Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:17:00.059Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:17:00.059Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:17:00 PM [express] GET /api/test-pdf 200 in 4ms :: {"message":"PDF generation test completed succe…
+[PDF-GENERATOR] Starting PRD document generation {
+  demandId: 999,
+  contentLength: 399,
+  timestamp: '2025-12-28T16:50:19.982Z'
+}
+[PDF-GENERATOR] PRD Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'escopo',
+      message: 'Seção "Escopo" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'in_scope',
+      message: 'Subseção "In Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'out_scope',
+      message: 'Subseção "Out of Scope" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'requisitos_funcionais',
+      message: 'Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)',
+      severity: 'error'
+    },
+    {
+      field: 'criterios_aceitacao',
+      message: 'Seção "Critérios de Aceitação Gerais" ausente',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:50:19.983Z'
+}
+
+❌ Erros de validação no PRD:
+
+**Erros críticos:**
+1. [escopo] Seção "Escopo" ausente no documento
+2. [in_scope] Subseção "In Scope" ausente
+3. [out_scope] Subseção "Out of Scope" ausente
+4. [requisitos_funcionais] Nenhum requisito funcional encontrado com formato válido (RF1, RF2, etc.)
+5. [criterios_aceitacao] Seção "Critérios de Aceitação Gerais" ausente
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] PRD Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:50:19.984Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] overviewObjectiveMatch: null
+[PDF-GENERATOR-DEBUG] overviewProblemMatch: null
+[PDF-GENERATOR-DEBUG] overviewSolutionMatch: null
+[PDF-GENERATOR-DEBUG] functionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] nonFunctionalRequirementsMatch: null
+[PDF-GENERATOR-DEBUG] inScopeMatch: null
+[PDF-GENERATOR-DEBUG] outOfScopeMatch: null
+[PDF-GENERATOR-DEBUG] acceptanceCriteriaMatch: null
+[PDF-GENERATOR-DEBUG] risksMatch: null
+[PDF-GENERATOR-DEBUG] primaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] secondaryMetricsMatch: null
+[PDF-GENERATOR-DEBUG] timelineMatch: null
+[PDF-GENERATOR] Extracted PRD data for validation: {
+  title: '',
+  version: '1.0.0',
+  hasTitle: false,
+  contentLength: 399,
+  overview: { objective: '', problem: '', solution: '' },
+  functionalRequirements: [],
+  nonFunctionalRequirements: [],
+  scope: { inScope: [], outOfScope: [] },
+  acceptanceCriteria: [],
+  risks: [],
+  metrics: { primary: [], secondary: [] },
+  timeline: { mvpDate: '', phases: [] }
+}
+[PDF-GENERATOR] PRD Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[overview.objective] Objetivo deve ter no mínimo 20 caracteres',
+    '[overview.problem] Descrição do problema deve ter no mínimo 20 caracteres',
+    '[overview.solution] Descrição da solução deve ter no mínimo 20 caracteres',
+    '[functionalRequirements] Pelo menos um requisito funcional é obrigatório',
+    '[nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório',
+    "[scope.inScope] Pelo menos um item 'In Scope' é obrigatório",
+    "[scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório",
+    '[acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório',
+    '[risks] Pelo menos um risco deve ser identificado',
+    '[metrics.primary] Pelo menos um KPI primário é obrigatório',
+    '[timeline.mvpDate] Data deve estar no formato YYYY-MM-DD'
+  ],
+  timestamp: '2025-12-28T16:50:19.984Z'
+}
+[PDF-GENERATOR] PRD Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] PRD Schema Error 2: [overview.objective] Objetivo deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 3: [overview.problem] Descrição do problema deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 4: [overview.solution] Descrição da solução deve ter no mínimo 20 caracteres
+[PDF-GENERATOR] PRD Schema Error 5: [functionalRequirements] Pelo menos um requisito funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 6: [nonFunctionalRequirements] Pelo menos um requisito não funcional é obrigatório
+[PDF-GENERATOR] PRD Schema Error 7: [scope.inScope] Pelo menos um item 'In Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 8: [scope.outOfScope] Pelo menos um item 'Out of Scope' é obrigatório
+[PDF-GENERATOR] PRD Schema Error 9: [acceptanceCriteria] Pelo menos um critério de aceitação geral é obrigatório
+[PDF-GENERATOR] PRD Schema Error 10: [risks] Pelo menos um risco deve ser identificado
+[PDF-GENERATOR] PRD Schema Error 11: [metrics.primary] Pelo menos um KPI primário é obrigatório
+[PDF-GENERATOR] PRD Schema Error 12: [timeline.mvpDate] Data deve estar no formato YYYY-MM-DD
+[PDF-GENERATOR] Starting Tasks document generation {
+  demandId: 999,
+  contentLength: 262,
+  timestamp: '2025-12-28T16:50:19.987Z'
+}
+[PDF-GENERATOR] Tasks Markdown validation failed: {
+  demandId: 999,
+  errors: [
+    {
+      field: 'metadados',
+      message: 'Seção "Metadados" ausente no documento',
+      severity: 'error'
+    },
+    {
+      field: 'prioridade',
+      message: 'Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)',
+      severity: 'error'
+    },
+    {
+      field: 'responsavel',
+      message: 'Campo "Responsável" ausente',
+      severity: 'error'
+    },
+    {
+      field: 'status',
+      message: 'Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)',
+      severity: 'error'
+    },
+    {
+      field: 'tarefas',
+      message: 'Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)',
+      severity: 'error'
+    }
+  ],
+  timestamp: '2025-12-28T16:50:19.987Z'
+}
+
+❌ Erros de validação no Tasks:
+
+**Erros críticos:**
+1. [metadados] Seção "Metadados" ausente no documento
+2. [prioridade] Campo "Prioridade" ausente ou inválido (deve ser Alta, Média ou Baixa)
+3. [responsavel] Campo "Responsável" ausente
+4. [status] Campo "Status" ausente ou inválido (deve ser Não Iniciado, Em Progresso ou Concluído)
+5. [tarefas] Nenhuma tarefa encontrada com formato válido (T1, T2, etc.)
+
+⚠️ **Avisos:**
+1. [metricas] Seção "Métricas de Sucesso" ausente
+[PDF-GENERATOR] Tasks Markdown validation warnings: {
+  demandId: 999,
+  warnings: [
+    {
+      field: 'metricas',
+      message: 'Seção "Métricas de Sucesso" ausente',
+      severity: 'warning'
+    }
+  ],
+  timestamp: '2025-12-28T16:50:19.987Z'
+}
+[PDF-GENERATOR-DEBUG] titleMatch: null
+[PDF-GENERATOR-DEBUG] versionMatch: null
+[PDF-GENERATOR-DEBUG] priorityMatch: null
+[PDF-GENERATOR-DEBUG] responsibleMatch: null
+[PDF-GENERATOR-DEBUG] statusMatch: null
+[PDF-GENERATOR-DEBUG] tasksMatch: null
+[PDF-GENERATOR-DEBUG] successMetricsMatch: null
+[PDF-GENERATOR] Extracted Tasks data for validation: {
+  title: '',
+  metadata: {
+    priority: 'Média',
+    responsible: '@unknown-team',
+    status: 'Não Iniciado',
+    version: '1.0.0'
+  },
+  tasks: [],
+  successMetrics: [],
+  contentLength: 262
+}
+[PDF-GENERATOR] Tasks Zod schema validation failed: {
+  demandId: 999,
+  errors: [
+    '[title] Título deve ter no mínimo 5 caracteres',
+    '[tasks] Pelo menos uma tarefa é obrigatória',
+    '[successMetrics] Pelo menos uma métrica de sucesso é obrigatória'
+  ],
+  timestamp: '2025-12-28T16:50:19.987Z'
+}
+[PDF-GENERATOR] Tasks Schema Error 1: [title] Título deve ter no mínimo 5 caracteres
+[PDF-GENERATOR] Tasks Schema Error 2: [tasks] Pelo menos uma tarefa é obrigatória
+[PDF-GENERATOR] Tasks Schema Error 3: [successMetrics] Pelo menos uma métrica de sucesso é obrigatória
+1:50:19 PM [express] GET /api/test-pdf 200 in 8ms :: {"message":"PDF generation test completed succe…
+1:50:22 PM [express] GET /api/documents/test_prd.pdf 200 in 0ms

@@ -1,0 +1,396 @@
+import { Octokit } from '@octokit/rest';
+import 'dotenv/config';
+
+/**
+ * GitHub Analyzer Service - Lightweight repository analysis
+ * Focuses on extracting strategic information without full indexing
+ */
+export class GitHubAnalyzer {
+  private client: Octokit;
+
+  constructor() {
+    const githubToken = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
+    
+    if (!githubToken) {
+      throw new Error('GitHub token not configured. Set GITHUB_ACCESS_TOKEN environment variable.');
+    }
+
+    this.client = new Octokit({
+      auth: githubToken,
+      userAgent: 'AiChatFlow/Analyzer',
+      baseUrl: 'https://api.github.com',
+      request: {
+        timeout: 15000 // 15 seconds timeout
+      }
+    });
+  }
+
+  /**
+   * Get strategic repository information (lightweight)
+   * @param owner Repository owner
+   * @param repo Repository name
+   * @returns Strategic repository analysis
+   */
+  async analyzeRepository(owner: string, repo: string): Promise<RepositoryAnalysis> {
+    try {
+      console.log(`Analyzing repository ${owner}/${repo}...`);
+      
+      // 1. Get basic repository info
+      const repoInfo = await this.getRepositoryInfo(owner, repo);
+      
+      // 2. Get languages (main technologies)
+      const languages = await this.getRepositoryLanguages(owner, repo);
+      
+      // 3. Get README content (main documentation)
+      const readme = await this.getReadmeContent(owner, repo);
+      
+      // 4. Get repository structure (main files/directories)
+      const structure = await this.getRepositoryStructure(owner, repo);
+      
+      // 5. Analyze and summarize
+      const analysis = this.analyzeRepositoryData(repoInfo, languages, readme, structure);
+      
+      console.log(`Repository analysis completed for ${owner}/${repo}`);
+      return analysis;
+      
+    } catch (error) {
+      console.error(`Failed to analyze repository ${owner}/${repo}:`, error);
+      
+      // Return minimal information even on error
+      return {
+        repository: `${owner}/${repo}`,
+        accessible: false,
+        basicInfo: this.getFallbackRepositoryInfo(owner, repo),
+        technologies: {
+          main: ['Unknown'],
+          all: ['Unknown'],
+          details: []
+        },
+        purpose: 'Repository information not available',
+        projectType: 'Unknown',
+        structure: {
+          keyFiles: [],
+          keyDirectories: [],
+          totalItems: 0
+        },
+        readme: 'Repository information not available',
+        analysisTimestamp: new Date().toISOString(),
+        error: this.formatError(error)
+      };
+    }
+  }
+
+  /**
+   * Get basic repository information
+   */
+  private async getRepositoryInfo(owner: string, repo: string): Promise<RepositoryInfo> {
+    try {
+      const { data } = await this.client.repos.get({ owner, repo });
+      return {
+        id: data.id,
+        name: data.name,
+        fullName: data.full_name,
+        description: data.description || 'No description',
+        private: data.private,
+        fork: data.fork,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        size: data.size,
+        stargazers: data.stargazers_count,
+        forks: data.forks_count,
+        language: data.language || 'Not specified',
+        defaultBranch: data.default_branch,
+        url: data.html_url,
+        topics: data.topics || []
+      };
+    } catch (error) {
+      console.warn(`Could not fetch repository info:`, this.formatError(error));
+      return this.getFallbackRepositoryInfo(owner, repo);
+    }
+  }
+
+  /**
+   * Get repository languages (technologies)
+   */
+  private async getRepositoryLanguages(owner: string, repo: string): Promise<RepositoryLanguages> {
+    try {
+      const { data } = await this.client.repos.listLanguages({ owner, repo });
+      return Object.entries(data).map(([language, bytes]) => ({
+        language,
+        bytes,
+        percentage: this.calculatePercentage(bytes, data)
+      }));
+    } catch (error) {
+      console.warn(`Could not fetch repository languages:`, this.formatError(error));
+      return [];
+    }
+  }
+
+  /**
+   * Get README content
+   */
+  private async getReadmeContent(owner: string, repo: string): Promise<string> {
+    try {
+      const { data } = await this.client.repos.getReadme({ owner, repo });
+      return Buffer.from(data.content, 'base64').toString('utf8');
+    } catch (error) {
+      console.warn(`Could not fetch README:`, this.formatError(error));
+      return 'No README available';
+    }
+  }
+
+  /**
+   * Get repository structure (main files and directories)
+   */
+  private async getRepositoryStructure(owner: string, repo: string): Promise<RepositoryStructure> {
+    try {
+      const { data: repoInfo } = await this.client.repos.get({ owner, repo });
+      const { data: tree } = await this.client.git.getTree({
+        owner,
+        repo,
+        tree_sha: repoInfo.default_branch,
+        recursive: 'false' // Only root level
+      });
+
+      return tree.tree
+        .filter(item => !this.isIgnoredItem(item.path))
+        .map(item => ({
+          path: item.path,
+          type: item.type as 'blob' | 'tree',
+          size: item.size || 0,
+          sha: item.sha
+        }));
+    } catch (error) {
+      console.warn(`Could not fetch repository structure:`, this.formatError(error));
+      return [];
+    }
+  }
+
+  /**
+   * Analyze and summarize repository data
+   */
+  private analyzeRepositoryData(
+    info: RepositoryInfo,
+    languages: RepositoryLanguages,
+    readme: string,
+    structure: RepositoryStructure
+  ): RepositoryAnalysis {
+    // Extract key technologies
+    const mainTechnologies = languages.length > 0 
+      ? languages.slice(0, 3).map(l => l.language)
+      : [info.language || 'Unknown'];
+
+    // Extract purpose from description or README
+    const purpose = this.extractPurpose(info.description, readme);
+
+    // Determine project type
+    const projectType = this.determineProjectType(info, structure);
+
+    // Extract key files
+    const keyFiles = structure
+      .filter(item => item.type === 'blob')
+      .slice(0, 10)
+      .map(item => item.path);
+
+    // Extract key directories
+    const keyDirectories = structure
+      .filter(item => item.type === 'tree')
+      .slice(0, 5)
+      .map(item => item.path);
+
+    return {
+      repository: info.fullName,
+      accessible: true,
+      basicInfo: info,
+      technologies: {
+        main: mainTechnologies,
+        all: languages.map(l => l.language),
+        details: languages
+      },
+      purpose: purpose,
+      projectType: projectType,
+      structure: {
+        keyFiles,
+        keyDirectories,
+        totalItems: structure.length
+      },
+      readme: readme.substring(0, 1000) + (readme.length > 1000 ? '...' : ''),
+      analysisTimestamp: new Date().toISOString(),
+      error: null
+    };
+  }
+
+  /**
+   * Extract purpose from description and README
+   */
+  private extractPurpose(description: string, readme: string): string {
+    if (description && description.trim() !== 'No description') {
+      return description.trim();
+    }
+
+    // Try to extract first paragraph from README
+    const firstParagraph = readme.split('\n\n')[0] || readme.split('\n')[0] || '';
+    return firstParagraph.substring(0, 200) + (firstParagraph.length > 200 ? '...' : '');
+  }
+
+  /**
+   * Determine project type based on structure and info
+   */
+  private determineProjectType(info: RepositoryInfo, structure: RepositoryStructure): string {
+    const hasBackend = structure.some(item => 
+      item.path.includes('server') || 
+      item.path.includes('backend') ||
+      item.path.includes('api') ||
+      item.path.includes('app.py') ||
+      item.path.includes('app.js') ||
+      item.path.includes('main.py')
+    );
+
+    const hasFrontend = structure.some(item => 
+      item.path.includes('client') || 
+      item.path.includes('frontend') ||
+      item.path.includes('public') ||
+      item.path.includes('src') ||
+      item.path.includes('components')
+    );
+
+    const hasMobile = structure.some(item => 
+      item.path.includes('android') || 
+      item.path.includes('ios') ||
+      item.path.includes('mobile') ||
+      item.path.includes('app')
+    );
+
+    const hasData = structure.some(item => 
+      item.path.includes('data') || 
+      item.path.includes('ml') ||
+      item.path.includes('ai') ||
+      item.path.includes('model')
+    );
+
+    if (hasBackend && hasFrontend) return 'Full Stack Application';
+    if (hasBackend) return 'Backend Service/API';
+    if (hasFrontend) return 'Frontend Application';
+    if (hasMobile) return 'Mobile Application';
+    if (hasData) return 'Data/ML Project';
+    if (info.topics.includes('library') || info.topics.includes('package')) return 'Library/Package';
+    if (info.topics.includes('cli') || info.topics.includes('tool')) return 'CLI Tool';
+    
+    return 'General Project';
+  }
+
+  /**
+   * Calculate percentage for language
+   */
+  private calculatePercentage(bytes: number, allLanguages: Record<string, number>): number {
+    const total = Object.values(allLanguages).reduce((sum, val) => sum + val, 0);
+    return Math.round((bytes / total) * 100);
+  }
+
+  /**
+   * Check if item should be ignored
+   */
+  private isIgnoredItem(path: string): boolean {
+    const ignored = ['.git', 'node_modules', 'dist', 'build', '.vscode', '.idea', 'temp', 'uploads'];
+    return ignored.some(ignoredItem => path.includes(ignoredItem));
+  }
+
+  /**
+   * Get fallback repository info when API fails
+   */
+  private getFallbackRepositoryInfo(owner: string, repo: string): RepositoryInfo {
+    return {
+      id: 0,
+      name: repo,
+      fullName: `${owner}/${repo}`,
+      description: 'Repository information not available',
+      private: true,
+      fork: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      size: 0,
+      stargazers: 0,
+      forks: 0,
+      language: 'Unknown',
+      defaultBranch: 'main',
+      url: `https://github.com/${owner}/${repo}`,
+      topics: []
+    };
+  }
+
+  /**
+   * Format error for logging
+   */
+  private formatError(error: unknown): string {
+    if (error instanceof Error) {
+      return `${error.name}: ${error.message}`;
+    } else if (error && typeof error === 'object') {
+      return JSON.stringify({
+        type: (error as any).type,
+        message: (error as any).message,
+        status: (error as any).status
+      }, null, 2);
+    }
+    return String(error);
+  }
+}
+
+// Export singleton instance
+export const githubAnalyzer = new GitHubAnalyzer();
+
+// Type definitions
+type RepositoryInfo = {
+  id: number;
+  name: string;
+  fullName: string;
+  description: string;
+  private: boolean;
+  fork: boolean;
+  createdAt: string;
+  updatedAt: string;
+  size: number;
+  stargazers: number;
+  forks: number;
+  language: string;
+  defaultBranch: string;
+  url: string;
+  topics: string[];
+};
+
+type RepositoryLanguage = {
+  language: string;
+  bytes: number;
+  percentage: number;
+};
+
+type RepositoryLanguages = RepositoryLanguage[];
+
+type RepositoryStructureItem = {
+  path: string;
+  type: 'blob' | 'tree';
+  size: number;
+  sha: string;
+};
+
+type RepositoryStructure = RepositoryStructureItem[];
+
+type RepositoryAnalysis = {
+  repository: string;
+  accessible: boolean;
+  basicInfo: RepositoryInfo;
+  technologies: {
+    main: string[];
+    all: string[];
+    details: RepositoryLanguages;
+  };
+  purpose: string;
+  projectType: string;
+  structure: {
+    keyFiles: string[];
+    keyDirectories: string[];
+    totalItems: number;
+  };
+  readme: string;
+  analysisTimestamp: string;
+  error: string | null;
+};

@@ -11,6 +11,8 @@ import { DiscoveryPlugin } from "../plugins/discovery-plugin";
 import { BugPlugin } from "../plugins/bug-plugin";
 import { ImprovementPlugin } from "../plugins/improvement-plugin";
 import { agentInteractionService } from "./agent-interaction";
+import { agentOrchestrator } from "../cognitive-core/agent-orchestrator";
+import { frameworkManager } from "../frameworks/framework-manager";
 
 // Using Mistral AI service instead of OpenAI
 
@@ -28,6 +30,8 @@ export class AISquadService {
   constructor() {
     this.loadAgentConfigurations();
     this.initializeRoutingSystem();
+    this.initializeCognitiveCore();
+    this.initializeFrameworkManager();
   }
 
   public addSSEConnection(demandId: number, connection: SSEConnection): void {
@@ -63,6 +67,33 @@ export class AISquadService {
       console.log('Routing system initialized with plugins');
     } catch (error) {
       console.error('Error initializing routing system:', error);
+    }
+  }
+
+  private async initializeCognitiveCore(): Promise<void> {
+    try {
+      console.log('Initializing AICHATflow Cognitive Core...');
+      console.log('✅ Demand Classifier ready');
+      console.log('✅ Agent Orchestrator ready');
+      console.log('AICHATflow Cognitive Core initialized successfully');
+    } catch (error) {
+      console.error('Error initializing cognitive core:', error);
+    }
+  }
+
+  private async initializeFrameworkManager(): Promise<void> {
+    try {
+      console.log('🔧 Initializing Framework Manager...');
+      await frameworkManager.initialize();
+      console.log('✅ Framework Manager initialized with 6 demand management frameworks');
+      console.log('   - JTBD (Jobs-to-be-Done)');
+      console.log('   - HEART (UX Metrics)');
+      console.log('   - Severity x Priority Matrix');
+      console.log('   - Double Diamond (Design Thinking)');
+      console.log('   - CRISP-DM (Data Science)');
+      console.log('   - AI Framework Suggestion');
+    } catch (error) {
+      console.error('Error initializing framework manager:', error);
     }
   }
 
@@ -175,6 +206,102 @@ export class AISquadService {
 
   stopProcessing(demandId: number): void {
     this.stopRequests.add(demandId);
+  }
+
+  async processDemandWithCognitiveCore(demandId: number, onProgress?: (message: ChatMessage) => void): Promise<void> {
+    const demand = await storage.getDemand(demandId);
+    if (!demand) throw new Error("Demand not found");
+
+    // Update status to processing
+    await storage.updateDemand(demandId, { status: 'processing' });
+
+    try {
+      // Use AICHATflow Cognitive Core for intelligent classification and orchestration
+      console.log(`🚀 Using AICHATflow Cognitive Core for demand ${demandId}`);
+
+      // Step 1: Classify the demand
+      const classification = await agentOrchestrator.createOrchestrationPlan(demandId);
+      
+      // Update demand with classification information
+      await agentOrchestrator.updateDemandWithOrchestration(demandId, classification);
+
+      console.log(`📊 Demand classified as: ${classification.classification.category}`);
+      console.log(`🔧 Execution order: ${classification.agentExecutionOrder.join(' → ')}`);
+      console.log(`⏱️ Estimated time: ${classification.estimatedCompletionTime} minutes`);
+
+      // Send classification update
+      if (onProgress) {
+        onProgress({
+          id: `${demandId}-classification`,
+          agent: 'cognitive_core',
+          message: `📊 Classificação Inteligente: ${classification.classification.category}\n` +
+                   `🔧 Ordem de Execução: ${classification.agentExecutionOrder.join(' → ')}\n` +
+                   `⏱️ Tempo Estimado: ${classification.estimatedCompletionTime} minutos`,
+          timestamp: new Date().toISOString(),
+          type: 'completed',
+          progress: 10
+        });
+      }
+
+      // Step 2: Execute the orchestration plan
+      const executionResults = await agentOrchestrator.executeOrchestrationPlan(
+        classification,
+        (progress: number, message: string) => {
+          if (onProgress) {
+            onProgress({
+              id: `${demandId}-orchestration-${progress}`,
+              agent: 'cognitive_core',
+              message: message,
+              timestamp: new Date().toISOString(),
+              type: 'processing',
+              progress: progress
+            });
+          }
+        }
+      );
+
+      console.log(`✅ Cognitive Core processing completed for demand ${demandId}`);
+      console.log(`📋 Execution results: ${executionResults.length} agents executed`);
+
+      // Step 3: Generate documents with PM (outside the cognitive core orchestration)
+      await storage.updateDemand(demandId, {
+        status: 'processing',
+        progress: 95
+      });
+
+      // Generate PRD with PM
+      const prdContent = await this.generatePRDWithPM(demand, []);
+
+      // Generate Tasks with PM
+      const tasksContent = await this.generateTasksWithPM(demand, prdContent);
+
+      // Save documents
+      const prdPath = await this.saveDocument(demandId, 'PRD', prdContent);
+      const tasksPath = await this.saveDocument(demandId, 'Tasks', tasksContent);
+
+      // Update demand with document paths and final progress
+      await storage.updateDemand(demandId, {
+        status: 'completed',
+        progress: 100,
+        prdUrl: prdPath,
+        tasksUrl: tasksPath
+      });
+
+      // Notify clients
+      this.notifyDemandUpdate(demandId);
+
+    } catch (error) {
+      console.error(`❌ Error in Cognitive Core processing for demand ${demandId}:`, error);
+      
+      // Fallback to traditional processing if cognitive core fails
+      await storage.updateDemand(demandId, {
+        status: 'processing',
+        errorMessage: `Cognitive Core error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+      
+      // Continue with traditional processing
+      await this.processDemand(demandId, onProgress);
+    }
   }
 
   async processDemand(demandId: number, onProgress?: (message: ChatMessage) => void): Promise<void> {

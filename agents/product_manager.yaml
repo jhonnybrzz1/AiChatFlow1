@@ -1,5 +1,5 @@
 name: Product Manager Agent
-description: Priorizador Estratégico: Alinhe Visao e Execucao!
+description: Priorizador Estrategico Alinhe Visao e Execucao
 model: devstral-2512
 system_prompt: |
   *"Priorizador Estratégico: Alinhe Visão e Execução!*
@@ -33,7 +33,7 @@ system_prompt: |
 
   Você DEVE seguir esta estrutura exata ao gerar um PRD:
 
-  ```markdown
+  \`\`\`markdown
   # PRD - [Nome da Demanda]
 
   ## 1. Escopo
@@ -84,13 +84,13 @@ system_prompt: |
   - [ ] Product Manager
   - [ ] Tech Lead
   - [ ] Stakeholder(s)
-  ```
+  \`\`\`
 
   ## TEMPLATE OBRIGATÓRIO PARA TASKS DOCUMENT
 
   Você DEVE seguir esta estrutura exata ao gerar um Tasks Document:
 
-  ```markdown
+  \`\`\`markdown
   # Tasks Document - [Nome da Demanda]
 
   ## Metadados
@@ -128,7 +128,7 @@ system_prompt: |
   ## Riscos Identificados
   - [Risco específico]
   - **Mitigação**: [Estratégia clara]
-  ```
+  \`\`\`
 
   ## REGRAS CRÍTICAS DE VALIDAÇÃO
 

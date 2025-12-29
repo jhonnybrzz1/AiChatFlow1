@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { FaCheck, FaSpinner } from 'react-icons/fa'; // Import react-icons
 
 interface GitHubImportModalProps {
-  onImportSuccess: (indexedContent: string, analysisResult: string) => void;
+  onImportSuccess: (indexedContent: string, analysisResult: string, repoName?: string) => void;
   demandDescription?: string;
 }
 
@@ -20,12 +20,9 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [repoSearch, setRepoSearch] = useState('');
-  const [isIndexed, setIsIndexed] = useState(false);
   const [indexedRepoName, setIndexedRepoName] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState<number>(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: repos, isLoading: isLoadingRepos, isError: isErrorRepos } = useQuery({
     queryKey: ['github/repos'],
@@ -38,76 +35,27 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
       api.github.indexRepo(owner, repo, demandDescription),
     onSuccess: (data) => {
       toast({
-        title: "Repositório indexado com sucesso!",
+        title: "Repositório analisado com sucesso!",
         description: "O conteúdo do repositório foi carregado para análise.",
       });
-      onImportSuccess(data.content, data.analysisResult);
-      setIsIndexed(true);
-      setIndexedRepoName(data.repoName); // Set repo name from API response
+      onImportSuccess(data.content, data.analysisResult, data.repoName);
+      setIndexedRepoName(data.repoName);
       setIsOpen(false);
       setSelectedRepo(null);
       setRepoSearch('');
     },
     onError: (error) => {
       toast({
-        title: "Erro ao indexar repositório",
+        title: "Erro ao analisar repositório",
         description: error.message,
         variant: "destructive",
       });
-      setIsIndexed(false);
       setIndexedRepoName(null);
     },
   });
 
-  // Auto-index timer effect
-  useEffect(() => {
-    let countdownInterval: NodeJS.Timeout | null = null;
-    if (selectedRepo) {
-      // Start countdown from 3 seconds
-      setCountdown(3);
-
-      countdownInterval = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            if (countdownInterval) clearInterval(countdownInterval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      // Set timer to auto-index after 3 seconds
-      timerRef.current = setTimeout(() => {
-        handleIndexRepo();
-      }, 3000);
-
-      return () => {
-        if (countdownInterval) clearInterval(countdownInterval);
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      };
-    } else {
-      setCountdown(0);
-    }
-  }, [selectedRepo]);
-
-  const handleIndexRepo = () => {
-    if (selectedRepo) {
-      const [owner, repo] = selectedRepo.split('/');
-      // Sempre anexar repositório no backend, sem precisar de descrição
-      indexRepoMutation.mutate({ owner, repo, demandDescription });
-    }
-  };
-
   const handleCancelSelection = () => {
     setSelectedRepo(null);
-    setCountdown(0);
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
   };
 
   const filteredRepos = repos?.filter(repo =>
@@ -119,22 +67,17 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={cn("flex items-center space-x-2", isIndexed && "bg-green-100 text-green-700 hover:bg-green-200")}
           disabled={indexRepoMutation.isPending}
         >
           {indexRepoMutation.isPending ? (
             <FaSpinner className="mr-2 h-4 w-4 animate-spin" />
-          ) : isIndexed ? (
-            <FaCheck className="mr-2 h-4 w-4" />
           ) : (
             <Github size={16} />
           )}
           <span>
             {indexRepoMutation.isPending
-              ? "Indexando..."
-              : isIndexed && indexedRepoName
-                ? `Indexado: ${indexedRepoName}`
-                : "Importar do GitHub"}
+              ? "Analisando..."
+              : "Importar do GitHub"}
           </span>
         </Button>
       </DialogTrigger>
@@ -195,37 +138,27 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
           )}
 
           <div className="flex gap-2">
-            <Button
-              onClick={handleIndexRepo}
-              disabled={!selectedRepo || indexRepoMutation.isPending}
-              className="flex-1"
-            >
-              {indexRepoMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Indexando...
-                </>
-              ) : countdown > 0 ? (
-                <>
-                  <Github className="mr-2 h-4 w-4" />
-                  Indexando em {countdown}s...
-                </>
-              ) : (
-                <>
-                  <Github className="mr-2 h-4 w-4" />
-                  Indexar Repositório
-                </>
-              )}
-            </Button>
-            {selectedRepo && countdown > 0 && !indexRepoMutation.isPending && (
+            {indexRepoMutation.isPending ? (
+              <Button disabled className="flex-1">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analisando repositório automaticamente...
+              </Button>
+            ) : (
               <Button
+                disabled={!selectedRepo}
                 onClick={handleCancelSelection}
                 variant="outline"
+                className="flex-1"
               >
-                Cancelar
+                {selectedRepo ? 'Cancelar seleção' : 'Selecione um repositório'}
               </Button>
             )}
           </div>
+          {selectedRepo && !indexRepoMutation.isPending && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              🤖 A squad virtual irá analisar automaticamente este repositório quando você criar a demanda
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
