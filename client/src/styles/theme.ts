@@ -13,6 +13,12 @@ export const theme = {
     textPrimary: '#1F2937',
     textSecondary: '#6B7280',
     border: '#E5E7EB',
+    // Dark mode colors
+    darkBackground: '#0A0A0A',
+    darkSurface: '#1A1A1A',
+    darkTextPrimary: '#F5F5F5',
+    darkTextSecondary: '#A0A0A0',
+    darkBorder: '#3A3A3A',
   },
   typography: {
     title: {

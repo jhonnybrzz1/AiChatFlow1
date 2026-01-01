@@ -9,11 +9,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { type Demand } from "@shared/schema";
 import Logo from "@/components/ui/logo";
-import { useTheme } from "next-themes";
+import { useEnhancedTheme } from "@/components/ui/theme-provider";
 
 export default function Home() {
   const [selectedDemand, setSelectedDemand] = useState<Demand | null>(null);
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme, isDarkMode } = useEnhancedTheme();
 
   const { data: demands = [] } = useQuery({
     queryKey: ['/api/demands'],
@@ -23,10 +23,6 @@ export default function Home() {
 
   const handleSelectDemand = (demand: Demand) => {
     setSelectedDemand(demand);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -42,9 +38,9 @@ export default function Home() {
               <button
                 onClick={toggleTheme}
                 className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
               </button>
               <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                 <Circle className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full fill-current" />

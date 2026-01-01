@@ -32,17 +32,17 @@
   --radius: 0.5rem;
 }
 
-/* Dark theme variables */
+/* Dark theme variables - Improved for better contrast and UX */
 .dark {
-  --background: hsl(240, 10%, 3.9%);
-  --foreground: hsl(0, 0%, 98%);
+  --background: hsl(240, 10%, 3.9%); /* Slightly lighter for better visibility */
+  --foreground: hsl(0, 0%, 98%); /* Brighter text for better contrast */
   --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
+  --muted-foreground: hsl(240, 5%, 74.9%); /* Lighter for better readability */
   --popover: hsl(240, 10%, 3.9%);
   --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 3.9%);
+  --card: hsl(240, 10%, 6.9%); /* Slightly lighter cards */
   --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
+  --border: hsl(240, 3.7%, 25.9%); /* More visible borders */
   --input: hsl(240, 3.7%, 15.9%);
   --primary: hsl(217, 91%, 60%);
   --primary-foreground: hsl(211, 100%, 99%);
@@ -56,8 +56,24 @@
   --success-foreground: hsl(144, 61%, 20%);
   --warning: hsl(32, 95%, 44%);
   --warning-foreground: hsl(21, 92%, 14%);
-  --ring: hsl(240, 4.9%, 83.9%);
+  --ring: hsl(217, 91%, 60%); /* Match primary color for consistency */
   --radius: 0.5rem;
+}
+
+/* Smooth theme transition - Fix for double click issue */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure theme is applied immediately */
+html.dark,
+body.dark {
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 @layer base {
@@ -87,11 +103,29 @@
   }
 
   .demand-type-btn.active {
-    @apply border-primary bg-blue-50 text-primary font-semibold dark:bg-blue-900/30 dark:text-blue-300;
+    @apply border-primary bg-blue-50 text-primary font-semibold dark:bg-blue-800/50 dark:text-blue-200;
+  }
+
+  /* Improved demand type button contrast for dark mode */
+  .demand-type-btn.dark-mode {
+    @apply border-darkBorder;
+  }
+
+  .demand-type-btn.dark-mode:hover {
+    @apply bg-darkSurface;
   }
 
   .chat-message {
     @apply animate-in slide-in-from-bottom-4 duration-300;
+  }
+
+  /* Improved chat message contrast for dark mode */
+  .chat-message.dark-mode {
+    @apply border-darkBorder;
+  }
+
+  .chat-message:hover.dark-mode {
+    @apply bg-darkSurface;
   }
 
   .processing-spinner {
@@ -103,7 +137,7 @@
     @apply bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 shadow-lg rounded-xl border-0;
   }
 
-  /* Enhanced button styling */
+  /* Enhanced button styling - Improved for dark mode */
   .premium-btn {
     @apply rounded-lg font-medium transition-all duration-200;
   }
@@ -115,11 +149,53 @@
   .premium-btn-secondary {
     @apply bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200;
   }
+
+  /* Improved button contrast for dark mode */
+  .premium-btn.dark-mode {
+    @apply shadow-md;
+  }
+
+  .premium-btn-primary.dark-mode {
+    @apply bg-blue-500 hover:bg-blue-600;
+  }
+
+  .premium-btn-secondary.dark-mode {
+    @apply bg-gray-600 hover:bg-gray-500 text-white;
+  }
+
+  /* Premium card styling - Improved for dark mode */
+  .premium-card {
+    @apply bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 shadow-lg rounded-xl border-0;
+  }
+
+  .premium-card.dark-mode {
+    @apply border border-darkBorder;
+  }
 }
 
-/* Custom MDEditor overrides */
+/* Custom MDEditor overrides - Improved for dark mode */
 .w-md-editor {
   @apply rounded-lg border border-border shadow-sm bg-background text-foreground;
+}
+
+.w-md-editor.dark-mode {
+  @apply border-darkBorder bg-darkBackground text-darkTextPrimary;
+}
+
+.w-md-editor-toolbar {
+  @apply bg-muted border-b border-border rounded-t-lg;
+}
+
+.w-md-editor-toolbar.dark-mode {
+  @apply bg-darkSurface border-darkBorder;
+}
+
+.w-md-editor-content {
+  @apply bg-background;
+}
+
+.w-md-editor-content.dark-mode {
+  @apply bg-darkBackground;
 }
 
 .w-md-editor-toolbar {
