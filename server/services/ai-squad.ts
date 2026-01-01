@@ -1,4 +1,3 @@
-
 import { type Demand, type ChatMessage } from "@shared/schema";
 import { storage } from "../storage";
 import fs from "fs";
@@ -13,6 +12,8 @@ import { ImprovementPlugin } from "../plugins/improvement-plugin";
 import { agentInteractionService } from "./agent-interaction";
 import { agentOrchestrator } from "../cognitive-core/agent-orchestrator";
 import { frameworkManager } from "../frameworks/framework-manager";
+import { gitHubService } from './github';
+import { repoService } from './repo-service';
 
 // Using Mistral AI service instead of OpenAI
 
@@ -304,9 +305,61 @@ export class AISquadService {
     }
   }
 
+  private async assembleInternalContext(demand: Demand): Promise<string> {
+    const description = demand.description;
+    const repoMatch = description.match(/Repositório:\s*([^\/\s]+\/[^\s]+)/);
+    if (!repoMatch || !repoMatch[1]) {
+      console.log("No repository found in demand description for context assembly.");
+      return "";
+    }
+  
+    const [owner, repoName] = repoMatch[1].split('/');
+    if (!owner || !repoName) {
+      console.log("Invalid repository format in demand description.");
+      return "";
+    }
+  
+    try {
+      const repo = await repoService.getOrCreateRepo(owner, repoName);
+      if (!repo) return "";
+
+      const briefing = repo.briefing ? `--- REPOSITORY BRIEFING ---\n${repo.briefing}\n\n` : "";
+      const systemMap = repo.systemMap ? `--- SYSTEM MAP ---\n${repo.systemMap}\n\n` : "";
+      
+      let specificFilesContext = "";
+      const userOnlyDescription = description.split('---')[0].trim();
+      const searchQuery = `${demand.title} ${userOnlyDescription}`.trim();
+      const searchResults = await gitHubService.searchRepo(owner, repoName, searchQuery);
+      
+      if (searchResults.length > 0) {
+        const topFiles = searchResults.slice(0, 5);
+        specificFilesContext += "--- DEMAND-SPECIFIC FILE CONTEXT ---\n";
+        for (const filePath of topFiles) {
+          try {
+            const content = await gitHubService.getRepoContent(owner, repoName, filePath);
+            if (content && content.encoding === 'base64') {
+              const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
+              specificFilesContext += `--- FILE: ${filePath} ---\n${decodedContent}\n\n`;
+            }
+          } catch (error) {
+            console.warn(`Could not read file ${filePath}:`, error);
+          }
+        }
+      }
+  
+      return `${briefing}${systemMap}${specificFilesContext}`.trim();
+    } catch (error) {
+      console.error(`Error assembling internal context for ${owner}/${repoName}:`, error);
+      return "--- WARNING: Failed to load full repository context. Proceeding with caution. ---";
+    }
+  }
+
   async processDemand(demandId: number, onProgress?: (message: ChatMessage) => void): Promise<void> {
     const demand = await storage.getDemand(demandId);
     if (!demand) throw new Error("Demand not found");
+
+    // Assemble the full internal context (briefing, map, specific files)
+    const internalContext = await this.assembleInternalContext(demand);
 
     // Update status to processing
     await storage.updateDemand(demandId, { status: 'processing' });
@@ -374,8 +427,9 @@ export class AISquadService {
       }
 
       interactionResult = await agentInteractionService.conductMultiAgentInteraction(
-        demand,
+        demand, 
         agentConfigs,
+        internalContext, // Pass the assembled context
         onProgress
       );
 
@@ -460,8 +514,9 @@ export class AISquadService {
         // Process with agent for actual agent response
         const response = await this.processWithAgent(
           agent.name,
-          demand,
-          refinementLevels
+          demand, 
+          refinementLevels,
+          internalContext // Pass the assembled context here as well
         );
 
         message.message = response;
@@ -555,15 +610,17 @@ export class AISquadService {
   private async processWithAgent(
     agentName: string,
     demand: Demand,
-    refinementLevels: number
+    refinementLevels: number,
+    internalContext: string, // New parameter
   ): Promise<string> {
     const intensityLevel = this.getIntensityByType(demand.type);
     const agentConfig = this.agentConfigs[agentName];
 
-    // Processamento padrão para todos os agentes de refinamento
-    const systemPrompt = agentConfig?.system_prompt
+    // Prepend the internal context to the agent's system prompt
+    const systemPrompt = `${internalContext}\n\n${agentConfig?.system_prompt
       ? `${agentConfig.system_prompt}\n\nContexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
-      : `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`;
+      : `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
+    }`;
 
     const userPrompt = agentConfig?.description
       ? `Para esta ${demand.type}, ${agentConfig.description.toLowerCase()}: ${demand.description}`
