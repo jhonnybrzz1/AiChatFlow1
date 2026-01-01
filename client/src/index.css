@@ -108,11 +108,11 @@ body.dark {
 
   /* Improved demand type button contrast for dark mode */
   .demand-type-btn.dark-mode {
-    @apply border-darkBorder;
+    border-color: var(--border);
   }
 
   .demand-type-btn.dark-mode:hover {
-    @apply bg-darkSurface;
+    background-color: var(--muted);
   }
 
   .chat-message {
@@ -121,11 +121,11 @@ body.dark {
 
   /* Improved chat message contrast for dark mode */
   .chat-message.dark-mode {
-    @apply border-darkBorder;
+    border-color: var(--border);
   }
 
   .chat-message:hover.dark-mode {
-    @apply bg-darkSurface;
+    background-color: var(--muted);
   }
 
   .processing-spinner {
@@ -152,50 +152,75 @@ body.dark {
 
   /* Improved button contrast for dark mode */
   .premium-btn.dark-mode {
-    @apply shadow-md;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
   .premium-btn-primary.dark-mode {
-    @apply bg-blue-500 hover:bg-blue-600;
+    background-color: #3b82f6;
+    transition: background-color 0.2s ease;
+  }
+
+  .premium-btn-primary.dark-mode:hover {
+    background-color: #2563eb;
   }
 
   .premium-btn-secondary.dark-mode {
-    @apply bg-gray-600 hover:bg-gray-500 text-white;
+    background-color: #4b5563;
+    color: white;
+    transition: background-color 0.2s ease;
+  }
+
+  .premium-btn-secondary.dark-mode:hover {
+    background-color: #374151;
   }
 
   /* Premium card styling - Improved for dark mode */
   .premium-card {
-    @apply bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 shadow-lg rounded-xl border-0;
+    background: linear-gradient(to bottom right, #f9fafb, #ffffff);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 0.75rem;
+    border: none;
   }
 
-  .premium-card.dark-mode {
-    @apply border border-darkBorder;
+  .dark .premium-card {
+    background: linear-gradient(to bottom right, rgba(31, 41, 55, 0.3), rgba(17, 24, 39, 0.3));
+    border: 1px solid var(--border);
   }
 }
 
 /* Custom MDEditor overrides - Improved for dark mode */
 .w-md-editor {
-  @apply rounded-lg border border-border shadow-sm bg-background text-foreground;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
-.w-md-editor.dark-mode {
-  @apply border-darkBorder bg-darkBackground text-darkTextPrimary;
+.dark .w-md-editor {
+  border-color: var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 .w-md-editor-toolbar {
-  @apply bg-muted border-b border-border rounded-t-lg;
+  background-color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
 }
 
-.w-md-editor-toolbar.dark-mode {
-  @apply bg-darkSurface border-darkBorder;
+.dark .w-md-editor-toolbar {
+  background-color: var(--muted);
+  border-bottom-color: var(--border);
 }
 
 .w-md-editor-content {
-  @apply bg-background;
+  background-color: var(--background);
 }
 
-.w-md-editor-content.dark-mode {
-  @apply bg-darkBackground;
+.dark .w-md-editor-content {
+  background-color: var(--background);
 }
 
 .w-md-editor-toolbar {

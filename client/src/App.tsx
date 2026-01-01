@@ -25,7 +25,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Toaster />
-            <div className="min-h-screen flex flex-col bg-background dark:bg-darkBackground text-foreground dark:text-darkTextPrimary">
+            <div className="min-h-screen flex flex-col bg-background text-foreground dark:bg-[--background] dark:text-[--foreground]">
               <Router />
               <footer className="mt-auto">
                 <CustomDisclaimer
@@ -33,7 +33,7 @@ function App() {
                   variant="note"
                   className="border-0 rounded-none dark:border-darkBorder"
                 >
-                  <p className="text-sm dark:text-darkTextSecondary">
+                  <p className="text-sm dark:text-[--muted-foreground]">
                     Esta plataforma utiliza inteligência artificial para refinar demandas com
                     colaboração entre agentes especializados. Os agentes trabalham juntos para
                     entender completamente seu pedido antes de gerar documentos finais.
