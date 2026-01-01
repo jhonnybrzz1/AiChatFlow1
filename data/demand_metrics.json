@@ -1253,5 +1253,86 @@
         "resultSize": 1904
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "media",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1152,
+    "estimatedSuccessRate": 51,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-01-01T18:15:11.633Z",
+    "completedAt": "2026-01-01T18:15:12.228Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 21796,
+        "success": true,
+        "resultSize": 3073
+      }
+    ]
+  },
+  {
+    "demandId": 2,
+    "type": "melhoria",
+    "priority": "alta",
+    "routingTeam": "fullstack",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 346,
+    "estimatedSuccessRate": 71,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-01-01T20:21:05.377Z",
+    "completedAt": "2026-01-01T20:21:05.897Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "ImprovementPlugin",
+        "executionTime": 39217,
+        "success": true,
+        "resultSize": 527
+      }
+    ]
+  },
+  {
+    "demandId": 3,
+    "type": "nova_funcionalidade",
+    "priority": "critica",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 768,
+    "estimatedSuccessRate": 50,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-01-01T20:33:53.925Z",
+    "completedAt": "2026-01-01T20:33:54.186Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "critica",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1152,
+    "estimatedSuccessRate": 40,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-01-01T21:05:03.331Z",
+    "completedAt": "2026-01-01T21:05:03.333Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 19493,
+        "success": true,
+        "resultSize": 2483
+      }
+    ]
   }
 ]

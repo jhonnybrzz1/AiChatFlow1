@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { InsertRepo, InsertRepoFile, Repo, RepoFile, repos, repoFiles } from '@shared/schema';
 import { GitHubService } from './github';
+import { mistralAIService } from './mistral-ai';
 
 export class RepoService {
   private gitHubService: GitHubService;
@@ -19,6 +20,105 @@ export class RepoService {
     this.gitHubService = new GitHubService(githubToken || undefined);
   }
 
+  async generateStructuralContext(owner: string, name: string): Promise<void> {
+    console.log(`Iniciando geração de contexto estrutural para ${owner}/${name}`);
+    const repo = await this.getOrCreateRepo(owner, name);
+
+    // 1. Coletar dados do repositório
+    const { defaultBranch } = repo;
+    if (!defaultBranch) {
+      console.error(`Branch padrão não encontrado para ${owner}/${name}.`);
+      return;
+    }
+
+    let fileTree = '';
+    let keyFilesContent = '';
+
+    try {
+      // Buscar a árvore de arquivos completa
+      const treeData = await this.gitHubService.client.git.getTree({
+        owner,
+        repo: name,
+        tree_sha: defaultBranch,
+        recursive: 'true',
+      });
+      if (treeData.data.truncated) {
+        console.warn(`A árvore de arquivos para ${owner}/${name} está truncada.`);
+      }
+      fileTree = treeData.data.tree.map(file => file.path).join('\n');
+
+      // Identificar e ler o conteúdo de arquivos chave
+      const keyFiles = ['package.json', 'pom.xml', 'build.gradle', 'requirements.txt', 'docker-compose.yml', 'README.md', 'ARCHITECTURE.md', 'tsconfig.json'];
+      const rootContent = await this.gitHubService.getRepoContent(owner, name);
+      const filesToRead = (rootContent as any[]).filter(item => item.type === 'file' && keyFiles.includes(item.name));
+
+      for (const file of filesToRead) {
+        const content = await this.gitHubService.getRepoContent(owner, name, file.path);
+        if (content && content.encoding === 'base64') {
+          const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
+          keyFilesContent += `--- CONTEÚDO DO ARQUIVO: ${file.path} ---\n${decodedContent}\n\n`;
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao coletar dados para o contexto estrutural de ${owner}/${name}:`, error);
+      // Mesmo com erro, tenta continuar com o que tiver
+    }
+
+    // 2. Criar o prompt para a IA
+    const systemPrompt = `Você é um Arquiteto de Software Sênior. Sua tarefa é analisar a estrutura de um repositório de código e gerar um "Repository Briefing" e um "System Map".
+
+Responda em formato JSON com a seguinte estrutura:
+{
+  "repositoryBriefing": {
+    "projectType": "monolito | microserviços | biblioteca | outro",
+    "techStack": ["Tecnologia 1", "Tecnologia 2", ...],
+    "architecturalPattern": "MVC | MVVM | Camadas | Hexagonal | Event-Driven | Desconhecido",
+    "technicalStage": "estável | legado parcial | refatoração contínua | em desenvolvimento ativo",
+    "criticalAreas": ["auth | billing | core-logic | ..."],
+    "sensitiveAreas": ["migrations | feature-flags | external-integrations | ..."]
+  },
+  "systemMap": "PASTA / -> descrição (TAGS)\\n  PASTA /src -> código fonte (CRÍTICO)\\n    PASTA /src/api -> camada de api\\n  PASTA /test -> testes (SENSÍVEL)"
+}
+
+- projectType: Classifique o tipo de projeto.
+- techStack: Liste as principais tecnologias, frameworks e linguagens.
+- architecturalPattern: Identifique o padrão de arquitetura principal.
+- technicalStage: Avalie o estágio técnico do projeto.
+- criticalAreas: Identifique diretórios ou módulos que são o coração do sistema.
+- sensitiveAreas: Identifique áreas que não devem ser alteradas sem cuidado (ex: configurações, migrações).
+- systemMap: Crie um mapa de pastas simplificado, com uma breve descrição e tags como (CRÍTICO), (SENSÍVEL), (LEGADO). Use indentação para hierarquia.`;
+
+    const userPrompt = `Analise os seguintes dados do repositório "${owner}/${name}":
+
+--- ÁRVORE DE ARQUIVOS ---
+${fileTree}
+
+--- CONTEÚDO DE ARQUIVOS CHAVE ---
+${keyFilesContent}
+
+Gere o "Repository Briefing" e o "System Map" no formato JSON solicitado.`;
+
+    // 3. Chamar a IA para gerar o contexto
+    try {
+      const response = await mistralAIService.generateChatCompletion(systemPrompt, userPrompt, { maxTokens: 4000 });
+      const contextJson = JSON.parse(response);
+
+      // 4. Salvar no banco de dados
+      await db.update(repos).set({
+        briefing: JSON.stringify(contextJson.repositoryBriefing, null, 2),
+        systemMap: contextJson.systemMap,
+        briefingGeneratedAt: new Date(),
+        systemMapGeneratedAt: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(repos.id, repo.id));
+
+      console.log(`Contexto estrutural gerado e salvo para ${owner}/${name}`);
+
+    } catch (error) {
+      console.error(`Erro ao gerar ou salvar o contexto estrutural para ${owner}/${name}:`, error);
+    }
+  }
+
   /**
    * Get or create a repository in the database
    * @param owner - Repository owner
@@ -26,247 +126,75 @@ export class RepoService {
    * @returns The repository record
    */
   async getOrCreateRepo(owner: string, name: string): Promise<Repo> {
-    // First try to get existing repo
-    const existingRepo = await db.select().from(repos).where(
-      eq(repos.fullName, `${owner}/${name}`)
-    ).limit(1);
+    const repo = await db.query.repos.findFirst({
+      where: eq(repos.fullName, `${owner}/${name}`),
+    });
 
-    if (existingRepo.length > 0) {
-      return existingRepo[0];
+    // Se o repositório já existe, verifica se o briefing precisa ser atualizado
+    if (repo) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      // Se o briefing não existe ou é mais antigo que 7 dias, gera em segundo plano
+      if (!repo.briefing || !repo.briefingGeneratedAt || repo.briefingGeneratedAt < sevenDaysAgo) {
+        console.log(`Briefing para ${owner}/${name} está desatualizado ou não existe. Gerando em segundo plano...`);
+        this.generateStructuralContext(owner, name).catch(error => {
+          console.error(`Erro na geração de contexto em segundo plano para ${owner}/${name}:`, error);
+        });
+      }
+      return repo;
     }
 
-    // If repo doesn't exist, try to fetch from GitHub and create
-    let repoData;
+    // Se o repositório não existe, busca no GitHub e cria
+    let repoDataFromGitHub;
     try {
       console.log(`Fetching repository metadata for ${owner}/${name} from GitHub`);
-      repoData = await this.gitHubService.client.repos.get({
-        owner,
-        repo: name
-      });
+      const response = await this.gitHubService.client.repos.get({ owner, repo: name });
+      repoDataFromGitHub = response.data;
       console.log(`Successfully fetched repository metadata for ${owner}/${name}`);
     } catch (error: any) {
-      console.error(`Could not fetch repository metadata for ${owner}/${name} from GitHub:`, error.message || error);
-      const errorStatus = (error as any)?.status || 'Unknown status';
-      console.error(`GitHub API error details - Status: ${errorStatus}`);
-      // Create a minimal repo object with basic information
-      repoData = {
-        data: {
-          id: Date.now(), // Use timestamp as temporary ID
-          node_id: '',
-          name,
-          full_name: `${owner}/${name}`,
-          owner: { login: owner },
-          private: false,
-          html_url: `https://github.com/${owner}/${name}`,
-          description: 'Repository data not available (no GitHub access)',
-          fork: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          size: 0,
-          stargazers_count: 0,
-          watchers_count: 0,
-          language: null,
-          has_issues: true,
-          has_projects: true,
-          has_wiki: true,
-          default_branch: 'main'
-        }
+      console.error(`Could not fetch repository metadata for ${owner}/${name} from GitHub. Creating minimal repo record.`);
+      repoDataFromGitHub = {
+        name,
+        full_name: `${owner}/${name}`,
+        owner: { login: owner },
+        description: 'Repositório não acessível via API do GitHub.',
+        html_url: `https://github.com/${owner}/${name}`,
+        default_branch: 'main',
+        language: null,
+        size: 0,
+        stargazers_count: 0,
+        forks_count: 0,
+        private: false,
+        fork: false,
       };
     }
 
     const newRepo: InsertRepo = {
       owner,
       name,
-      fullName: repoData.data.full_name || `${owner}/${name}`,
-      description: repoData.data.description || null,
-      url: repoData.data.url || `https://github.com/${owner}/${name}`,
-      cloneUrl: repoData.data.clone_url || null,
-      sshUrl: repoData.data.ssh_url || null,
-      htmlUrl: repoData.data.html_url || `https://github.com/${owner}/${name}`,
-      defaultBranch: repoData.data.default_branch || 'main',
-      language: repoData.data.language || null,
-      size: repoData.data.size || 0,
-      stars: repoData.data.stargazers_count || 0,
-      forks: repoData.data.forks_count || 0,
-      isPrivate: repoData.data.private || false,
-      isFork: repoData.data.fork || false,
-      indexedContent: null, // Will be populated later
-      lastCommit: null, // Will be populated later
+      fullName: repoDataFromGitHub.full_name,
+      description: repoDataFromGitHub.description,
+      url: `https://github.com/${owner}/${name}`,
+      cloneUrl: repoDataFromGitHub.clone_url,
+      sshUrl: repoDataFromGitHub.ssh_url,
+      htmlUrl: repoDataFromGitHub.html_url,
+      defaultBranch: repoDataFromGitHub.default_branch,
+      language: repoDataFromGitHub.language,
+      size: repoDataFromGitHub.size,
+      stars: repoDataFromGitHub.stargazers_count,
+      forks: repoDataFromGitHub.forks_count,
+      isPrivate: repoDataFromGitHub.private,
+      isFork: repoDataFromGitHub.fork,
     };
 
     const [createdRepo] = await db.insert(repos).values(newRepo).returning();
+
+    // Dispara a geração de contexto em segundo plano para o novo repositório
+    console.log(`Disparando geração de contexto inicial para o novo repositório ${owner}/${name}...`);
+    this.generateStructuralContext(owner, name).catch(error => {
+      console.error(`Erro na geração de contexto inicial em segundo plano para ${owner}/${name}:`, error);
+    });
+
     return createdRepo;
-  }
-
-  /**
-   * Index a repository and store its content
-   * @param owner - Repository owner
-   * @param name - Repository name
-   * @returns The indexed repository content
-   */
-  async indexRepo(owner: string, name: string): Promise<string> {
-    console.log(`Starting repository indexing for ${owner}/${name}`);
-    // Get or create the repo record
-    const repo = await this.getOrCreateRepo(owner, name);
-    console.log(`Repository record retrieved/created for ${owner}/${name}, ID: ${repo.id}`);
-
-    // Index the repository content using the GitHub service
-    let indexedContent;
-    try {
-      console.log(`Calling GitHubService.indexRepo for ${owner}/${name}`);
-      indexedContent = await this.gitHubService.indexRepo(owner, name);
-      console.log(`Successfully indexed repository content for ${owner}/${name}`);
-    } catch (error: any) {
-      console.error(`Could not index repository ${owner}/${name} from GitHub. Using fallback approach.`);
-      
-      // Enhanced error logging
-      let errorMessage = 'Unknown error';
-      let errorType = 'unknown';
-      let errorDetails = {};
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-        errorType = 'Error';
-        errorDetails = {
-          message: error.message,
-          name: error.name,
-          stack: error.stack?.substring(0, 200) + '...'
-        };
-      } else if (error && typeof error === 'object') {
-        errorMessage = error.message || 'Unknown error';
-        errorType = error.type || 'unknown';
-        errorDetails = {
-          type: error.type,
-          message: error.message,
-          timeStamp: error.timeStamp,
-          defaultPrevented: error.defaultPrevented,
-          cancelable: error.cancelable
-        };
-        
-        if (error.type === 'error') {
-          console.error('ErrorEvent detected in repoService:', errorDetails);
-        }
-      }
-      
-      console.error(`Error details - Type: ${errorType}, Message: ${errorMessage}`);
-      console.error('Full error object:', error);
-      
-      // Fallback: create minimal content if indexing fails
-      indexedContent = `# Repository: ${owner}/${name}\n\nRepository content could not be indexed. This may be due to:\n- GitHub token permissions\n- Private repository access\n- Network connectivity issues\n\nConsider uploading repository files directly or ensuring proper GitHub token permissions.\n\nLast attempt: ${new Date().toISOString()}\n\nError type: ${errorType}\nError details: ${JSON.stringify(errorDetails, null, 2)}`;
-    }
-
-    // Update the repo with indexed content and timestamp
-    console.log(`Updating repository record with indexed content for ${owner}/${name}`);
-    await db.update(repos).set({
-      indexedContent,
-      indexedAt: new Date(),
-      updatedAt: new Date()
-    }).where(eq(repos.id, repo.id));
-
-    // Parse and store individual files
-    try {
-      console.log(`Storing repository files for ${owner}/${name}`);
-      await this.storeRepoFiles(owner, name, indexedContent, repo.id);
-      console.log(`Successfully stored repository files for ${owner}/${name}`);
-    } catch (error: any) {
-      console.error(`Could not store repository files for ${owner}/${name}:`, error.message || error);
-      // Continue with the indexed content even if file storage fails
-    }
-
-    console.log(`Completed repository indexing for ${owner}/${name}`);
-    return indexedContent;
-  }
-
-  /**
-   * Store individual files from indexed content
-   * @param owner - Repository owner
-   * @param name - Repository name
-   * @param indexedContent - Full indexed content
-   * @param repoId - ID of the parent repository
-   */
-  private async storeRepoFiles(owner: string, name: string, indexedContent: string, repoId: number): Promise<void> {
-    // Clear existing files for this repo
-    await db.delete(repoFiles).where(eq(repoFiles.repoId, repoId));
-    
-    // Parse the indexed content to extract individual files
-    // The content format is: "--- FILE: path ---\n\nfile_content\n\n"
-    const fileSections = indexedContent.split('--- FILE: ');
-    
-    for (let i = 1; i < fileSections.length; i++) { // Skip first empty section
-      const section = fileSections[i];
-      const endOfFileHeader = section.indexOf(' ---');
-      
-      if (endOfFileHeader === -1) continue; // Invalid format
-      
-      const filename = section.substring(0, endOfFileHeader);
-      const contentStart = section.indexOf('\n\n', endOfFileHeader) + 2;
-      const contentEnd = section.indexOf('\n\n--- FILE: ') !== -1 
-        ? section.indexOf('\n\n--- FILE: ') 
-        : section.length;
-      
-      const content = section.substring(contentStart, contentEnd);
-      
-      const fileExtension = filename.split('.').pop()?.toLowerCase() || '';
-      const language = this.getLanguageFromExtension(fileExtension);
-      
-      const repoFile: InsertRepoFile = {
-        repoId,
-        path: filename,
-        filename: filename.split('/').pop() || filename,
-        content,
-        language,
-        size: content.length,
-        url: `https://github.com/${owner}/${name}/blob/main/${filename}`
-      };
-      
-      await db.insert(repoFiles).values(repoFile);
-    }
-  }
-
-  /**
-   * Get language from file extension
-   * @param ext - File extension
-   * @returns Language name
-   */
-  private getLanguageFromExtension(ext: string): string | null {
-    const extToLang: Record<string, string> = {
-      'js': 'JavaScript',
-      'ts': 'TypeScript',
-      'jsx': 'JavaScript',
-      'tsx': 'TypeScript',
-      'py': 'Python',
-      'java': 'Java',
-      'cpp': 'C++',
-      'c': 'C',
-      'cs': 'C#',
-      'go': 'Go',
-      'rb': 'Ruby',
-      'php': 'PHP',
-      'html': 'HTML',
-      'css': 'CSS',
-      'json': 'JSON',
-      'yaml': 'YAML',
-      'yml': 'YAML',
-      'md': 'Markdown',
-      'sql': 'SQL',
-      'sh': 'Shell',
-      'bash': 'Shell',
-      'dockerfile': 'Dockerfile',
-      'txt': 'Plain Text',
-      'xml': 'XML',
-      'vue': 'Vue',
-      'svelte': 'Svelte',
-      'rs': 'Rust',
-      'swift': 'Swift',
-      'kt': 'Kotlin',
-      'scala': 'Scala',
-      'dart': 'Dart',
-      'jl': 'Julia',
-      'r': 'R',
-      'pl': 'Perl'
-    };
-    
-    return extToLang[ext] || null;
   }
 
   /**

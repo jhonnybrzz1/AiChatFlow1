@@ -91,8 +91,8 @@ export const api = {
       const response = await apiRequest("GET", "/api/github/repos");
       return response.json();
     },
-    indexRepo: async (owner: string, repo: string, demandDescription?: string): Promise<{ content: string; demandDescription: string | null; analysisResult: string; repoName: string }> => {
-      const response = await apiRequest("POST", `/api/github/repos/${owner}/${repo}/index`, { demandDescription });
+    searchFiles: async (owner: string, repo: string, query: string): Promise<string[]> => {
+      const response = await apiRequest("POST", "/api/github/search-files", { owner, repo, query });
       return response.json();
     },
     getRepoContent: async (owner: string, repo: string, path: string = ''): Promise<any> => {

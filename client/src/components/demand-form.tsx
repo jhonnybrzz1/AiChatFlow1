@@ -5,9 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import CustomAlert from "@/components/ui/custom-alert";
 import CustomDisclaimer from "@/components/ui/custom-disclaimer";
-import { Plus, TrendingUp, Bug, Compass, BarChart, CloudUpload, Send, Github, ChevronDown, ChevronUp, X, AlertTriangle, CheckCircle } from "lucide-react";
+import { Plus, TrendingUp, Bug, Compass, BarChart, CloudUpload, Send, Github, ChevronDown, ChevronUp, X, CheckCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertDemandSchema } from "@shared/schema";
@@ -28,7 +27,6 @@ const demandTypes = [
   { value: "analise_exploratoria", label: "Análise Exploratória", icon: BarChart },
 ];
 
-// Ordenadas logicamente: Baixa → Média → Alta → Crítica
 const priorities = [
   { value: "baixa", label: "Baixa" },
   { value: "media", label: "Média" },
@@ -39,8 +37,7 @@ const priorities = [
 export function DemandForm() {
   const [selectedType, setSelectedType] = useState("nova_funcionalidade");
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [githubRepoOwner, setGithubRepoOwner] = useState<string | null>(null);
-  const [githubRepoName, setGithubRepoName] = useState<string | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null); // New unified state
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isFocused, setIsFocused] = useState({
     title: false,
@@ -68,27 +65,21 @@ export function DemandForm() {
       githubRepoOwner?: string,
       githubRepoName?: string
     }) => {
-      // Create form data with repository information if available
       const formData = new FormData();
-
-      // Add demand data
       Object.entries(demand).forEach(([key, value]) => {
         formData.append(key, value as string);
       });
-
-      // Add GitHub repository information if available
       if (githubRepoOwner && githubRepoName) {
         formData.append('githubRepoOwner', githubRepoOwner);
         formData.append('githubRepoName', githubRepoName);
+        // Also add to description for the backend to parse
+        formData.set('description', `${demand.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`);
       }
-
-      // Add files if any
       if (files) {
         Array.from(files).forEach((file) => {
           formData.append('files', file);
         });
       }
-
       return api.demands.createWithFormData(formData);
     },
     onSuccess: () => {
@@ -98,12 +89,9 @@ export function DemandForm() {
       });
       form.reset();
       setSelectedFiles(null);
-      setGithubRepoOwner(null);
-      setGithubRepoName(null);
-      setIsCollapsed(true); // Minimizar formulário após envio
+      setSelectedRepo(null); // Reset selected repo
+      setIsCollapsed(true);
       queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
-
-      // Foco automático no chat após 500ms
       setTimeout(() => {
         const chatArea = document.querySelector('[data-chat-area]');
         if (chatArea) {
@@ -121,6 +109,11 @@ export function DemandForm() {
   });
 
   const onSubmit = (data: typeof insertDemandSchema._type) => {
+    let githubRepoOwner: string | undefined;
+    let githubRepoName: string | undefined;
+    if (selectedRepo) {
+      [githubRepoOwner, githubRepoName] = selectedRepo.split('/');
+    }
     createDemandMutation.mutate({ demand: data, files: selectedFiles || undefined, githubRepoOwner, githubRepoName });
   };
 
@@ -128,26 +121,14 @@ export function DemandForm() {
     setSelectedFiles(event.target.files);
   };
 
-  const handleGitHubImport = (indexedContent: string, analysisResult: string, repoName?: string) => {
-    form.setValue('description', analysisResult || indexedContent); // Use analysisResult if available, otherwise indexedContent
-    form.setValue(
-      'title',
-      analysisResult
-        ? 'Análise de Repositório GitHub (Contextualizada)'
-        : 'Análise de Repositório GitHub (Discovery)'
-    );
-
-    // Extract owner and repo name from repoName (format: owner/repo)
+  const handleRepoSelect = (_indexedContent: string, _analysisResult: string, repoName?: string) => {
     if (repoName) {
-      const [owner, repo] = repoName.split('/');
-      setGithubRepoOwner(owner);
-      setGithubRepoName(repo);
+      setSelectedRepo(repoName);
+      toast({
+        title: "Repositório selecionado!",
+        description: `O repositório ${repoName} será usado como contexto.`,
+      });
     }
-
-    toast({
-      title: "Conteúdo do GitHub carregado",
-      description: "A descrição da demanda foi preenchida com o conteúdo do repositório.",
-    });
   };
 
   const handleRemoveFile = (indexToRemove: number) => {
@@ -200,11 +181,7 @@ export function DemandForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-              {/* Disclaimer para instruções de uso */}
-              <CustomDisclaimer
-                title="Dicas para criar uma boa demanda"
-                variant="info"
-              >
+              <CustomDisclaimer title="Dicas para criar uma boa demanda" variant="info">
                 <ul className="list-disc pl-5 space-y-1 text-sm">
                   <li>Descreva detalhadamente o problema ou necessidade</li>
                   <li>Explique o contexto e os objetivos esperados</li>
@@ -212,26 +189,39 @@ export function DemandForm() {
                   <li>Priorize conforme impacto no negócio</li>
                 </ul>
               </CustomDisclaimer>
-
-              {/* GitHub Import */}
-              <div className="flex justify-end">
-                <GitHubImportModal
-                  onImportSuccess={handleGitHubImport}
-                  demandDescription={form.watch('description')}
-                />
+              
+              <div className="space-y-2">
+                <Label>Contexto do Projeto (Opcional)</Label>
+                {selectedRepo ? (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
+                      <CheckCircle size={16} />
+                      <span className="font-medium">{selectedRepo}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedRepo(null)}
+                      className="h-6 w-6 p-0 rounded-full text-green-600 hover:bg-green-200 dark:text-green-400 dark:hover:bg-green-800"
+                    >
+                      <X size={14} />
+                    </Button>
+                  </div>
+                ) : (
+                  <GitHubImportModal
+                    onImportSuccess={handleRepoSelect}
+                    demandDescription={form.watch('description')}
+                  />
+                )}
               </div>
 
-              {/* Demand Type Selection */}
               <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.type ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
-                      onFocus={() => setIsFocused(prev => ({ ...prev, type: true }))}
-                      onBlur={() => setIsFocused(prev => ({ ...prev, type: false }))}
-                    >
+                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.type ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                       Tipo de Demanda
                     </FormLabel>
                     <FormControl>
@@ -269,26 +259,18 @@ export function DemandForm() {
                 )}
               />
 
-              {/* Demand Title */}
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.title ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
-                      onFocus={() => setIsFocused(prev => ({ ...prev, title: true }))}
-                      onBlur={() => setIsFocused(prev => ({ ...prev, title: false }))}
-                    >
+                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.title ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                       Título da Demanda
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Ex: Sistema de autenticação por biometria"
-                        className={cn(
-                          "transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
-                          form.formState.errors.title ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : ""
-                        )}
+                        className={cn("transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600", form.formState.errors.title ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : "")}
                         {...field}
                         aria-invalid={!!form.formState.errors.title}
                       />
@@ -298,27 +280,19 @@ export function DemandForm() {
                 )}
               />
 
-              {/* Demand Description */}
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.description ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
-                      onFocus={() => setIsFocused(prev => ({ ...prev, description: true }))}
-                      onBlur={() => setIsFocused(prev => ({ ...prev, description: false }))}
-                    >
+                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.description ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                       Descrição Detalhada
                     </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Descreva sua demanda em detalhes. Inclua contexto, objetivos e qualquer informação relevante..."
                         rows={5}
-                        className={cn(
-                          "resize-none transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
-                          form.formState.errors.description ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : ""
-                        )}
+                        className={cn("resize-none transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600", form.formState.errors.description ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : "")}
                         {...field}
                         aria-invalid={!!form.formState.errors.description}
                       />
@@ -328,26 +302,18 @@ export function DemandForm() {
                 )}
               />
 
-              {/* Priority Selection */}
               <FormField
                 control={form.control}
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel
-                      className={`block text-sm font-medium mb-2 ${isFocused.priority ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}
-                      onFocus={() => setIsFocused(prev => ({ ...prev, priority: true }))}
-                      onBlur={() => setIsFocused(prev => ({ ...prev, priority: false }))}
-                    >
+                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.priority ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                       Prioridade
                     </FormLabel>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger
-                          className={cn(
-                            "w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
-                            form.formState.errors.priority ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : ""
-                          )}
+                          className={cn("w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600", form.formState.errors.priority ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : "")}
                           aria-invalid={!!form.formState.errors.priority}
                         >
                           <SelectValue placeholder="Selecione a prioridade" />
@@ -370,30 +336,17 @@ export function DemandForm() {
                 )}
               />
 
-              {/* File Upload */}
               <div className="space-y-2">
                 <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anexar Documentos (Opcional)</Label>
                 <div
-                  className={cn(
-                    "border-2 border-dashed rounded-xl p-6 text-center transition-colors",
-                    selectedFiles
-                      ? "border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-900/20"
-                      : "border-gray-300 hover:border-blue-500 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50 dark:hover:border-blue-500"
-                  )}
+                  className={cn("border-2 border-dashed rounded-xl p-6 text-center transition-colors", selectedFiles ? "border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-900/20" : "border-gray-300 hover:border-blue-500 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50 dark:hover:border-blue-500")}
                 >
                   <CloudUpload className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={24} />
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Arraste arquivos aqui ou{" "}
                     <label className="text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-300 font-medium">
                       clique para selecionar
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".txt,.pdf,.docx"
-                        multiple
-                        onChange={handleFileChange}
-                        aria-label="Selecionar arquivos para anexar"
-                      />
+                      <input type="file" className="hidden" accept=".txt,.pdf,.docx" multiple onChange={handleFileChange} aria-label="Selecionar arquivos para anexar" />
                     </label>
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -411,14 +364,7 @@ export function DemandForm() {
                               ({Math.round(file.size / 1024)}KB)
                             </span>
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveFile(index)}
-                            className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
-                            aria-label={`Remover arquivo ${file.name}`}
-                          >
+                          <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveFile(index)} className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full" aria-label={`Remover arquivo ${file.name}`}>
                             <X size={14} className="text-red-500 dark:text-red-400" />
                           </Button>
                         </div>
@@ -428,7 +374,6 @@ export function DemandForm() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex justify-end pt-4">
                 <Button
                   type="submit"

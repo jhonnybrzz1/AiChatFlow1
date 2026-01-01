@@ -28,6 +28,7 @@ export class AgentInteractionService {
   async conductMultiAgentInteraction(
     demand: Demand,
     agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }>,
+    internalContext: string, // New parameter
     onProgress?: (message: ChatMessage) => void
   ): Promise<AgentInteractionResult> {
     // Get all agent names
@@ -71,7 +72,7 @@ Por favor, colaborem para refinar esta demanda. Cada agente deve contribuir com 
         // Create prompt with context of previous conversation
         const conversationContext = this.buildConversationContext(conversationHistory);
         
-        const systemPrompt = `${agentConfig.system_prompt}
+        const systemPrompt = `${internalContext}\n\n${agentConfig.system_prompt}
 
 CONTEXTO DA CONVERSA ATÉ AGORA:
 ${conversationContext}

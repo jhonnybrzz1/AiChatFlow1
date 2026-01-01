@@ -1,28 +1,23 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Loader2, Github, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { FaCheck, FaSpinner } from 'react-icons/fa'; // Import react-icons
 
 interface GitHubImportModalProps {
   onImportSuccess: (indexedContent: string, analysisResult: string, repoName?: string) => void;
   demandDescription?: string;
 }
 
-export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHubImportModalProps) {
+export function GitHubImportModal({ onImportSuccess }: GitHubImportModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [repoSearch, setRepoSearch] = useState('');
-  const [indexedRepoName, setIndexedRepoName] = useState<string | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: repos, isLoading: isLoadingRepos, isError: isErrorRepos } = useQuery({
     queryKey: ['github/repos'],
@@ -30,32 +25,11 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
     enabled: isOpen,
   });
 
-  const indexRepoMutation = useMutation({
-    mutationFn: ({ owner, repo, demandDescription }: { owner: string; repo: string; demandDescription?: string }) =>
-      api.github.indexRepo(owner, repo, demandDescription),
-    onSuccess: (data) => {
-      toast({
-        title: "Repositório analisado com sucesso!",
-        description: "O conteúdo do repositório foi carregado para análise.",
-      });
-      onImportSuccess(data.content, data.analysisResult, data.repoName);
-      setIndexedRepoName(data.repoName);
-      setIsOpen(false);
-      setSelectedRepo(null);
-      setRepoSearch('');
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro ao analisar repositório",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIndexedRepoName(null);
-    },
-  });
-
-  const handleCancelSelection = () => {
-    setSelectedRepo(null);
+  const handleRepoSelect = (repoFullName: string) => {
+    setSelectedRepo(repoFullName);
+    // Pass the selected repo name back to the parent. The other parameters are now irrelevant.
+    onImportSuccess("", "", repoFullName);
+    setIsOpen(false);
   };
 
   const filteredRepos = repos?.filter(repo =>
@@ -65,27 +39,16 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          disabled={indexRepoMutation.isPending}
-        >
-          {indexRepoMutation.isPending ? (
-            <FaSpinner className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Github size={16} />
-          )}
-          <span>
-            {indexRepoMutation.isPending
-              ? "Analisando..."
-              : "Importar do GitHub"}
-          </span>
+        <Button variant="outline">
+          <Github className="mr-2" size={16} />
+          Adicionar Projeto
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Importar Repositório do GitHub</DialogTitle>
+          <DialogTitle>Selecionar Repositório do GitHub</DialogTitle>
           <DialogDescription>
-            Selecione um repositório para importar e iniciar a análise.
+            Selecione o repositório que a squad deve usar como contexto para refinar a demanda.
           </DialogDescription>
         </DialogHeader>
 
@@ -123,9 +86,9 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
                     key={repo.id}
                     className={cn(
                       "flex items-center justify-between p-2 cursor-pointer hover:bg-muted rounded-md",
-                      selectedRepo === repo.full_name && "bg-muted"
+                      selectedRepo === repo.full_name && "bg-green-100 dark:bg-green-900" // Highlight in green
                     )}
-                    onClick={() => setSelectedRepo(repo.full_name)}
+                    onClick={() => handleRepoSelect(repo.full_name)}
                   >
                     <span>{repo.full_name}</span>
                     {selectedRepo === repo.full_name && (
@@ -135,29 +98,6 @@ export function GitHubImportModal({ onImportSuccess, demandDescription }: GitHub
                 ))}
               </div>
             </ScrollArea>
-          )}
-
-          <div className="flex gap-2">
-            {indexRepoMutation.isPending ? (
-              <Button disabled className="flex-1">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analisando repositório automaticamente...
-              </Button>
-            ) : (
-              <Button
-                disabled={!selectedRepo}
-                onClick={handleCancelSelection}
-                variant="outline"
-                className="flex-1"
-              >
-                {selectedRepo ? 'Cancelar seleção' : 'Selecione um repositório'}
-              </Button>
-            )}
-          </div>
-          {selectedRepo && !indexRepoMutation.isPending && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              🤖 A squad virtual irá analisar automaticamente este repositório quando você criar a demanda
-            </div>
           )}
         </div>
       </DialogContent>

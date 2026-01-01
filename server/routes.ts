@@ -66,6 +66,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/github/search-files", async (req: Request, res: Response) => {
+    try {
+      const { owner, repo, query } = req.body;
+      if (!owner || !repo || !query) {
+        return res.status(400).json({ error: "Missing required parameters: owner, repo, query" });
+      }
+      const results = await gitHubService.searchRepo(owner, repo, query);
+      res.json(results);
+    } catch (error) {
+      console.error('GitHub search error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({
+        error: "Failed to search repository.",
+        errorDetails: errorMessage,
+      });
+    }
+  });
+
   // New endpoint for lightweight repository analysis (disabled temporarily)
   // app.get("/api/github/repos/:owner/:repo/analyze", async (req: Request, res: Response) => {
   //   try {
@@ -90,79 +108,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //     });
   //   }
   // });
-
-  app.post("/api/github/repos/:owner/:repo/index", async (req: Request, res: Response) => {
-    try {
-      const { owner, repo } = req.params;
-      const { demandDescription } = req.body; // Extract demandDescription from body
-      console.log(`Starting repository indexing for ${owner}/${repo} with demand description: ${!!demandDescription}`);
-
-      // Check if GitHub token is available and valid before proceeding
-      const githubToken = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
-      if (!githubToken) {
-        throw new Error('GITHUB_ACCESS_TOKEN or GITHUB_TOKEN environment variable is not set.');
-      }
-
-      // Validate token format
-      if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
-        throw new Error('Invalid GitHub token format. Must start with "ghp_" or "github_pat_".');
-      }
-
-      console.log(`GitHub token validation passed for ${owner}/${repo}`);
-
-      // Index the repository and store it in the database
-      let indexedContent;
-      try {
-        console.log(`Calling repoService.indexRepo for ${owner}/${repo}`);
-        indexedContent = await repoService.indexRepo(owner, repo);
-        console.log(`Repository indexing completed for ${owner}/${repo}`);
-      } catch (indexError: any) {
-        console.error(`Repository indexing failed for ${owner}/${repo}:`, indexError.message || indexError);
-        const errorStatus = (indexError as any)?.status || 'Unknown status';
-        console.error(`GitHub API error details - Status: ${errorStatus}`);
-        // Create minimal repository data as fallback
-        await repoService.getOrCreateRepo(owner, repo);
-        indexedContent = `# Repository: ${owner}/${repo}\n\nRepository content could not be fully indexed due to access restrictions or permissions.\n\nLast attempt: ${new Date().toISOString()}\n\nError details: ${indexError.message || 'Unknown error'}`;
-      }
-
-      let userPrompt = '';
-      if (demandDescription && demandDescription.trim() !== '') {
-        userPrompt = `Analise este repositório focando na seguinte demanda: "${demandDescription}". Forneça um resumo dos aspectos relevantes para esta demanda, identifique possíveis soluções ou desafios e sugira os próximos passos.`;
-      } else {
-        userPrompt = `Realize uma análise geral deste repositório para identificar possíveis funcionalidades, estrutura, e desafios. Considere que este é um modo de descoberta (discovery).`;
-      }
-
-      let analysisResult = 'Análise do repositório não disponível.';
-      try {
-        console.log(`Starting repository analysis for ${owner}/${repo}`);
-        analysisResult = await codeAnalysisService.analyzeRepo(indexedContent, demandDescription || '', userPrompt);
-        console.log(`Repository analysis completed for ${owner}/${repo}`);
-      } catch (analysisError: any) {
-        console.error(`Repository analysis failed for ${owner}/${repo}:`, analysisError.message || analysisError);
-        analysisResult = `Análise do repositório não pôde ser realizada: ${analysisError.message || 'Erro desconhecido'}`;
-      }
-
-      console.log(`Sending successful response for ${owner}/${repo} indexing`);
-      res.json({ content: indexedContent, analysisResult: analysisResult, demandDescription: demandDescription || null, repoName: `${owner}/${repo}` });
-    } catch (error) {
-      console.error('Error in repository indexing endpoint:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const errorStatus = (error as any)?.status || 'Unknown status';
-      console.error(`GitHub API error details - Status: ${errorStatus}, Message: ${errorMessage}`);
-      // Return minimal data instead of failing completely
-      const { owner, repo } = req.params;
-      const { demandDescription } = req.body;
-      res.status(500).json({
-        content: `# Repository: ${owner}/${repo}\n\nContent unavailable due to access restrictions.\n\nLast attempt: ${new Date().toISOString()}`,
-        analysisResult: 'Repository analysis could not be performed due to access restrictions or errors.',
-        demandDescription: demandDescription || null,
-        repoName: `${owner}/${repo}`,
-        error: 'Could not access repository content. This may be due to GitHub token permissions, private repository access, or other errors.',
-        errorMessage: errorMessage,
-        errorStatus: errorStatus
-      });
-    }
-  });
 
   // New endpoint to get repository information from backend
   app.get("/api/github/repos/:owner/:repo", async (req: Request, res: Response) => {
