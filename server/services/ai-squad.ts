@@ -14,6 +14,7 @@ import { agentOrchestrator } from "../cognitive-core/agent-orchestrator";
 import { frameworkManager } from "../frameworks/framework-manager";
 import { gitHubService } from './github';
 import { repoService } from './repo-service';
+import { contextBuilder } from './context-builder';
 
 // Using Mistral AI service instead of OpenAI
 
@@ -306,52 +307,7 @@ export class AISquadService {
   }
 
   private async assembleInternalContext(demand: Demand): Promise<string> {
-    const description = demand.description;
-    const repoMatch = description.match(/Repositório:\s*([^\/\s]+\/[^\s]+)/);
-    if (!repoMatch || !repoMatch[1]) {
-      console.log("No repository found in demand description for context assembly.");
-      return "";
-    }
-  
-    const [owner, repoName] = repoMatch[1].split('/');
-    if (!owner || !repoName) {
-      console.log("Invalid repository format in demand description.");
-      return "";
-    }
-  
-    try {
-      const repo = await repoService.getOrCreateRepo(owner, repoName);
-      if (!repo) return "";
-
-      const briefing = repo.briefing ? `--- REPOSITORY BRIEFING ---\n${repo.briefing}\n\n` : "";
-      const systemMap = repo.systemMap ? `--- SYSTEM MAP ---\n${repo.systemMap}\n\n` : "";
-      
-      let specificFilesContext = "";
-      const userOnlyDescription = description.split('---')[0].trim();
-      const searchQuery = `${demand.title} ${userOnlyDescription}`.trim();
-      const searchResults = await gitHubService.searchRepo(owner, repoName, searchQuery);
-      
-      if (searchResults.length > 0) {
-        const topFiles = searchResults.slice(0, 5);
-        specificFilesContext += "--- DEMAND-SPECIFIC FILE CONTEXT ---\n";
-        for (const filePath of topFiles) {
-          try {
-            const content = await gitHubService.getRepoContent(owner, repoName, filePath);
-            if (content && content.encoding === 'base64') {
-              const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
-              specificFilesContext += `--- FILE: ${filePath} ---\n${decodedContent}\n\n`;
-            }
-          } catch (error) {
-            console.warn(`Could not read file ${filePath}:`, error);
-          }
-        }
-      }
-  
-      return `${briefing}${systemMap}${specificFilesContext}`.trim();
-    } catch (error) {
-      console.error(`Error assembling internal context for ${owner}/${repoName}:`, error);
-      return "--- WARNING: Failed to load full repository context. Proceeding with caution. ---";
-    }
+    // Use the new ContextBuilder with anti-overengineering constraintsn    return contextBuilder.buildContext(demand);
   }
 
   async processDemand(demandId: number, onProgress?: (message: ChatMessage) => void): Promise<void> {
@@ -617,8 +573,12 @@ export class AISquadService {
     const agentConfig = this.agentConfigs[agentName];
 
     // Prepend the internal context to the agent's system prompt
-    const systemPrompt = `${internalContext}\n\n${agentConfig?.system_prompt
-      ? `${agentConfig.system_prompt}\n\nContexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
+    const systemPrompt = `${internalContext}
+
+${agentConfig?.system_prompt
+      ? `${agentConfig.system_prompt}
+
+Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
       : `Você é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas. Tipo de demanda: ${demand.type}. Nível de refinamento: ${refinementLevels}/4. Intensidade de análise: ${intensityLevel}.`
     }`;
 
@@ -640,13 +600,50 @@ export class AISquadService {
         }
       );
 
-      return response || `${agentName} processou a demanda com sucesso.`;
+      const finalResponse = response || `${agentName} processou a demanda com sucesso.`;
+      
+      // Validate response against anti-overengineering rules
+      const validation = contextBuilder.validateResponse(finalResponse);
+      
+      if (!validation.isValid) {
+        console.warn(`Agent ${agentName} response validation failed (score: ${validation.score}):`, validation.issues);
+        // Return structured response even if validation fails
+        return this.createStructuredResponse(agentName, finalResponse, validation);
+      }
+      
+      return finalResponse;
     } catch (error) {
       console.error(`Error processing with ${agentName}:`, error);
       return `${agentName} encontrou um erro durante o processamento, mas o fluxo continua.`;
     }
   }
 
+  private createStructuredResponse(agentName: string, rawResponse: string, validation: { score: number; issues: string[] }): string {
+    // Try to extract structured information from raw response
+    const analysisMatch = rawResponse.match(/\*\*Análise:\*\*(.*?)(?=\*\*|$)/s);
+    const problemMatch = rawResponse.match(/\*\*Problema Identificado:\*\*(.*?)(?=\*\*|$)/s);
+    const impactMatch = rawResponse.match(/\*\*Impacto:\*\*(.*?)(?=\*\*|$)/s);
+    const recommendationMatch = rawResponse.match(/\*\*Recomendação:\*\*(.*?)(?=\*\*|$)/s);
+    const roiMatch = rawResponse.match(/\*\*ROI:\*\*(.*?)(?=\*\*|$)/s);
+    const effortMatch = rawResponse.match(/\*\*Esforço:\*\*(.*?)(?=\*\*|$)/s);
+    const priorityMatch = rawResponse.match(/\*\*Prioridade:\*\*(.*?)(?=\*\*|$)/s);
+
+    const structuredResponse = `
+**Análise:** ${analysisMatch ? analysisMatch[1].trim() : 'Análise não fornecida'}
+**Problema Identificado:** ${problemMatch ? problemMatch[1].trim() : 'Problema não identificado'}
+**Impacto:** ${impactMatch ? impactMatch[1].trim() : 'Impacto não especificado'}
+**Recomendação:** ${recommendationMatch ? recommendationMatch[1].trim() : 'Nenhuma recomendação específica'}
+**ROI:** ${roiMatch ? roiMatch[1].trim() : 'ROI não calculado'}
+**Esforço:** ${effortMatch ? effortMatch[1].trim() : 'Esforço não estimado'}
+**Prioridade:** ${priorityMatch ? priorityMatch[1].trim() : 'Desejável'}
+
+---
+**Validação:** Score ${validation.score}/100
+**Problemas:** ${validation.issues.length > 0 ? validation.issues.join(', ') : 'Nenhum'}
+**Nota:** Resposta estruturada automaticamente para conformidade`;
+
+    return structuredResponse;
+  }
   private getIntensityByType(type: string): 'baixa' | 'media' | 'alta' {
     switch (type) {
       case 'bug': return 'baixa';

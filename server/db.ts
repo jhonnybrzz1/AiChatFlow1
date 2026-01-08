@@ -1,6 +1,5 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { Pool } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
 
-const connectionString = process.env.DATABASE_URL!;
-const pool = new Pool({ connectionString });
-export const db = drizzle(pool);
+const sqlite = new Database(process.env.DATABASE_URL || 'sqlite.db');
+export const db = drizzle(sqlite);

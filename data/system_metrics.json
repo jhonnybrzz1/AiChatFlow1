@@ -1,28 +1,28 @@
 {
-  "totalDemandsProcessed": 70,
+  "totalDemandsProcessed": 94,
   "averageRoutingConfidence": 60,
   "successRate": 0,
   "averageResolutionTime": 0,
   "pluginEffectiveness": {
     "ImprovementPlugin": {
       "name": "ImprovementPlugin",
-      "totalExecutions": 10,
-      "successfulExecutions": 10,
-      "averageExecutionTime": 19207.1,
+      "totalExecutions": 13,
+      "successfulExecutions": 13,
+      "averageExecutionTime": 22673.384615384617,
       "usefulnessScore": 100
     },
     "DiscoveryPlugin": {
       "name": "DiscoveryPlugin",
-      "totalExecutions": 28,
-      "successfulExecutions": 28,
-      "averageExecutionTime": 26318,
+      "totalExecutions": 38,
+      "successfulExecutions": 38,
+      "averageExecutionTime": 25687.342105263157,
       "usefulnessScore": 100
     },
     "BugPlugin": {
       "name": "BugPlugin",
-      "totalExecutions": 6,
-      "successfulExecutions": 6,
-      "averageExecutionTime": 21875.333333333332,
+      "totalExecutions": 8,
+      "successfulExecutions": 8,
+      "averageExecutionTime": 20594.5,
       "usefulnessScore": 100
     }
   }

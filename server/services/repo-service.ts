@@ -35,29 +35,60 @@ export class RepoService {
     let keyFilesContent = '';
 
     try {
-      // Buscar a árvore de arquivos completa
-      const treeData = await this.gitHubService.client.git.getTree({
-        owner,
-        repo: name,
-        tree_sha: defaultBranch,
-        recursive: 'true',
-      });
-      if (treeData.data.truncated) {
-        console.warn(`A árvore de arquivos para ${owner}/${name} está truncada.`);
+      // Primeiro, verificar se o repositório é acessível
+      try {
+        console.log(`Verificando acessibilidade do repositório ${owner}/${name}`);
+        const repoCheck = await this.gitHubService.client.repos.get({ owner, repo: name });
+        console.log(`Repositório ${owner}/${name} é acessível`);
+      } catch (checkError) {
+        console.error(`Repositório ${owner}/${name} não é acessível ou não existe:`, checkError);
+        // Se o repositório não é acessível, não tente gerar o contexto
+        return;
       }
-      fileTree = treeData.data.tree.map(file => file.path).join('\n');
+
+      // Buscar a árvore de arquivos completa
+      try {
+        console.log(`Buscando árvore de arquivos para ${owner}/${name} no branch ${defaultBranch}`);
+        const treeData = await this.gitHubService.client.git.getTree({
+          owner,
+          repo: name,
+          tree_sha: defaultBranch,
+          recursive: 'true',
+        });
+        if (treeData.data.truncated) {
+          console.warn(`A árvore de arquivos para ${owner}/${name} está truncada.`);
+        }
+        fileTree = treeData.data.tree.map(file => file.path).join('\n');
+        console.log(`Árvore de arquivos obtida com sucesso. Total de arquivos: ${treeData.data.tree.length}`);
+      } catch (treeError) {
+        console.error(`Erro ao buscar árvore de arquivos para ${owner}/${name}:`, treeError);
+        // Se não conseguirmos a árvore de arquivos, não podemos gerar o contexto
+        return;
+      }
 
       // Identificar e ler o conteúdo de arquivos chave
       const keyFiles = ['package.json', 'pom.xml', 'build.gradle', 'requirements.txt', 'docker-compose.yml', 'README.md', 'ARCHITECTURE.md', 'tsconfig.json'];
-      const rootContent = await this.gitHubService.getRepoContent(owner, name);
-      const filesToRead = (rootContent as any[]).filter(item => item.type === 'file' && keyFiles.includes(item.name));
+      try {
+        console.log(`Buscando conteúdo da raiz para identificar arquivos chave`);
+        const rootContent = await this.gitHubService.getRepoContent(owner, name);
+        const filesToRead = (rootContent as any[]).filter(item => item.type === 'file' && keyFiles.includes(item.name));
+        console.log(`Arquivos chave encontrados: ${filesToRead.map(f => f.name).join(', ')}`);
 
-      for (const file of filesToRead) {
-        const content = await this.gitHubService.getRepoContent(owner, name, file.path);
-        if (content && content.encoding === 'base64') {
-          const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
-          keyFilesContent += `--- CONTEÚDO DO ARQUIVO: ${file.path} ---\n${decodedContent}\n\n`;
+        for (const file of filesToRead) {
+          try {
+            const content = await this.gitHubService.getRepoContent(owner, name, file.path);
+            if (content && content.encoding === 'base64') {
+              const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
+              keyFilesContent += `--- CONTEÚDO DO ARQUIVO: ${file.path} ---\n${decodedContent}\n\n`;
+            }
+          } catch (fileError) {
+            console.error(`Erro ao ler arquivo ${file.path}:`, fileError);
+            // Continue com os outros arquivos mesmo se um falhar
+          }
         }
+      } catch (contentError) {
+        console.error(`Erro ao buscar conteúdo da raiz para ${owner}/${name}:`, contentError);
+        // Continue mesmo sem os arquivos chave
       }
     } catch (error) {
       console.error(`Erro ao coletar dados para o contexto estrutural de ${owner}/${name}:`, error);
@@ -119,6 +150,9 @@ Gere o "Repository Briefing" e o "System Map" no formato JSON solicitado.`;
     }
   }
 
+  // Track ongoing context generation to prevent duplicate calls
+  private ongoingContextGeneration = new Set<string>();
+
   /**
    * Get or create a repository in the database
    * @param owner - Repository owner
@@ -126,19 +160,27 @@ Gere o "Repository Briefing" e o "System Map" no formato JSON solicitado.`;
    * @returns The repository record
    */
   async getOrCreateRepo(owner: string, name: string): Promise<Repo> {
-    const repo = await db.query.repos.findFirst({
-      where: eq(repos.fullName, `${owner}/${name}`),
-    });
+    const repo = await db.select().from(repos).where(
+      eq(repos.fullName, `${owner}/${name}`)
+    ).limit(1);
 
     // Se o repositório já existe, verifica se o briefing precisa ser atualizado
     if (repo) {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       // Se o briefing não existe ou é mais antigo que 7 dias, gera em segundo plano
       if (!repo.briefing || !repo.briefingGeneratedAt || repo.briefingGeneratedAt < sevenDaysAgo) {
-        console.log(`Briefing para ${owner}/${name} está desatualizado ou não existe. Gerando em segundo plano...`);
-        this.generateStructuralContext(owner, name).catch(error => {
-          console.error(`Erro na geração de contexto em segundo plano para ${owner}/${name}:`, error);
-        });
+        const repoKey = `${owner}/${name}`;
+        if (!this.ongoingContextGeneration.has(repoKey)) {
+          this.ongoingContextGeneration.add(repoKey);
+          console.log(`Briefing para ${owner}/${name} está desatualizado ou não existe. Gerando em segundo plano...`);
+          this.generateStructuralContext(owner, name).catch(error => {
+            console.error(`Erro na geração de contexto em segundo plano para ${owner}/${name}:`, error);
+          }).finally(() => {
+            this.ongoingContextGeneration.delete(repoKey);
+          });
+        } else {
+          console.log(`Geração de contexto já em andamento para ${owner}/${name}. Pulando chamada duplicada.`);
+        }
       }
       return repo;
     }
@@ -189,10 +231,18 @@ Gere o "Repository Briefing" e o "System Map" no formato JSON solicitado.`;
     const [createdRepo] = await db.insert(repos).values(newRepo).returning();
 
     // Dispara a geração de contexto em segundo plano para o novo repositório
-    console.log(`Disparando geração de contexto inicial para o novo repositório ${owner}/${name}...`);
-    this.generateStructuralContext(owner, name).catch(error => {
-      console.error(`Erro na geração de contexto inicial em segundo plano para ${owner}/${name}:`, error);
-    });
+    const repoKey = `${owner}/${name}`;
+    if (!this.ongoingContextGeneration.has(repoKey)) {
+      this.ongoingContextGeneration.add(repoKey);
+      console.log(`Disparando geração de contexto inicial para o novo repositório ${owner}/${name}...`);
+      this.generateStructuralContext(owner, name).catch(error => {
+        console.error(`Erro na geração de contexto inicial em segundo plano para ${owner}/${name}:`, error);
+      }).finally(() => {
+        this.ongoingContextGeneration.delete(repoKey);
+      });
+    } else {
+      console.log(`Geração de contexto já em andamento para ${owner}/${name}. Pulando chamada duplicada.`);
+    }
 
     return createdRepo;
   }

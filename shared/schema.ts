@@ -1,30 +1,30 @@
-import { pgTable, text, serial, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const demands = pgTable("demands", {
-  id: serial("id").primaryKey(),
+export const demands = sqliteTable("demands", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   description: text("description").notNull(),
   type: text("type").notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'discovery', 'analise_exploratoria'
   priority: text("priority").notNull(), // 'baixa', 'media', 'alta', 'critica'
   status: text("status").notNull().default('processing'), // 'processing', 'completed', 'error', 'stopped'
-  progress: serial("progress").notNull().default(0), // Progress percentage 0-100
-  chatMessages: jsonb("chat_messages").$type<ChatMessage[]>().default([]),
+  progress: integer("progress").notNull().default(0), // Progress percentage 0-100
+  chatMessages: text("chat_messages", { mode: "json" }).$type<ChatMessage[]>().default([]),
   prdUrl: text("prd_url"),
   tasksUrl: text("tasks_url"),
-  classification: jsonb("classification").$type<any>(), // Cognitive Core classification
-  orchestration: jsonb("orchestration").$type<any>(), // Cognitive Core orchestration
+  classification: text("classification", { mode: "json" }).$type<any>(), // Cognitive Core classification
+  orchestration: text("orchestration", { mode: "json" }).$type<any>(), // Cognitive Core orchestration
   currentAgent: text("current_agent"), // Current agent being executed
   errorMessage: text("error_message"), // Error message if any
   validationNotes: text("validation_notes"), // Validation notes
-  completedAt: timestamp("completed_at"), // When demand was completed
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  completedAt: integer("completed_at", { mode: "timestamp" }), // When demand was completed
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const repos = pgTable("repos", {
-  id: serial("id").primaryKey(),
+export const repos = sqliteTable("repos", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   owner: text("owner").notNull(),
   name: text("name").notNull(),
   fullName: text("full_name").notNull().unique(),
@@ -35,50 +35,50 @@ export const repos = pgTable("repos", {
   htmlUrl: text("html_url"),
   defaultBranch: text("default_branch"),
   language: text("language"),
-  size: serial("size"), // Size in KB
-  stars: serial("stars").default(0),
-  forks: serial("forks").default(0),
-  isPrivate: boolean("is_private").default(false),
-  isFork: boolean("is_fork").default(false),
+  size: integer("size"), // Size in KB
+  stars: integer("stars").default(0),
+  forks: integer("forks").default(0),
+  isPrivate: integer("is_private", { mode: "boolean" }).default(false),
+  isFork: integer("is_fork", { mode: "boolean" }).default(false),
   indexedContent: text("indexed_content"),
-  indexedAt: timestamp("indexed_at"),
+  indexedAt: integer("indexed_at", { mode: "timestamp" }),
   briefing: text("briefing"),
-  briefingGeneratedAt: timestamp("briefing_generated_at"),
+  briefingGeneratedAt: integer("briefing_generated_at", { mode: "timestamp" }),
   systemMap: text("system_map"),
-  systemMapGeneratedAt: timestamp("system_map_generated_at"),
+  systemMapGeneratedAt: integer("system_map_generated_at", { mode: "timestamp" }),
   lastCommit: text("last_commit"),
-  lastCommitDate: timestamp("last_commit_date"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  lastCommitDate: integer("last_commit_date", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const repoFiles = pgTable("repo_files", {
-  id: serial("id").primaryKey(),
-  repoId: serial("repo_id").references(() => repos.id, { onDelete: 'cascade' }),
+export const repoFiles = sqliteTable("repo_files", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  repoId: integer("repo_id").references(() => repos.id, { onDelete: 'cascade' }),
   path: text("path").notNull(),
   filename: text("filename").notNull(),
   content: text("content"),
   language: text("language"),
-  size: serial("size"), // Size in bytes
+  size: integer("size"), // Size in bytes
   sha: text("sha"),
   url: text("url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const files = pgTable("files", {
-  id: serial("id").primaryKey(),
-  demandId: serial("demand_id").references(() => demands.id),
+export const files = sqliteTable("files", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  demandId: integer("demand_id").references(() => demands.id),
   filename: text("filename").notNull(),
   originalName: text("original_name").notNull(),
   mimeType: text("mime_type").notNull(),
-  size: serial("size").notNull(),
+  size: integer("size").notNull(),
   path: text("path").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
