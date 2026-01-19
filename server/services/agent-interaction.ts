@@ -1,6 +1,7 @@
 import { Demand, ChatMessage } from '@shared/schema';
 import { mistralAIService } from './mistral-ai';
 import { storage } from '../storage';
+import { contextBuilder } from './context-builder';
 
 export interface AgentMessage {
   agent: string;
@@ -28,12 +29,12 @@ export class AgentInteractionService {
   async conductMultiAgentInteraction(
     demand: Demand,
     agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }>,
-    internalContext: string, // New parameter
+    internalContext: string, // Initial context (will be evolved)
     onProgress?: (message: ChatMessage) => void
   ): Promise<AgentInteractionResult> {
     // Get all agent names
     const agentNames = Object.keys(agentConfigs);
-    
+
     if (agentNames.length === 0) {
       throw new Error('No agents available for interaction');
     }
@@ -69,20 +70,31 @@ Por favor, colaborem para refinar esta demanda. Cada agente deve contribuir com 
         const agentConfig = agentConfigs[agentName];
         if (!agentConfig) continue;
 
-        // Create prompt with context of previous conversation
+        // CONTEXT EVOLUTION: Get the evolved context with all previous agent insights
+        const evolvedContext = contextBuilder.getEvolvedContext(demand.id);
+
+        // Create prompt with EVOLVED context (not static)
         const conversationContext = this.buildConversationContext(conversationHistory);
-        
-        const systemPrompt = `${internalContext}\n\n${agentConfig.system_prompt}
+
+        const systemPrompt = `${evolvedContext}\n\n${agentConfig.system_prompt}
 
 CONTEXTO DA CONVERSA ATÉ AGORA:
 ${conversationContext}
 
 Como ${agentName}, contribua para o refinamento da demanda acima.
 Seu papel é: ${agentConfig.description}
+
+IMPORTANTE:
+- Use os insights dos agentes anteriores para enriquecer sua análise
+- NÃO repita o que já foi dito - adicione NOVO valor
+- Seja específico e prático nas recomendações
+- Respeite as REALITY CONSTRAINTS se aplicáveis
+
 Trabalhe em colaboração com outros agentes para criar a melhor possível compreensão e refinamento da demanda.`;
 
-        const userPrompt = `Agora é sua vez de contribuir para o refinamento da demanda. 
+        const userPrompt = `Agora é sua vez de contribuir para o refinamento da demanda.
 Considere as contribuições anteriores dos outros agentes e adicione seu valor específico com base em sua especialidade.
+NÃO repita análises já feitas - traga novos insights da sua área.
 Demanda: ${demand.description}`;
 
         try {
@@ -122,6 +134,10 @@ Demanda: ${demand.description}`;
             };
 
             conversationHistory.push(agentMessage);
+
+            // CONTEXT EVOLUTION: Add this agent's insight to the evolving context
+            // This ensures the next agent sees this agent's contributions
+            contextBuilder.addAgentInsight(demand.id, agentName, response);
 
             // Send completed message update
             if (onProgress) {

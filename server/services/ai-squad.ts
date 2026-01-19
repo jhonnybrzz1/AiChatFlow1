@@ -15,6 +15,7 @@ import { frameworkManager } from "../frameworks/framework-manager";
 import { gitHubService } from './github';
 import { repoService } from './repo-service';
 import { contextBuilder } from './context-builder';
+import { RealityBasedRefinement } from '../cognitive-core/reality-based-refinement';
 
 // Using Mistral AI service instead of OpenAI
 
@@ -28,8 +29,10 @@ export class AISquadService {
   private agents: { name: string, icon: string, description: string }[] = [];
   private agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }> = {};
   private sseConnections: Map<number, SSEConnection> = new Map(); // Map de demandId para connection
+  private realityBasedRefinement: RealityBasedRefinement;
 
   constructor() {
+    this.realityBasedRefinement = new RealityBasedRefinement();
     this.loadAgentConfigurations();
     this.initializeRoutingSystem();
     this.initializeCognitiveCore();
@@ -221,31 +224,64 @@ export class AISquadService {
       // Use AICHATflow Cognitive Core for intelligent classification and orchestration
       console.log(`🚀 Using AICHATflow Cognitive Core for demand ${demandId}`);
 
+      // UNIFIED: Initialize context with reality constraints (same as processDemand)
+      const internalContext = await this.assembleInternalContext(demand);
+
+      // UNIFIED: Apply reality constraints BEFORE any processing
+      try {
+        const realityConstraints = await this.realityBasedRefinement.getConstraintsForDemandType(demand.type);
+        contextBuilder.setRealityConstraints(demandId, {
+          maturityLevel: realityConstraints.maturityLevel || 'MVP',
+          allowedTechnologies: realityConstraints.allowedTechnologies || ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
+          forbiddenTechnologies: realityConstraints.forbiddenTechnologies || ['kubernetes', 'microservices', 'blockchain'],
+          maxEffortDays: realityConstraints.maxEffortDays || 14,
+          minROI: realityConstraints.minROI || '3:1'
+        });
+
+        if (onProgress) {
+          onProgress({
+            id: `${demandId}-reality-check`,
+            agent: 'reality_checker',
+            message: `🔍 Reality Check aplicado: Maturity Level ${realityConstraints.maturityLevel}`,
+            timestamp: new Date().toISOString(),
+            type: 'completed',
+            progress: 3
+          });
+        }
+      } catch (error) {
+        console.warn(`Reality check failed, using defaults`);
+        contextBuilder.setRealityConstraints(demandId, {
+          maturityLevel: 'MVP',
+          allowedTechnologies: ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
+          forbiddenTechnologies: ['kubernetes', 'microservices', 'blockchain'],
+          maxEffortDays: 14,
+          minROI: '3:1'
+        });
+      }
+
       // Step 1: Classify the demand
       const classification = await agentOrchestrator.createOrchestrationPlan(demandId);
-      
+
       // Update demand with classification information
       await agentOrchestrator.updateDemandWithOrchestration(demandId, classification);
 
       console.log(`📊 Demand classified as: ${classification.classification.category}`);
       console.log(`🔧 Execution order: ${classification.agentExecutionOrder.join(' → ')}`);
-      console.log(`⏱️ Estimated time: ${classification.estimatedCompletionTime} minutes`);
 
       // Send classification update
       if (onProgress) {
         onProgress({
           id: `${demandId}-classification`,
           agent: 'cognitive_core',
-          message: `📊 Classificação Inteligente: ${classification.classification.category}\n` +
-                   `🔧 Ordem de Execução: ${classification.agentExecutionOrder.join(' → ')}\n` +
-                   `⏱️ Tempo Estimado: ${classification.estimatedCompletionTime} minutos`,
+          message: `📊 Classificação: ${classification.classification.category}\n` +
+                   `🔧 Ordem: ${classification.agentExecutionOrder.join(' → ')}`,
           timestamp: new Date().toISOString(),
           type: 'completed',
           progress: 10
         });
       }
 
-      // Step 2: Execute the orchestration plan
+      // Step 2: Execute orchestration with context evolution
       const executionResults = await agentOrchestrator.executeOrchestrationPlan(
         classification,
         (progress: number, message: string) => {
@@ -262,19 +298,34 @@ export class AISquadService {
         }
       );
 
-      console.log(`✅ Cognitive Core processing completed for demand ${demandId}`);
-      console.log(`📋 Execution results: ${executionResults.length} agents executed`);
+      // UNIFIED: Add execution results to evolving context
+      for (const result of executionResults) {
+        if (result.message) {
+          contextBuilder.addAgentInsight(demandId, result.agentName || 'unknown', result.message);
+        }
+      }
 
-      // Step 3: Generate documents with PM (outside the cognitive core orchestration)
+      console.log(`✅ Cognitive Core completed for demand ${demandId}`);
+
+      // Step 3: Generate documents with PM (uses evolved context with all insights)
       await storage.updateDemand(demandId, {
         status: 'processing',
-        progress: 95
+        progress: 90
       });
 
-      // Generate PRD with PM
-      const prdContent = await this.generatePRDWithPM(demand, []);
+      // Convert execution results to chat messages for PRD generation
+      const refinementMessages: ChatMessage[] = executionResults.map((result, index) => ({
+        id: `${demandId}-result-${index}`,
+        agent: result.agentName || 'unknown',
+        message: result.message || '',
+        timestamp: new Date().toISOString(),
+        type: 'completed' as const
+      }));
 
-      // Generate Tasks with PM
+      // Generate PRD with PM (validated)
+      const prdContent = await this.generatePRDWithPM(demand, refinementMessages);
+
+      // Generate Tasks with PM (validated)
       const tasksContent = await this.generateTasksWithPM(demand, prdContent);
 
       // Save documents
@@ -289,25 +340,44 @@ export class AISquadService {
         tasksUrl: tasksPath
       });
 
+      // UNIFIED: Clean up evolving context
+      contextBuilder.clearEvolvingContext(demandId);
+      console.log(`✅ Demand ${demandId} completed via Cognitive Core`);
+
       // Notify clients
       this.notifyDemandUpdate(demandId);
 
     } catch (error) {
-      console.error(`❌ Error in Cognitive Core processing for demand ${demandId}:`, error);
-      
-      // Fallback to traditional processing if cognitive core fails
+      console.error(`❌ Error in Cognitive Core for demand ${demandId}:`, error);
+
+      // Clean up context on error
+      contextBuilder.clearEvolvingContext(demandId);
+
+      // UNIFIED: Fallback to standard processing with clear notification
       await storage.updateDemand(demandId, {
         status: 'processing',
-        errorMessage: `Cognitive Core error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        errorMessage: `Fallback: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
-      
-      // Continue with traditional processing
+
+      if (onProgress) {
+        onProgress({
+          id: `${demandId}-fallback`,
+          agent: 'system',
+          message: `⚠️ Cognitive Core indisponível, usando processamento padrão...`,
+          timestamp: new Date().toISOString(),
+          type: 'processing',
+          progress: 5
+        });
+      }
+
+      // Continue with standard processing (which also has reality check)
       await this.processDemand(demandId, onProgress);
     }
   }
 
   private async assembleInternalContext(demand: Demand): Promise<string> {
-    // Use the new ContextBuilder with anti-overengineering constraintsn    return contextBuilder.buildContext(demand);
+    // Use the new ContextBuilder with anti-overengineering constraints
+    return contextBuilder.buildContext(demand);
   }
 
   async processDemand(demandId: number, onProgress?: (message: ChatMessage) => void): Promise<void> {
@@ -319,6 +389,44 @@ export class AISquadService {
 
     // Update status to processing
     await storage.updateDemand(demandId, { status: 'processing' });
+
+    // REALITY CHECK: Apply reality constraints BEFORE any agent processing
+    try {
+      console.log(`🔍 Applying Reality Check for demand ${demandId}...`);
+      const realityConstraints = await this.realityBasedRefinement.getConstraintsForDemandType(demand.type);
+
+      // Set reality constraints in the context builder
+      contextBuilder.setRealityConstraints(demandId, {
+        maturityLevel: realityConstraints.maturityLevel || 'MVP',
+        allowedTechnologies: realityConstraints.allowedTechnologies || ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
+        forbiddenTechnologies: realityConstraints.forbiddenTechnologies || ['kubernetes', 'microservices', 'blockchain'],
+        maxEffortDays: realityConstraints.maxEffortDays || 14,
+        minROI: realityConstraints.minROI || '3:1'
+      });
+
+      console.log(`✅ Reality constraints applied: ${realityConstraints.maturityLevel}`);
+
+      if (onProgress) {
+        onProgress({
+          id: `${demandId}-reality-check`,
+          agent: 'reality_checker',
+          message: `🔍 Reality Check aplicado: Maturity Level ${realityConstraints.maturityLevel}, Stack permitida: ${(realityConstraints.allowedTechnologies || []).slice(0, 3).join(', ')}`,
+          timestamp: new Date().toISOString(),
+          type: 'completed',
+          progress: 3
+        });
+      }
+    } catch (error) {
+      console.warn(`Reality check failed for demand ${demandId}, continuing with defaults:`, error);
+      // Apply default constraints if reality check fails
+      contextBuilder.setRealityConstraints(demandId, {
+        maturityLevel: 'MVP',
+        allowedTechnologies: ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
+        forbiddenTechnologies: ['kubernetes', 'microservices', 'blockchain', 'kafka', 'elasticsearch'],
+        maxEffortDays: 14,
+        minROI: '3:1'
+      });
+    }
 
     // Use intelligent routing to determine optimal processing path
     try {
@@ -536,6 +644,10 @@ export class AISquadService {
       tasksUrl: tasksPath
     });
 
+    // Clean up evolving context after processing completes
+    contextBuilder.clearEvolvingContext(demandId);
+    console.log(`✅ Demand ${demandId} processing completed and context cleaned up`);
+
     // Emitir evento para atualizar clientes conectados
     this.notifyDemandUpdate(demandId);
   }
@@ -654,6 +766,7 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
   }
 
   // ===== NOVOS MÉTODOS: Geração de PRD e Tasks com PM (FORA DO LOOP) =====
+  // Agora com validação anti-overengineering integrada
 
   private async generatePRDWithPM(
     demand: Demand,
@@ -664,7 +777,20 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
       .map(msg => `**${msg.agent}**: ${msg.message}`)
       .join('\n\n');
 
+    // Get insights from evolved context for richer PRD
+    const insightsSummary = contextBuilder.getInsightsSummary(demand.id);
+
     const systemPrompt = `Você é um Product Manager experiente.
+
+--- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
+1. NÃO sugira tecnologias fora do stack atual (TypeScript, React, Node.js, Vite, SQLite)
+2. NÃO proponha refatoração arquitetural ou troca de frameworks
+3. NÃO sugira microserviços, kubernetes, blockchain ou tecnologias enterprise
+4. TODAS as estimativas devem ser realistas (< 2 semanas para features, < 3 dias para bugs)
+5. Foque em soluções PRÁTICAS e INCREMENTAIS
+6. Referencie dados CONCRETOS do projeto quando disponíveis
+
+${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
 Sua responsabilidade é criar um PRD (Product Requirements Document) profissional em Markdown seguindo EXATAMENTE este formato:
 
 # PRD - [Título da Demanda]
@@ -804,7 +930,19 @@ IMPORTANTE:
     demand: Demand,
     prdContent: string
   ): Promise<string> {
+    // Get insights from evolved context
+    const insightsSummary = contextBuilder.getInsightsSummary(demand.id);
+
     const systemPrompt = `Você é um Product Manager experiente.
+
+--- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
+1. NÃO sugira tecnologias fora do stack atual (TypeScript, React, Node.js, Vite, SQLite)
+2. NÃO proponha refatoração arquitetural ou troca de frameworks
+3. TODAS as estimativas devem ser realistas (< 2 semanas para features, < 3 dias para bugs)
+4. As tasks devem ser INCREMENTAIS e PRÁTICAS
+5. Foque no que pode ser feito AGORA com a stack atual
+
+${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
 Crie um documento de tasks técnicas detalhadas baseadas no PRD seguindo EXATAMENTE este formato:
 
 # Tasks Document - [Título da Demanda]

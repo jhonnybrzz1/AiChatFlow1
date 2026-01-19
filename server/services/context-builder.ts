@@ -3,10 +3,44 @@ import { repoService } from './repo-service';
 import { gitHubService } from './github';
 
 /**
+ * Agent insight for context evolution
+ */
+interface AgentInsight {
+  agentName: string;
+  insight: string;
+  timestamp: string;
+}
+
+/**
+ * Reality constraints from project analysis
+ */
+interface RealityConstraints {
+  maturityLevel: string;
+  allowedTechnologies: string[];
+  forbiddenTechnologies: string[];
+  maxEffortDays: number;
+  minROI: string;
+}
+
+/**
+ * Evolving context that grows with agent contributions
+ */
+interface EvolvingContext {
+  baseContext: string;
+  repoContext: string;
+  agentInsights: AgentInsight[];
+  realityConstraints: RealityConstraints | null;
+  lastUpdated: string;
+}
+
+/**
  * Context Builder - Creates structured context for agents with anti-overengineering constraints
+ * Now supports context evolution where insights from each agent enrich the context for subsequent agents
  */
 export class ContextBuilder {
-  
+
+  private evolvingContexts: Map<number, EvolvingContext> = new Map();
+
   /**
    * Creates a comprehensive context with project constraints and real data
    * @param demand - The demand being processed
@@ -15,8 +49,156 @@ export class ContextBuilder {
   async buildContext(demand: Demand): Promise<string> {
     const baseContext = this.createBaseContext();
     const repoContext = await this.createRepositoryContext(demand);
-    
+
+    // Initialize evolving context for this demand
+    this.evolvingContexts.set(demand.id, {
+      baseContext,
+      repoContext,
+      agentInsights: [],
+      realityConstraints: null,
+      lastUpdated: new Date().toISOString()
+    });
+
     return `${baseContext}\n\n${repoContext}`.trim();
+  }
+
+  /**
+   * Gets the evolved context for a demand, including all agent insights collected so far
+   * @param demandId - The demand ID
+   * @returns The current evolved context string
+   */
+  getEvolvedContext(demandId: number): string {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx) {
+      return this.createBaseContext();
+    }
+
+    let evolvedContext = `${ctx.baseContext}\n\n${ctx.repoContext}`;
+
+    // Add reality constraints if available
+    if (ctx.realityConstraints) {
+      evolvedContext += `\n\n--- REALITY CONSTRAINTS (MANDATORY) ---
+Maturity Level: ${ctx.realityConstraints.maturityLevel}
+Allowed Technologies: ${ctx.realityConstraints.allowedTechnologies.join(', ')}
+Forbidden Technologies: ${ctx.realityConstraints.forbiddenTechnologies.join(', ')}
+Max Effort: ${ctx.realityConstraints.maxEffortDays} days
+Min ROI: ${ctx.realityConstraints.minROI}
+
+IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
+    }
+
+    // Add accumulated agent insights
+    if (ctx.agentInsights.length > 0) {
+      evolvedContext += '\n\n--- INSIGHTS ACUMULADOS DOS AGENTES ---\n';
+      evolvedContext += 'Use estes insights dos agentes anteriores para enriquecer sua análise:\n\n';
+
+      for (const insight of ctx.agentInsights) {
+        evolvedContext += `**${insight.agentName.toUpperCase()}** (${insight.timestamp}):\n`;
+        evolvedContext += `${this.extractKeyInsights(insight.insight)}\n\n`;
+      }
+    }
+
+    return evolvedContext.trim();
+  }
+
+  /**
+   * Adds an agent's insight to the evolving context
+   * This is the core of the Context Evolution Loop
+   * @param demandId - The demand ID
+   * @param agentName - Name of the agent providing the insight
+   * @param insight - The agent's response/insight
+   */
+  addAgentInsight(demandId: number, agentName: string, insight: string): void {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx) {
+      console.warn(`No evolving context found for demand ${demandId}`);
+      return;
+    }
+
+    ctx.agentInsights.push({
+      agentName,
+      insight,
+      timestamp: new Date().toLocaleTimeString('pt-BR')
+    });
+
+    ctx.lastUpdated = new Date().toISOString();
+    this.evolvingContexts.set(demandId, ctx);
+
+    console.log(`Context evolved: Added insight from ${agentName} for demand ${demandId} (${ctx.agentInsights.length} insights total)`);
+  }
+
+  /**
+   * Sets reality constraints for a demand's context
+   * @param demandId - The demand ID
+   * @param constraints - Reality constraints from project analysis
+   */
+  setRealityConstraints(demandId: number, constraints: RealityConstraints): void {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx) {
+      console.warn(`No evolving context found for demand ${demandId}`);
+      return;
+    }
+
+    ctx.realityConstraints = constraints;
+    ctx.lastUpdated = new Date().toISOString();
+    this.evolvingContexts.set(demandId, ctx);
+
+    console.log(`Reality constraints applied to demand ${demandId}`);
+  }
+
+  /**
+   * Extracts key insights from an agent's response for context enrichment
+   * Focuses on actionable items, decisions, and important findings
+   */
+  private extractKeyInsights(response: string): string {
+    const lines = response.split('\n');
+    const keyLines: string[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Extract lines with key markers
+      if (trimmed.startsWith('**') ||
+          trimmed.startsWith('- ') ||
+          trimmed.match(/^(Análise|Recomendação|Problema|Impacto|ROI|Esforço|Prioridade):/i) ||
+          trimmed.match(/\d+:\d+/) || // ROI pattern
+          trimmed.match(/\d+\s*(dia|semana)/i)) { // Effort pattern
+        keyLines.push(trimmed);
+      }
+    }
+
+    // Return summary if we found key lines, otherwise return truncated original
+    if (keyLines.length > 0) {
+      return keyLines.slice(0, 8).join('\n');
+    }
+
+    // Fallback: return first 300 chars
+    return response.substring(0, 300) + (response.length > 300 ? '...' : '');
+  }
+
+  /**
+   * Clears the evolving context for a demand (call after processing completes)
+   */
+  clearEvolvingContext(demandId: number): void {
+    this.evolvingContexts.delete(demandId);
+  }
+
+  /**
+   * Gets summary of all agent insights for document generation
+   */
+  getInsightsSummary(demandId: number): string {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx || ctx.agentInsights.length === 0) {
+      return '';
+    }
+
+    let summary = '--- RESUMO DOS INSIGHTS DA SQUAD ---\n\n';
+
+    for (const insight of ctx.agentInsights) {
+      summary += `### ${insight.agentName.toUpperCase()}\n`;
+      summary += `${insight.insight}\n\n`;
+    }
+
+    return summary;
   }
   
   /**
@@ -117,7 +299,8 @@ Exemplo:
         for (const filePath of topFiles) {
           try {
             const content = await gitHubService.getRepoContent(owner, repoName, filePath);
-            if (content && content.encoding === 'base64') {
+            // Type guard: check if content is a file (not array/dir) with encoding
+            if (content && !Array.isArray(content) && 'encoding' in content && content.encoding === 'base64' && 'content' in content && content.content) {
               const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
               specificFilesContext += `--- FILE: ${filePath} ---\n${decodedContent}\n\n`;
             }
