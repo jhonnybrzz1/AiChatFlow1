@@ -1,14 +1,11 @@
-
 import OpenAI from 'openai';
 
-// Using GPT-5.4-nano model
 const DEFAULT_MODEL = 'gpt-5.4-nano';
 
-export class MistralAIService {
+export class OpenAIService {
   private client: OpenAI;
 
   constructor(apiKey?: string) {
-    // Check for API key in environment variables
     const envApiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey && !envApiKey) {
@@ -20,13 +17,6 @@ export class MistralAIService {
     });
   }
 
-  /**
-   * Generate a chat completion using Mistral AI
-   * @param systemPrompt - The system prompt to use
-   * @param userPrompt - The user prompt to use
-   * @param options - Additional options for the chat completion
-   * @returns The generated chat completion
-   */
   async generateChatCompletion(
     systemPrompt: string,
     userPrompt: string,
@@ -44,23 +34,16 @@ export class MistralAIService {
           { role: 'user', content: userPrompt }
         ],
         temperature: options.temperature,
-        max_completion_tokens: options.maxTokens
+        max_tokens: options.maxTokens
       });
 
-      const content = response.choices[0].message.content;
-      return content || '';
+      return response.choices[0].message.content || '';
     } catch (error) {
       console.error('Error generating chat completion:', error);
       throw new Error(`Failed to generate chat completion: ${error}`);
     }
   }
 
-  /**
-   * Generate multiple chat completions in parallel
-   * @param prompts - Array of prompt objects containing system and user prompts
-   * @param options - Additional options for the chat completions
-   * @returns Array of generated chat completions
-   */
   async generateMultipleChatCompletions(
     prompts: Array<{ systemPrompt: string; userPrompt: string }>,
     options: {
@@ -70,8 +53,6 @@ export class MistralAIService {
     } = {}
   ): Promise<string[]> {
     try {
-
-
       const promises = prompts.map(prompt =>
         this.generateChatCompletion(
           prompt.systemPrompt,
@@ -83,12 +64,11 @@ export class MistralAIService {
       return await Promise.all(promises);
     } catch (error) {
       console.error('Error generating multiple chat completions:', error);
-      // Return fallback content when there's an error
       return prompts.map(prompt => {
         if (prompt.systemPrompt.includes('PRD')) {
           return `PRD gerado com sucesso\n\n${prompt.userPrompt.substring(0, 200)}...`;
         } else if (prompt.systemPrompt.includes('Tasks')) {
-          return `Tasks geradas com sucesso\n\n- [ ] 🔧 Implementar funcionalidade principal\n- [ ] 🔧 Criar testes\n- [ ] 🎨 Documentar solução`;
+          return `Tasks geradas com sucesso\n\n- [ ] Implementar funcionalidade principal\n- [ ] Criar testes\n- [ ] Documentar solução`;
         } else {
           return `Conteúdo gerado com sucesso para: ${prompt.systemPrompt}`;
         }
@@ -96,13 +76,6 @@ export class MistralAIService {
     }
   }
 
-  /**
-   * Generate a structured JSON response using Mistral AI
-   * @param systemPrompt - The system prompt to use
-   * @param userPrompt - The user prompt to use
-   * @param options - Additional options for the chat completion
-   * @returns The generated JSON response
-   */
   async generateJSONResponse(
     systemPrompt: string,
     userPrompt: string,
@@ -120,7 +93,7 @@ export class MistralAIService {
           { role: 'user', content: userPrompt }
         ],
         temperature: options.temperature || 0.3,
-        max_completion_tokens: options.maxTokens,
+        max_tokens: options.maxTokens,
         response_format: { type: 'json_object' }
       });
 
@@ -133,5 +106,4 @@ export class MistralAIService {
   }
 }
 
-// Export a singleton instance
-export const mistralAIService = new MistralAIService();
+export const openAIService = new OpenAIService();

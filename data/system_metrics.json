@@ -1,5 +1,5 @@
 {
-  "totalDemandsProcessed": 94,
+  "totalDemandsProcessed": 101,
   "averageRoutingConfidence": 60,
   "successRate": 0,
   "averageResolutionTime": 0,
@@ -13,9 +13,9 @@
     },
     "DiscoveryPlugin": {
       "name": "DiscoveryPlugin",
-      "totalExecutions": 38,
-      "successfulExecutions": 38,
-      "averageExecutionTime": 25687.342105263157,
+      "totalExecutions": 42,
+      "successfulExecutions": 42,
+      "averageExecutionTime": 23906.238095238095,
       "usefulnessScore": 100
     },
     "BugPlugin": {

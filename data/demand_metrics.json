@@ -1821,5 +1821,138 @@
         "resultSize": 1576
       }
     ]
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 864,
+    "estimatedSuccessRate": 55,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-21T11:27:48.273Z",
+    "completedAt": "2026-04-21T11:27:48.277Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "discovery",
+    "priority": "alta",
+    "routingTeam": "research",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 583,
+    "estimatedSuccessRate": 53,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-27T18:46:24.400Z",
+    "completedAt": "2026-04-27T18:46:24.405Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 1509,
+        "success": true,
+        "resultSize": 325
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "alta",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1296,
+    "estimatedSuccessRate": 45,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-27T18:49:47.869Z",
+    "completedAt": "2026-04-27T18:49:47.872Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 9878,
+        "success": true,
+        "resultSize": 3650
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "alta",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1296,
+    "estimatedSuccessRate": 45,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-27T18:56:31.150Z",
+    "completedAt": "2026-04-27T18:56:31.155Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 7502,
+        "success": true,
+        "resultSize": 3808
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "analise_exploratoria",
+    "priority": "alta",
+    "routingTeam": "analytics",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 1296,
+    "estimatedSuccessRate": 45,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-27T19:02:49.895Z",
+    "completedAt": "2026-04-27T19:02:49.899Z",
+    "processingTime": 0,
+    "pluginExecutions": [
+      {
+        "pluginName": "DiscoveryPlugin",
+        "executionTime": 9054,
+        "success": true,
+        "resultSize": 3826
+      }
+    ]
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 821,
+    "estimatedSuccessRate": 57,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-27T19:14:58.249Z",
+    "completedAt": "2026-04-27T19:14:58.253Z",
+    "processingTime": 0,
+    "pluginExecutions": []
+  },
+  {
+    "demandId": 1,
+    "type": "nova_funcionalidade",
+    "priority": "alta",
+    "routingTeam": "backend-frontend",
+    "routingConfidence": 60,
+    "estimatedResolutionTime": 821,
+    "estimatedSuccessRate": 57,
+    "actualResolutionTime": 0,
+    "actualSuccess": false,
+    "createdAt": "2026-04-28T16:46:45.424Z",
+    "completedAt": "2026-04-28T16:46:45.430Z",
+    "processingTime": 0,
+    "pluginExecutions": []
   }
 ]

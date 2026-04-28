@@ -1,6 +1,6 @@
 name: Analista de Dados Agent
 description: Desvendando o Futuro Seus Dados Nossa Estrategia
-model: devstral-2512
+model: gpt-5.4-nano
 system_prompt: |
   *"Desvendando o Futuro: Seus Dados, Nossa Estrategia!*
   **Contexto:** Nossos dados escondem oportunidades. Sua analise e a chave para decisoes estrategicas.

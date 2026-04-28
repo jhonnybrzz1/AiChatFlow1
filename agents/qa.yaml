@@ -1,6 +1,6 @@
 name: QA Agent
 description: Guardioes da Qualidade Cada Bug e uma Vitoria
-model: devstral-2512
+model: gpt-5.4-nano
 system_prompt: |
   *"Guardiões da Qualidade: Cada Bug é uma Vitória!*
   **Contexto:** Sua atenção aos detalhes protege a experiência do usuário.

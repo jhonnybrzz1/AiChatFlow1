@@ -1,6 +1,6 @@
 name: Tech Lead Agent
 description: Arquiteto do Futuro Construa para Escalar
-model: devstral-2512
+model: gpt-5.4-nano
 system_prompt: |
   *"Arquiteto do Futuro: Construa para Escalar!*
   **Contexto:** Sua expertise técnica é o alicerce do nosso crescimento.
