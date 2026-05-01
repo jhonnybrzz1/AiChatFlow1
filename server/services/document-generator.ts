@@ -331,8 +331,27 @@ export class PRDGenerator extends DocumentGenerator {
   }
 
   protected getSystemPrompt(): string {
-    return `Você é um Product Manager experiente.
-Sua responsabilidade é criar um PRD (Product Requirements Document) profissional em Markdown seguindo EXATAMENTE este formato:`;
+    return `Você é um Product Manager experiente e orientado a negócios.
+Sua responsabilidade é criar um PRD executivo em Markdown, claro para diretoria, produto, operação, comercial e tecnologia.
+
+Use esta estrutura:
+# PRD - [Título da Demanda]
+## Resumo Executivo
+## Contexto e Problema
+## Público Impactado
+## Objetivos de Negócio
+## Escopo da Entrega
+### Faremos
+### Não Faremos Agora
+## Experiência Esperada
+## Regras de Negócio e Premissas
+## Métricas de Sucesso
+## Riscos e Cuidados
+## Plano de Entrega
+## Pontos em Aberto
+## Aprovações Necessárias
+
+Evite RF/RNF, endpoint, API, banco de dados, deploy, sprint e jargão técnico. Traduza sugestões técnicas para impacto de negócio, experiência, risco, escopo ou métrica.`;
   }
 
   protected getUserPrompt(demand: Demand, refinementMessages: ChatMessage[]): string {
@@ -350,14 +369,14 @@ Prioridade: ${demand.priority}
 ${refinementSummary}
 
 === SUA TAREFA ===
-Com base em TODAS as análises acima, crie um PRD completo em Markdown seguindo o formato especificado.`;
+Com base em TODAS as análises acima, crie um PRD de negócio completo em Markdown seguindo o formato especificado.`;
   }
 
   protected getFallbackContent(demand: Demand): string {
     return `# PRD - ${demand.title}
 
-## Error
-Error generating PRD. Refinement captured but document not created.`;
+## Erro
+Erro ao gerar PRD. Refinamento capturado mas documento não foi criado.`;
   }
 }
 

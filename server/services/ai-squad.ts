@@ -780,18 +780,19 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
     // Get insights from evolved context for richer PRD
     const insightsSummary = contextBuilder.getInsightsSummary(demand.id);
 
-    const systemPrompt = `Você é um Product Manager experiente.
+    const systemPrompt = `Você é um Product Manager experiente e orientado a negócios.
 
 --- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
 1. NÃO sugira tecnologias fora do stack atual (TypeScript, React, Node.js, Vite, SQLite)
 2. NÃO proponha refatoração arquitetural ou troca de frameworks
 3. NÃO sugira microserviços, kubernetes, blockchain ou tecnologias enterprise
-4. TODAS as estimativas devem ser realistas (< 2 semanas para features, < 3 dias para bugs)
+4. TODAS as estimativas devem ser realistas e incrementais
 5. Foque em soluções PRÁTICAS e INCREMENTAIS
 6. Referencie dados CONCRETOS do projeto quando disponíveis
 
 ${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
-Sua responsabilidade é criar um PRD (Product Requirements Document) profissional em Markdown seguindo EXATAMENTE este formato:
+Sua responsabilidade é criar um PRD executivo, claro e voltado a decisão de negócio.
+O documento deve ser compreensível por diretoria, produto, operação, comercial e tecnologia.
 
 # PRD - [Título da Demanda]
 
@@ -799,96 +800,87 @@ Sua responsabilidade é criar um PRD (Product Requirements Document) profissiona
 **Data:** [Data atual]
 **Autor:** Product Manager
 
-## 📋 Visão Geral
+## Resumo Executivo
 
-**Objetivo:** [Descreva o objetivo principal em 1-2 frases]
-**Problema:** [Descreva o problema que está sendo resolvido]
-**Solução:** [Descreva a solução proposta]
+**O que será feito:** [Explique em linguagem simples]
+**Por que isso importa:** [Benefício de negócio]
+**Decisão esperada:** [O que precisa ser aprovado ou priorizado]
 
-## 🎯 Requisitos Funcionais
+## Contexto e Problema
 
-- RF1:
-  **Descrição:** [Descrição detalhada do requisito]
-  **Critérios de Aceite:** [Critérios de aceite específicos]
-  **Prioridade:** [Alta/Média/Baixa]
+[Descreva a situação atual, quem sofre com o problema e o impacto prático no negócio.]
 
-- RF2:
-  **Descrição:** [Descrição detalhada do requisito]
-  **Critérios de Aceite:** [Critérios de aceite específicos]
-  **Prioridade:** [Alta/Média/Baixa]
+## Público Impactado
 
-[Continue com mais RFs conforme necessário]
+- **Usuários ou áreas afetadas:** [Quem usa ou depende disso]
+- **Momento de uso:** [Quando o problema aparece]
+- **Dor principal:** [O que atrapalha hoje]
 
-## 🛠️ Requisitos Não Funcionais
+## Objetivos de Negócio
 
-- RNF1:
-  **Descrição:** [Descrição do requisito não funcional]
-  **Métrica:** [Métrica mensurável]
+- [Objetivo 1 com resultado esperado]
+- [Objetivo 2 com resultado esperado]
+- [Objetivo 3 com resultado esperado]
 
-- RNF2:
-  **Descrição:** [Descrição do requisito não funcional]
-  **Métrica:** [Métrica mensurável]
+## Escopo da Entrega
 
-[Continue com mais RNFs conforme necessário]
+### Faremos
+- [Entrega ou mudança em linguagem de negócio]
+- [Entrega ou mudança em linguagem de negócio]
 
-## 🎯 Escopo
+### Não Faremos Agora
+- [Limite do escopo e motivo]
+- [Limite do escopo e motivo]
 
-### In Scope
-- [Item no escopo 1]
-- [Item no escopo 2]
-- [Item no escopo 3]
+## Experiência Esperada
 
-### Out of Scope
-- [Item fora do escopo 1]
-- [Item fora do escopo 2]
+Descreva como a pessoa usuária deve perceber a solução pronta:
+- [Passo ou resultado esperado 1]
+- [Passo ou resultado esperado 2]
+- [Passo ou resultado esperado 3]
 
-## ✅ Critérios de Aceitação Gerais
-- [Critério geral 1]
-- [Critério geral 2]
-- [Critério geral 3]
+## Regras de Negócio e Premissas
 
-## 📦 Dependências
+- [Regra, política, restrição ou premissa relevante]
+- [Regra, política, restrição ou premissa relevante]
 
-**Internas:**
-- [Dependência interna 1]
-- [Dependência interna 2]
+## Métricas de Sucesso
 
-**Externas:**
-- [Dependência externa 1]
-- [Dependência externa 2]
+- [Métrica principal com meta ou sinal de melhora]
+- [Métrica operacional com meta ou sinal de melhora]
+- [Métrica de qualidade/percepção com meta ou sinal de melhora]
 
-## ⚠️ Riscos e Mitigações
+## Riscos e Cuidados
 
-- **Risco 1:**
-  **Impacto:** [Alto/Médio/Baixo]
-  **Probabilidade:** [Alta/Média/Baixa]
-  **Mitigação:** [Estratégia de mitigação]
+- **Risco:** [O que pode dar errado]
+  **Impacto no negócio:** [Consequência prática]
+  **Como reduzir:** [Ação preventiva]
 
-- **Risco 2:**
-  **Impacto:** [Alto/Médio/Baixo]
-  **Probabilidade:** [Alta/Média/Baixa]
-  **Mitigação:** [Estratégia de mitigação]
+## Plano de Entrega
 
-## 📊 Métricas de Sucesso
+1. [Primeiro passo de entrega] - [Prazo/ordem sugerida]
+2. [Segundo passo de entrega] - [Prazo/ordem sugerida]
+3. [Terceiro passo de entrega] - [Prazo/ordem sugerida]
 
-**Primárias:**
-- [Métrica primária 1 com valor alvo]
-- [Métrica primária 2 com valor alvo]
+## Pontos em Aberto
 
-**Secundárias:**
-- [Métrica secundária 1 com valor alvo]
-- [Métrica secundária 2 com valor alvo]
+- [Pergunta ou decisão pendente]
+- [Pergunta ou decisão pendente]
 
-## 📅 Cronograma
+## Aprovações Necessárias
 
-**Data MVP:** [Data estimada]
+- [ ] Produto
+- [ ] Negócio/Operação
+- [ ] Tecnologia
 
-**Fases:**
-1. **Fase 1:** [Nome] - [Duração estimada] - [Descrição breve]
-2. **Fase 2:** [Nome] - [Duração estimada] - [Descrição breve]
-3. **Fase 3:** [Nome] - [Duração estimada] - [Descrição breve]
+REGRAS DE ESCRITA:
+- Escreva em português brasileiro, com frases curtas e objetivas
+- Priorize problema, impacto, valor, escopo, métricas, riscos e decisão
+- Não use RF, RNF, endpoint, API, banco de dados, deploy, sprint ou jargões técnicos no PRD
+- Se algum detalhe técnico for indispensável, coloque no máximo 5 bullets em "Regras de Negócio e Premissas" e explique o impacto para o negócio
+- Não transforme sugestões técnicas dos agentes em arquitetura; traduza para consequência prática para o usuário ou para a operação
+- Não inclua placeholders entre colchetes na resposta final
 
-IMPORTANTE: Siga EXATAMENTE este formato, incluindo todos os emojis, títulos de seção e estrutura.
 Gere um PRD completo, profissional e bem estruturado em português brasileiro.`;
 
     const userPrompt = `Demanda Original: ${demand.title}
@@ -901,13 +893,13 @@ ${refinementSummary}
 
 === SUA TAREFA ===
 Com base em TODAS as análises acima, crie um PRD completo em Markdown seguindo o formato especificado.
-O PRD deve ser um documento profissional que qualquer pessoa possa ler e entender o que precisa ser feito.
+O PRD deve ser um documento de negócio que qualquer pessoa consiga ler uma vez e entender o problema, o valor e a decisão necessária.
 
 IMPORTANTE:
 - Use as informações do refinamento dos agentes para preencher os campos do PRD
-- Seja específico e técnico, usando as sugestões e insights dos agentes
+- Traduza sugestões técnicas dos agentes para impacto de negócio, experiência do usuário, risco, escopo ou métrica
 - Certifique-se de que o conteúdo do PRD reflita fielmente as discussões realizadas
-- Referencie diretamente as sugestões de cada agente onde apropriado`;
+- Não escreva em formato RF/RNF e não detalhe implementação técnica`;
 
     try {
       const response = await mistralAIService.generateChatCompletion(
@@ -919,10 +911,10 @@ IMPORTANTE:
         }
       );
 
-      return response || `# ${demand.title}\n\nPRD gerado com base no refinamento da squad.`;
+      return response || `# PRD - ${demand.title}\n\n## Resumo Executivo\n\nPRD gerado com base no refinamento da squad.`;
     } catch (error) {
       console.error(`Error generating PRD with PM:`, error);
-      return `# ${demand.title}\n\n## Erro\nErro ao gerar PRD. Refinamento capturado mas documento não foi criado.`;
+      return `# PRD - ${demand.title}\n\n## Erro\nErro ao gerar PRD. Refinamento capturado mas documento não foi criado.`;
     }
   }
 
@@ -957,17 +949,17 @@ Crie um documento de tasks técnicas detalhadas baseadas no PRD seguindo EXATAME
 - **T1:** [Descrição concisa da tarefa 1]
   Critérios de aceite: [Critérios específicos de aceite]
   **Dependências:** [Tarefas ou recursos necessários]
-  **Vinculado ao PRD:** RF1, RF2
+  **Vinculado ao PRD:** Escopo da Entrega; Experiência Esperada
 
 - **T2:** [Descrição concisa da tarefa 2]
   Critérios de aceite: [Critérios específicos de aceite]
   **Dependências:** T1
-  **Vinculado ao PRD:** RF3
+  **Vinculado ao PRD:** Métricas de Sucesso
 
 - **T3:** [Descrição concisa da tarefa 3]
   Critérios de aceite: [Critérios específicos de aceite]
   **Dependências:** Nenhuma
-  **Vinculado ao PRD:** RNF1
+  **Vinculado ao PRD:** Regras de Negócio e Premissas
 
 [Continue com mais tasks conforme necessário - mínimo 5 tasks]
 
@@ -983,7 +975,7 @@ IMPORTANTE:
 - Siga EXATAMENTE este formato
 - Gere NO MÍNIMO 5 tasks detalhadas
 - Cada task deve ter ID sequencial (T1, T2, T3, etc.)
-- Vincule cada task aos requisitos do PRD (RF ou RNF)
+- Vincule cada task a uma seção, entrega ou métrica do PRD
 - As tasks devem cobrir: Backend, Frontend, Database, Testes e DevOps
 - Seja específico e técnico nas descrições
 
@@ -997,7 +989,7 @@ Com base no PRD acima, crie uma lista completa de tasks técnicas organizadas po
 As tasks devem cobrir todos os aspectos técnicos necessários para implementar a demanda.
 
 IMPORTANTE:
-- As tasks devem refletir diretamente os requisitos funcionais e não funcionais definidos no PRD
+- As tasks devem refletir diretamente o escopo, a experiência esperada, as regras de negócio e as métricas do PRD
 - Use informações técnicas e insights específicos mencionados durante o refinamento da squad
 - Crie tarefas que estejam claramente alinhadas com as sugestões dos agentes do refinamento`;
 

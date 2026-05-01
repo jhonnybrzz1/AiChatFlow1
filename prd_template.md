@@ -1,72 +1,77 @@
+# PRD - [Nome da Demanda]
 
-# Product Requirements Document (PRD)
-
-## 1. Visão Geral
-
-**Nome do Projeto:** [Nome do Projeto]
+**Versão:** 1.0.0
 **Data:** [Data]
-**Versão:** [Versão]
+**Autor:** Product Manager
 
-### 1.1 Objetivos
-- [Objetivo 1]
-- [Objetivo 2]
-- [Objetivo 3]
+## Resumo Executivo
 
-### 1.2 Escopo
-Descrição do escopo do projeto, incluindo o que está dentro e fora do escopo.
+**O que será feito:** [Explique em uma frase clara.]
+**Por que isso importa:** [Explique o impacto esperado para o negócio.]
+**Decisão esperada:** [Explique o que precisa ser aprovado, priorizado ou alinhado.]
 
-## 2. Requisitos Funcionais
+## Contexto e Problema
 
-### 2.1 Funcionalidades Principais
-- **Funcionalidade 1:** Descrição detalhada
-- **Funcionalidade 2:** Descrição detalhada
-- **Funcionalidade 3:** Descrição detalhada
+[Descreva a situação atual, quem sente o problema e qual é o custo prático de manter tudo como está.]
 
-### 2.2 Fluxos de Usuário
-Descrição dos fluxos de usuário principais, incluindo diagramas ou wireframes.
+## Público Impactado
 
-## 3. Requisitos Não Funcionais
+- **Usuários ou áreas afetadas:** [Quem usa, compra, atende ou depende disso.]
+- **Momento de uso:** [Quando o problema aparece.]
+- **Dor principal:** [O que atrapalha hoje.]
 
-### 3.1 Performance
-- Tempo de resposta máximo: [X] segundos
-- Capacidade de usuários simultâneos: [Y]
+## Objetivos de Negócio
 
-### 3.2 Segurança
-- Autenticação: [Métodos]
-- Autorização: [Métodos]
-- Criptografia: [Padrões]
+- [Objetivo com resultado esperado.]
+- [Objetivo com resultado esperado.]
+- [Objetivo com resultado esperado.]
 
-### 3.3 Usabilidade
-- Acessibilidade: [Requisitos]
-- Interface de usuário: [Requisitos]
+## Escopo da Entrega
 
-## 4. Critérios de Aceitação
+### Faremos
+- [Entrega ou mudança em linguagem de negócio.]
+- [Entrega ou mudança em linguagem de negócio.]
 
-- [Critério 1]
-- [Critério 2]
-- [Critério 3]
+### Não Faremos Agora
+- [Limite do escopo e motivo.]
+- [Limite do escopo e motivo.]
 
-## 5. Dependências e Riscos
+## Experiência Esperada
 
-### 5.1 Dependências
-- [Dependência 1]
-- [Dependência 2]
+- [Como a pessoa usuária percebe a solução pronta.]
+- [Qual passo fica mais simples, rápido ou confiável.]
+- [Qual resultado aparece ao fim do uso.]
 
-### 5.2 Riscos
-- **Risco 1:** Descrição e mitigação
-- **Risco 2:** Descrição e mitigação
+## Regras de Negócio e Premissas
 
-## 6. Cronograma
+- [Regra, política, restrição ou premissa relevante.]
+- [Regra, política, restrição ou premissa relevante.]
 
-| Fase | Data de Início | Data de Término | Responsável |
-|------|----------------|----------------|-------------|
-| Planejamento | [Data] | [Data] | [Responsável] |
-| Desenvolvimento | [Data] | [Data] | [Responsável] |
-| Testes | [Data] | [Data] | [Responsável] |
-| Implantação | [Data] | [Data] | [Responsável] |
+## Métricas de Sucesso
 
-## 7. Aprovações
+- [Métrica principal com meta ou sinal de melhora.]
+- [Métrica operacional com meta ou sinal de melhora.]
+- [Métrica de qualidade/percepção com meta ou sinal de melhora.]
 
-- **Product Owner:** [Nome]
-- **Tech Lead:** [Nome]
-- **Stakeholders:** [Nomes]
+## Riscos e Cuidados
+
+- **Risco:** [O que pode dar errado.]
+  **Impacto no negócio:** [Consequência prática.]
+  **Como reduzir:** [Ação preventiva.]
+
+## Plano de Entrega
+
+1. [Primeiro passo de entrega] - [Prazo/ordem sugerida.]
+2. [Segundo passo de entrega] - [Prazo/ordem sugerida.]
+3. [Terceiro passo de entrega] - [Prazo/ordem sugerida.]
+
+## Pontos em Aberto
+
+- [Pergunta ou decisão pendente.]
+- [Pergunta ou decisão pendente.]
+
+## Aprovações Necessárias
+
+- [ ] Produto
+- [ ] Negócio/Operação
+- [ ] Tecnologia

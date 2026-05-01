@@ -141,34 +141,84 @@ export function validatePRDDocument(content: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
+  const hasSection = (sectionName: string) => {
+    const escaped = sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${escaped}`, 'im').test(content);
+  };
+
+  const isBusinessPRD = [
+    'Resumo Executivo',
+    'Contexto e Problema',
+    'Público Impactado',
+    'Publico Impactado',
+    'Objetivos de Negócio',
+    'Objetivos de Negocio',
+    'Escopo da Entrega',
+    'Experiência Esperada',
+    'Experiencia Esperada',
+    'Métricas de Sucesso',
+    'Metricas de Sucesso',
+  ].some(hasSection);
+
+  if (isBusinessPRD) {
+    const recommendedSections = [
+      'Resumo Executivo',
+      'Contexto e Problema',
+      'Escopo da Entrega',
+      'Métricas de Sucesso',
+      'Riscos e Cuidados',
+      'Plano de Entrega',
+    ];
+
+    recommendedSections.forEach((section) => {
+      if (!hasSection(section)) {
+        warnings.push({
+          field: section.toLowerCase().replace(/\s+/g, '_'),
+          message: `Seção recomendada "${section}" ausente no PRD de negócio`,
+          severity: 'warning'
+        });
+      }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
+  const hasScopeSection = hasSection('Escopo') || content.includes('## 🎯 Escopo');
+  const hasInScope = content.includes('### In Scope') || content.includes('### Faremos');
+  const hasOutOfScope = content.includes('### Out of Scope') || content.includes('### Não Faremos Agora');
+
   // Validar seção de escopo
-  if (!content.includes('## 1. Escopo')) {
+  if (!hasScopeSection) {
     errors.push({
       field: 'escopo',
-      message: 'Seção "Escopo" ausente no documento',
+      message: 'Seção "Escopo" ou "Escopo da Entrega" ausente no documento',
       severity: 'error'
     });
   }
 
   // Validar In Scope e Out of Scope
-  if (!content.includes('### In Scope')) {
+  if (!hasInScope) {
     errors.push({
       field: 'in_scope',
-      message: 'Subseção "In Scope" ausente',
+      message: 'Subseção "In Scope" ou "Faremos" ausente',
       severity: 'error'
     });
   }
 
-  if (!content.includes('### Out of Scope')) {
+  if (!hasOutOfScope) {
     errors.push({
       field: 'out_scope',
-      message: 'Subseção "Out of Scope" ausente',
+      message: 'Subseção "Out of Scope" ou "Não Faremos Agora" ausente',
       severity: 'error'
     });
   }
 
   // Validar requisitos funcionais
-  if (!content.includes('## 2. Requisitos Funcionais')) {
+  if (!hasSection('Requisitos Funcionais') && !content.includes('## 🎯 Requisitos Funcionais')) {
     errors.push({
       field: 'requisitos_funcionais',
       message: 'Seção "Requisitos Funcionais" ausente',
@@ -177,7 +227,7 @@ export function validatePRDDocument(content: string): ValidationResult {
   }
 
   // Validar formato dos requisitos funcionais (RF1, RF2, etc.)
-  const rfRegex = /### RF\d+:/g;
+  const rfRegex = /(?:###\s*)?RF\d+:|- RF\d+:/g;
   const functionalReqs = content.match(rfRegex);
 
   if (!functionalReqs || functionalReqs.length === 0) {
@@ -214,7 +264,7 @@ export function validatePRDDocument(content: string): ValidationResult {
   }
 
   // Validar requisitos não funcionais
-  if (!content.includes('## 3. Requisitos Não Funcionais')) {
+  if (!hasSection('Requisitos Não Funcionais') && !content.includes('## 🛠️ Requisitos Não Funcionais')) {
     warnings.push({
       field: 'requisitos_nao_funcionais',
       message: 'Seção "Requisitos Não Funcionais" ausente',
@@ -223,7 +273,7 @@ export function validatePRDDocument(content: string): ValidationResult {
   }
 
   // Validar critérios de aceitação gerais
-  if (!content.includes('## 4. Critérios de Aceitação Gerais')) {
+  if (!hasSection('Critérios de Aceitação Gerais') && !hasSection('Critérios de Aceitação')) {
     errors.push({
       field: 'criterios_aceitacao',
       message: 'Seção "Critérios de Aceitação Gerais" ausente',

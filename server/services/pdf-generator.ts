@@ -214,14 +214,54 @@ export class PDFGenerator {
       });
   
       return data;
-    }  /**
+    }
+
+  /**
    * Remove emojis and other non-WinAnsi characters from text
    * WinAnsi (used by Helvetica) only supports basic Latin characters
    */
   private removeEmojis(text: string): string {
-    // Remove emojis and other Unicode characters outside the WinAnsi range
-    // WinAnsi supports characters from 0x0020 to 0x00FF
-    return text.replace(/[^\x20-\x7E\xA0-\xFF]/g, '');
+    // Preserve whitespace controls used for layout while removing glyphs
+    // that Helvetica/WinAnsi cannot encode safely.
+    return text
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, '');
+  }
+
+  private hasMarkdownHeadings(content: string): boolean {
+    return (content.match(/^##\s+/gm)?.length || 0) >= 2;
+  }
+
+  private isBusinessPRDContent(content: string): boolean {
+    const normalized = content.toLowerCase();
+    const businessSections = [
+      '## resumo executivo',
+      '## contexto e problema',
+      '## publico impactado',
+      '## público impactado',
+      '## objetivos de negocio',
+      '## objetivos de negócio',
+      '## escopo da entrega',
+      '## experiencia esperada',
+      '## experiência esperada',
+      '## metricas de sucesso',
+      '## métricas de sucesso'
+    ];
+
+    return businessSections.some(section => normalized.includes(section));
+  }
+
+  private stripMarkdownForPdf(text: string): string {
+    return text
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      .replace(/^\s*>\s?/, '')
+      .trim();
   }
 
   async generatePRDDocument(content: string, demandId: number): Promise<Buffer> {
@@ -251,33 +291,40 @@ export class PDFGenerator {
       });
     }
 
-    // FASE 2: Validação de schema Zod (nova validação estrutural)
-    try {
-      const extractedData = this.extractPRDDataFromMarkdown(content);
-      const schemaValidation = validatePRDSchema(extractedData);
+    // FASE 2: Validação de schema Zod legado (somente para PRD técnico RF/RNF)
+    if (!this.isBusinessPRDContent(content)) {
+      try {
+        const extractedData = this.extractPRDDataFromMarkdown(content);
+        const schemaValidation = validatePRDSchema(extractedData);
 
-      if (!schemaValidation.success && schemaValidation.errors) {
-        const formattedErrors = formatZodErrors(schemaValidation.errors);
-        console.error('[PDF-GENERATOR] PRD Zod schema validation failed:', {
-          demandId,
-          errors: formattedErrors,
-          timestamp: new Date().toISOString()
-        });
+        if (!schemaValidation.success && schemaValidation.errors) {
+          const formattedErrors = formatZodErrors(schemaValidation.errors);
+          console.error('[PDF-GENERATOR] PRD Zod schema validation failed:', {
+            demandId,
+            errors: formattedErrors,
+            timestamp: new Date().toISOString()
+          });
 
-        // Log cada erro individualmente para facilitar debugging
-        formattedErrors.forEach((error, index) => {
-          console.error(`[PDF-GENERATOR] PRD Schema Error ${index + 1}: ${error}`);
-        });
-      } else {
-        console.log('[PDF-GENERATOR] PRD Zod schema validation passed', {
+          // Log cada erro individualmente para facilitar debugging
+          formattedErrors.forEach((error, index) => {
+            console.error(`[PDF-GENERATOR] PRD Schema Error ${index + 1}: ${error}`);
+          });
+        } else {
+          console.log('[PDF-GENERATOR] PRD Zod schema validation passed', {
+            demandId,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('[PDF-GENERATOR] Error during Zod validation:', {
           demandId,
+          error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         });
       }
-    } catch (error) {
-      console.error('[PDF-GENERATOR] Error during Zod validation:', {
+    } else {
+      console.log('[PDF-GENERATOR] Business PRD detected; skipping legacy RF/RNF schema validation', {
         demandId,
-        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
     }
@@ -293,7 +340,7 @@ export class PDFGenerator {
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // Draw content across multiple pages
-    await this.drawMultiPageContent(pdfDoc, helveticaFont, helveticaBoldFont, formattedContent, demandId, 'Product Requirements Document (PRD)');
+    await this.drawMultiPageContent(pdfDoc, helveticaFont, helveticaBoldFont, formattedContent, demandId, 'PRD Executivo');
 
     // Serialize the PDFDocument to bytes
     const pdfBytes = await pdfDoc.save();
@@ -381,8 +428,13 @@ export class PDFGenerator {
    */
   private formatTasksContent(content: string): string {
     // Check if content already has standard structure
-    if (content.includes('## 1. Project Overview') || content.includes('## 2. Task Categories')) {
-      return content;
+    if (
+      content.includes('## 1. Project Overview') ||
+      content.includes('## 2. Task Categories') ||
+      content.includes('## Tarefas') ||
+      this.hasMarkdownHeadings(content)
+    ) {
+      return content.trim();
     }
 
     // Extract summarized content if available
@@ -520,23 +572,28 @@ ${summaryContent || 'No summary available.'}
     console.log('[PDF-GENERATOR] formatPRDContent called with content length:', content.length);
     
     // Check if content already has standard structure
-    if (content.includes('## 1. Visão Geral') || content.includes('## 2. Requisitos Funcionais')) {
+    if (
+      content.includes('## 1. Visão Geral') ||
+      content.includes('## 2. Requisitos Funcionais') ||
+      this.isBusinessPRDContent(content) ||
+      this.hasMarkdownHeadings(content)
+    ) {
       console.log('[PDF-GENERATOR] Content already has standard structure, returning as-is');
-      return content;
+      return content.trim();
     }
 
     // Extract summarized content if available
     const summaryMatch = content.match(/Resumo das discussões dos agentes:([\s\S]*?)Detalhes dos agentes:/);
     const summaryContent = summaryMatch ? summaryMatch[1].trim() : '';
 
-    // Format content into standard PRD structure
+    // Format unstructured content into a business-oriented PRD structure
     const section1 = this.extractSection(content, 'overview', 'objectives', 'scope');
-    const section2 = this.extractSection(content, 'functional requirements', 'features', 'user flows');
-    const section3 = this.extractSection(content, 'non-functional requirements', 'performance', 'security', 'usability');
-    const section4 = this.extractSection(content, 'acceptance criteria', 'success metrics');
-    const section5 = this.extractSection(content, 'dependencies', 'risks');
-    const section6 = this.extractSection(content, 'timeline', 'schedule', 'milestones');
-    const section7 = this.extractSection(content, 'approvals', 'stakeholders');
+    const section2 = this.extractSection(content, 'problem', 'problema', 'pain', 'dor');
+    const section3 = this.extractSection(content, 'users', 'usuarios', 'usuários', 'customer', 'cliente');
+    const section4 = this.extractSection(content, 'success metrics', 'metricas', 'métricas', 'kpi');
+    const section5 = this.extractSection(content, 'dependencies', 'risks', 'dependencias', 'dependências', 'riscos');
+    const section6 = this.extractSection(content, 'timeline', 'schedule', 'milestones', 'cronograma', 'prazo');
+    const section7 = this.extractSection(content, 'approvals', 'stakeholders', 'aprovacao', 'aprovação');
     
     console.log('[PDF-GENERATOR] Extracted sections:', {
       section1Length: section1.length,
@@ -550,37 +607,37 @@ ${summaryContent || 'No summary available.'}
     });
     
     const formattedContent = `
-# Product Requirements Document (PRD)
+# PRD Executivo
 
-## 1. Visão Geral
+## Resumo Executivo
 
 ${section1}
 
-## 2. Requisitos Funcionais
+## Contexto e Problema
 
 ${section2}
 
-## 3. Requisitos Não Funcionais
+## Público Impactado
 
 ${section3}
 
-## 4. Critérios de Aceitação
+## Métricas de Sucesso
 
 ${section4}
 
-## 5. Dependências e Riscos
+## Riscos e Dependências
 
 ${section5}
 
-## 6. Cronograma
+## Plano de Entrega
 
 ${section6}
 
-## 7. Aprovações
+## Aprovações Necessárias
 
 ${section7}
 
-## 8. Resumo das Discussões dos Agentes
+## Resumo das Discussões da Squad
 
 ${summaryContent || 'Nenhum resumo disponível.'}
 `;
@@ -632,7 +689,6 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     const lineHeight = 14;
     const headerHeight = 180;
     const footerHeight = 70;
-    const contentAreaHeight = pageHeight - headerHeight - footerHeight;
 
     // Remove emojis from content
     const cleanContent = this.removeEmojis(content);
@@ -662,24 +718,29 @@ ${summaryContent || 'Nenhum resumo disponível.'}
       let currentFont = font;
       let color = rgb(0, 0, 0);
       let indent = 0;
+      const trimmedLine = line.trim();
 
       // Check line type and set properties
-      if (line.trim().startsWith('#')) {
-        const headingText = line.replace(/^#+\s*/, '').trim();
+      if (trimmedLine.startsWith('#')) {
+        const headingText = this.stripMarkdownForPdf(trimmedLine.replace(/^#+\s*/, ''));
         wrappedLines = this.wrapText(headingText, maxWidth, boldFont, 16);
         fontSize = 16;
         currentFont = boldFont;
         color = rgb(0.2, 0.4, 0.6);
-      } else if (line.trim().match(/^- [ \ ]/)) {
-        const taskText = line.replace(/^- [ \ ]\s*/, '').trim();
-        wrappedLines = this.wrapText('• ' + taskText, maxWidth - 20, font, 12);
+      } else if (/^-\s+\[[ xX]\]\s*/.test(trimmedLine)) {
+        const taskText = this.stripMarkdownForPdf(trimmedLine.replace(/^-\s+\[[ xX]\]\s*/, ''));
+        wrappedLines = this.wrapText('- ' + taskText, maxWidth - 20, font, 12);
         indent = 10;
-      } else if (line.trim().startsWith('-')) {
-        const listText = line.replace(/^-\s*/, '').trim();
-        wrappedLines = this.wrapText('• ' + listText, maxWidth - 20, font, 12);
+      } else if (/^\d+\.\s+/.test(trimmedLine)) {
+        const listText = this.stripMarkdownForPdf(trimmedLine);
+        wrappedLines = this.wrapText(listText, maxWidth - 20, font, 12);
+        indent = 10;
+      } else if (trimmedLine.startsWith('-')) {
+        const listText = this.stripMarkdownForPdf(trimmedLine.replace(/^-\s*/, ''));
+        wrappedLines = this.wrapText('- ' + listText, maxWidth - 20, font, 12);
         indent = 10;
       } else {
-        wrappedLines = this.wrapText(line, maxWidth, font, 12);
+        wrappedLines = this.wrapText(this.stripMarkdownForPdf(line), maxWidth, font, 12);
       }
 
       // Draw each wrapped line
@@ -737,7 +798,7 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     });
 
     // Draw document title
-    page.drawText(`${docType} Document`, {
+    page.drawText(docType, {
       x: 50,
       y: height - 120,
       size: 18,
@@ -814,7 +875,7 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     });
 
     // Draw footer text
-    page.drawText('AICHATflow - Confidential Document', {
+    page.drawText('AICHATflow - Documento confidencial', {
       x: 50,
       y: 30,
       size: 10,
@@ -823,7 +884,7 @@ ${summaryContent || 'Nenhum resumo disponível.'}
     });
 
     // Draw page number
-    page.drawText(`Page ${pageNumber}`, {
+    page.drawText(`Pagina ${pageNumber}`, {
       x: width - 100,
       y: 30,
       size: 10,

@@ -4,6 +4,9 @@ import { InsertRepo, InsertRepoFile, Repo, RepoFile, repos, repoFiles } from '@s
 import { GitHubService } from './github';
 import { mistralAIService } from './mistral-ai';
 
+const isSupportedGitHubToken = (token: string): boolean =>
+  token.startsWith('github_pat_');
+
 export class RepoService {
   private gitHubService: GitHubService;
 
@@ -11,10 +14,10 @@ export class RepoService {
     const githubToken = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
     console.log('RepoService initializing GitHubService with token availability:', !!githubToken);
     if (githubToken) {
-      console.log('GitHub token is available, first 5 chars:', githubToken.substring(0, 5) + '...');
+      console.log('GitHub token is available');
       // Validate token format
-      if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
-        console.warn('Warning: GitHub token may be in an incorrect format. Should start with "ghp_" or "github_pat_".');
+      if (!isSupportedGitHubToken(githubToken)) {
+        console.warn('Warning: Use a fine-grained GitHub personal access token that starts with "github_pat_" and grants repository read-only permissions.');
       }
     }
     this.gitHubService = new GitHubService(githubToken || undefined);

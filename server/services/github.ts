@@ -8,6 +8,12 @@ import path from 'path';
 // Isso ainda deixa margem para o prompt do modelo (256k tokens total)
 const MAX_INDEX_TOKENS = 1000000;
 
+const isSupportedGitHubToken = (token: string): boolean =>
+  token.startsWith('github_pat_');
+
+const supportedTokenMessage =
+  'Use a fine-grained GitHub personal access token that starts with "github_pat_" and grants repository read-only permissions.';
+
 export class GitHubService {
   public client: Octokit;
   private git: SimpleGit;
@@ -16,19 +22,19 @@ export class GitHubService {
     const envApiKey = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_TOKEN;
 
     console.log('--- GitHubService Initialization ---');
-    console.log('process.env.GITHUB_ACCESS_TOKEN:', process.env.GITHUB_ACCESS_TOKEN ? (process.env.GITHUB_ACCESS_TOKEN.substring(0, 5) + '...') : 'undefined');
-    console.log('process.env.GITHUB_TOKEN:', process.env.GITHUB_TOKEN ? (process.env.GITHUB_TOKEN.substring(0, 5) + '...') : 'undefined');
+    console.log('process.env.GITHUB_ACCESS_TOKEN:', process.env.GITHUB_ACCESS_TOKEN ? 'present' : 'undefined');
+    console.log('process.env.GITHUB_TOKEN:', process.env.GITHUB_TOKEN ? 'present' : 'undefined');
     console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
     console.log('------------------------------------');
 
     if (!apiKey && !envApiKey) {
       console.warn('No GitHub API key provided. Please set GITHUB_ACCESS_TOKEN environment variable.');
     } else {
-      console.log('GitHub API Key loaded (first 5 chars):', (apiKey || envApiKey || '').substring(0, 5) + '...');
+      console.log('GitHub API key loaded');
       // Validate token format
       const token = apiKey || envApiKey;
-      if (token && !token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-        console.warn('Warning: GitHub token may be in an incorrect format. Should start with "ghp_" or "github_pat_".');
+      if (token && !isSupportedGitHubToken(token)) {
+        console.warn(`Warning: GitHub token may be in an incorrect format. ${supportedTokenMessage}`);
       }
     }
 
@@ -81,15 +87,21 @@ export class GitHubService {
     }
 
     // Validate token format
-    if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
-      throw new Error('Invalid GitHub token format. Must start with "ghp_" or "github_pat_".');
+    if (!isSupportedGitHubToken(githubToken)) {
+      throw new Error(`Invalid GitHub token format. ${supportedTokenMessage}`);
     }
 
     try {
-      console.log('Listing user repositories from GitHub API');
-      const repos = await this.client.repos.listForAuthenticatedUser();
-      console.log(`Successfully listed ${repos.data.length} repositories from GitHub API`);
-      return repos.data;
+      console.log('Listing all accessible repositories from GitHub API');
+      const repos = await this.client.paginate(this.client.repos.listForAuthenticatedUser, {
+        visibility: 'all',
+        affiliation: 'owner,collaborator,organization_member',
+        sort: 'updated',
+        direction: 'desc',
+        per_page: 100,
+      });
+      console.log(`Successfully listed ${repos.length} repositories from GitHub API`);
+      return repos;
     } catch (error) {
       console.error('Error listing user repositories:', error);
       console.error(`Error type: ${typeof error}`);
@@ -111,8 +123,8 @@ export class GitHubService {
     }
 
     // Validate token format
-    if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
-      throw new Error('Invalid GitHub token format. Must start with "ghp_" or "github_pat_".');
+    if (!isSupportedGitHubToken(githubToken)) {
+      throw new Error(`Invalid GitHub token format. ${supportedTokenMessage}`);
     }
 
     try {
@@ -143,7 +155,7 @@ export class GitHubService {
     if (!githubToken) {
       throw new Error('GITHUB_ACCESS_TOKEN or GITHUB_TOKEN environment variable is not set.');
     }
-    if (!githubToken.startsWith('ghp_') && !githubToken.startsWith('github_pat_')) {
+    if (!isSupportedGitHubToken(githubToken)) {
       throw new Error('Invalid GitHub token format.');
     }
 
