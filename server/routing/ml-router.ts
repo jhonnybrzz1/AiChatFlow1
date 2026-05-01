@@ -1,6 +1,7 @@
 import { HistoricalDemandData } from './data-collector';
 import fs from 'fs';
 import path from 'path';
+import { z } from 'zod';
 
 export interface RoutingPrediction {
   team: string;
@@ -93,8 +94,26 @@ export class MLRouter {
     try {
       if (fs.existsSync(this.modelPath)) {
         const modelStr = fs.readFileSync(this.modelPath, 'utf-8');
-        const model = JSON.parse(modelStr);
-        this.modelData = model.modelData || [];
+        const modelSchema = z.object({
+          modelData: z.array(z.object({
+            demand_id: z.number(),
+            title: z.string(),
+            description: z.string(),
+            type: z.string(),
+            priority: z.string(),
+            complexity: z.number(),
+            resolution_time: z.number(),
+            team: z.string(),
+            success_rate: z.number(),
+            created_at: z.string(),
+            updated_at: z.string()
+          })).default([])
+        }).passthrough();
+        const parsedModel = modelSchema.safeParse(JSON.parse(modelStr));
+        if (!parsedModel.success) {
+          throw new Error(`Invalid routing model format: ${parsedModel.error.message}`);
+        }
+        this.modelData = parsedModel.data.modelData;
         this.modelTrained = true;
         console.log('Trained ML model loaded successfully');
         return true;

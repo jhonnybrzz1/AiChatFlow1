@@ -1,5 +1,5 @@
 
-import { mistralAIService } from './mistral-ai';
+import { openAIService } from './openai-ai';
 
 class CodeAnalysisService {
   async analyzeRepo(indexedContent: string, demandDescription: string, userPrompt: string): Promise<string> {
@@ -11,10 +11,14 @@ Here is the repository content:
 ${indexedContent}`;
 
     try {
-      const analysis = await mistralAIService.generateChatCompletion(
+      const analysis = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
-        { model: 'codestral-latest' }
+        {
+          model: process.env.OPENAI_MODEL_CODE,
+          taskType: 'analysis',
+          operation: 'code_analysis'
+        }
       );
       return analysis;
     } catch (error) {

@@ -40,6 +40,9 @@ interface EvolvingContext {
 export class ContextBuilder {
 
   private evolvingContexts: Map<number, EvolvingContext> = new Map();
+  private cleanupTimers: Map<number, NodeJS.Timeout> = new Map();
+  private readonly contextTtlMs = this.parsePositiveInt(process.env.EVOLVING_CONTEXT_TTL_MS, 60 * 60 * 1000);
+  private readonly maxContexts = this.parsePositiveInt(process.env.EVOLVING_CONTEXT_MAX_ENTRIES, 100);
 
   /**
    * Creates a comprehensive context with project constraints and real data
@@ -58,6 +61,8 @@ export class ContextBuilder {
       realityConstraints: null,
       lastUpdated: new Date().toISOString()
     });
+    this.scheduleContextCleanup(demand.id);
+    this.pruneOldContexts();
 
     return `${baseContext}\n\n${repoContext}`.trim();
   }
@@ -123,6 +128,7 @@ IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
 
     ctx.lastUpdated = new Date().toISOString();
     this.evolvingContexts.set(demandId, ctx);
+    this.scheduleContextCleanup(demandId);
 
     console.log(`Context evolved: Added insight from ${agentName} for demand ${demandId} (${ctx.agentInsights.length} insights total)`);
   }
@@ -142,6 +148,7 @@ IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
     ctx.realityConstraints = constraints;
     ctx.lastUpdated = new Date().toISOString();
     this.evolvingContexts.set(demandId, ctx);
+    this.scheduleContextCleanup(demandId);
 
     console.log(`Reality constraints applied to demand ${demandId}`);
   }
@@ -180,6 +187,20 @@ IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
    */
   clearEvolvingContext(demandId: number): void {
     this.evolvingContexts.delete(demandId);
+    const timer = this.cleanupTimers.get(demandId);
+    if (timer) {
+      clearTimeout(timer);
+      this.cleanupTimers.delete(demandId);
+    }
+  }
+
+  getContextStats(): { activeContexts: number; maxContexts: number; ttlMs: number } {
+    this.pruneOldContexts();
+    return {
+      activeContexts: this.evolvingContexts.size,
+      maxContexts: this.maxContexts,
+      ttlMs: this.contextTtlMs
+    };
   }
 
   /**
@@ -362,6 +383,41 @@ Exemplo:
       score,
       issues
     };
+  }
+
+  private scheduleContextCleanup(demandId: number): void {
+    const existingTimer = this.cleanupTimers.get(demandId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    const timer = setTimeout(() => {
+      this.evolvingContexts.delete(demandId);
+      this.cleanupTimers.delete(demandId);
+      console.log(`Evolving context expired and was cleaned for demand ${demandId}`);
+    }, this.contextTtlMs);
+
+    timer.unref?.();
+    this.cleanupTimers.set(demandId, timer);
+  }
+
+  private pruneOldContexts(): void {
+    if (this.evolvingContexts.size <= this.maxContexts) {
+      return;
+    }
+
+    const sortedContexts = Array.from(this.evolvingContexts.entries())
+      .sort(([, left], [, right]) => new Date(left.lastUpdated).getTime() - new Date(right.lastUpdated).getTime());
+
+    const contextsToRemove = sortedContexts.slice(0, this.evolvingContexts.size - this.maxContexts);
+    for (const [demandId] of contextsToRemove) {
+      this.clearEvolvingContext(demandId);
+    }
+  }
+
+  private parsePositiveInt(value: string | undefined, fallback: number): number {
+    const parsed = Number.parseInt(value || '', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
   }
 }
 

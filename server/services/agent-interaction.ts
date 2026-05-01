@@ -1,5 +1,5 @@
 import { Demand, ChatMessage } from '@shared/schema';
-import { mistralAIService } from './mistral-ai';
+import { openAIService } from './openai-ai';
 import { storage } from '../storage';
 import { contextBuilder } from './context-builder';
 
@@ -111,13 +111,15 @@ Demanda: ${demand.description}`;
             });
           }
 
-          const response = await mistralAIService.generateChatCompletion(
+          const response = await openAIService.generateChatCompletion(
             systemPrompt,
             userPrompt,
             {
               temperature: 0.8, // Higher temperature for more creative collaboration
               maxTokens: 1500,
-              model: agentConfig.model
+              model: agentConfig.model,
+              taskType: 'analysis',
+              operation: `agent_interaction:${agentName}`
             }
           );
 
@@ -306,12 +308,14 @@ Responda APENAS com o número, sem explicações adicionais.`;
     const userPrompt = `Qual o percentual de completude do refinamento com base nos critérios definidos? Responda apenas com um número de 0 a 100.`;
 
     try {
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.2, // Lower temperature for more consistent evaluation
-          maxTokens: 20
+          maxTokens: 20,
+          taskType: 'classification',
+          operation: 'agent_interaction:completeness'
         }
       );
 
@@ -377,12 +381,14 @@ mantendo uma estrutura clara e coesa que seja útil para a equipe de desenvolvim
 O documento deve ser bem estruturado, claro e prático, incorporando os insights de todas as especialidades.`;
 
     try {
-      const synthesis = await mistralAIService.generateChatCompletion(
+      const synthesis = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.6,
-          maxTokens: 3000
+          maxTokens: 3000,
+          taskType: 'document',
+          operation: 'agent_interaction:synthesis'
         }
       );
 

@@ -1,5 +1,5 @@
 import { BasePlugin, PluginResult, DemandContext } from './base-plugin';
-import { mistralAIService } from '../services/mistral-ai';
+import { openAIService } from '../services/openai-ai';
 
 export class BugPlugin extends BasePlugin {
   readonly name = 'BugPlugin';
@@ -66,12 +66,14 @@ Prioridade Atual: ${demand.priority}
 Por favor, forneça uma análise detalhada do bug com foco em priorização e sugestões de resolução.`;
 
     try {
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.5,
-          maxTokens: 1200
+          maxTokens: 1200,
+          taskType: 'analysis',
+          operation: 'plugin:bug'
         }
       );
 

@@ -11,6 +11,9 @@ import { codeAnalysisService } from './services/codeAnalysis'; // Import the new
 import { demandRoutingOrchestrator } from './routing/orchestrator';
 import { metricsCollector } from './routing/metrics-collector';
 import { repoService } from './services/repo-service';
+import { aiUsageTracker } from './services/ai-usage-tracker';
+import { aiResponseCache } from './services/ai-cache';
+import { contextBuilder } from './services/context-builder';
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -21,6 +24,24 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  app.get("/api/ai/usage", (_req: Request, res: Response) => {
+    res.json({
+      usage: aiUsageTracker.getSummary(),
+      cache: aiResponseCache.getStats(),
+      context: contextBuilder.getContextStats()
+    });
+  });
+
+  app.post("/api/ai/usage/reset", (_req: Request, res: Response) => {
+    aiUsageTracker.reset();
+    res.json({ success: true });
+  });
+
+  app.post("/api/ai/cache/clear", (_req: Request, res: Response) => {
+    aiResponseCache.clear();
+    res.json({ success: true, cache: aiResponseCache.getStats() });
+  });
 
   // GitHub routes
   app.get("/api/github/repos", async (req: Request, res: Response) => {

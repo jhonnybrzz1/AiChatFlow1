@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.agentInteractionService = exports.AgentInteractionService = void 0;
-const mistral_ai_1 = require("./mistral-ai");
+const openai_ai_1 = require("./openai-ai");
 const storage_1 = require("../storage");
 class AgentInteractionService {
     /**
@@ -70,7 +70,7 @@ Demanda: ${demand.description}`;
                             progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
                         });
                     }
-                    const response = await mistral_ai_1.mistralAIService.generateChatCompletion(systemPrompt, userPrompt, {
+                    const response = await openai_ai_1.openAIService.generateChatCompletion(systemPrompt, userPrompt, {
                         temperature: 0.8, // Higher temperature for more creative collaboration
                         maxTokens: 1500,
                         model: agentConfig.model
@@ -226,7 +226,7 @@ Forneça um número de 0 a 100 representando o percentual de critérios atendido
 Responda APENAS com o número, sem explicações adicionais.`;
         const userPrompt = `Qual o percentual de completude do refinamento com base nos critérios definidos? Responda apenas com um número de 0 a 100.`;
         try {
-            const response = await mistral_ai_1.mistralAIService.generateChatCompletion(systemPrompt, userPrompt, {
+            const response = await openai_ai_1.openAIService.generateChatCompletion(systemPrompt, userPrompt, {
                 temperature: 0.2, // Lower temperature for more consistent evaluation
                 maxTokens: 20
             });
@@ -276,7 +276,7 @@ mantendo uma estrutura clara e coesa que seja útil para a equipe de desenvolvim
         const userPrompt = `Consolide todas as contribuições acima em um único refinamento da demanda que seja útil para a squad. 
 O documento deve ser bem estruturado, claro e prático, incorporando os insights de todas as especialidades.`;
         try {
-            const synthesis = await mistral_ai_1.mistralAIService.generateChatCompletion(systemPrompt, userPrompt, {
+            const synthesis = await openai_ai_1.openAIService.generateChatCompletion(systemPrompt, userPrompt, {
                 temperature: 0.6,
                 maxTokens: 3000
             });

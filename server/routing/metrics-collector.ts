@@ -2,6 +2,7 @@ import { Demand } from '@shared/schema';
 import { storage } from '../storage';
 import fs from 'fs';
 import path from 'path';
+import { z } from 'zod';
 
 export interface DemandMetrics {
   demandId: number;
@@ -41,6 +42,27 @@ export interface PluginEffectiveness {
   averageExecutionTime: number;
   usefulnessScore: number; // 0-100 based on impact on success
 }
+
+const demandMetricsSchema = z.object({
+  demandId: z.number(),
+  type: z.string(),
+  priority: z.string(),
+  routingTeam: z.string(),
+  routingConfidence: z.number(),
+  estimatedResolutionTime: z.number(),
+  estimatedSuccessRate: z.number(),
+  actualResolutionTime: z.number(),
+  actualSuccess: z.boolean(),
+  createdAt: z.string(),
+  completedAt: z.string().nullable(),
+  processingTime: z.number(),
+  pluginExecutions: z.array(z.object({
+    pluginName: z.string(),
+    executionTime: z.number(),
+    success: z.boolean(),
+    resultSize: z.number()
+  })).default([])
+});
 
 export class MetricsCollector {
   private static readonly METRICS_PATH = path.join(process.cwd(), 'data', 'demand_metrics.json');
@@ -118,7 +140,11 @@ export class MetricsCollector {
     try {
       if (fs.existsSync(MetricsCollector.METRICS_PATH)) {
         const data = fs.readFileSync(MetricsCollector.METRICS_PATH, 'utf-8');
-        this.metrics = JSON.parse(data) as DemandMetrics[];
+        const parsedMetrics = z.array(demandMetricsSchema).safeParse(JSON.parse(data));
+        if (!parsedMetrics.success) {
+          throw new Error(`Invalid metrics format: ${parsedMetrics.error.message}`);
+        }
+        this.metrics = parsedMetrics.data;
       } else {
         this.metrics = [];
       }

@@ -1,7 +1,7 @@
 // Framework Manager - Main module for managing all demand frameworks
 import { Demand } from '@shared/schema';
 import { storage } from '../storage';
-import { mistralAIService } from '../services/mistral-ai';
+import { openAIService } from '../services/openai-ai';
 import {
   FrameworkType,
   AnyFramework,
@@ -450,11 +450,14 @@ export class FrameworkManager {
     demand: Demand,
     criteria: FrameworkSelectionCriteria
   ): Promise<AIFrameworkSuggestion> {
-    // Use Mistral AI to analyze and suggest framework
+    // Use OpenAI to analyze and suggest framework
     const prompt = this.buildFrameworkSuggestionPrompt(demand, criteria);
     
     try {
-      const aiResponse = await mistralAIService.generateResponse(prompt);
+      const aiResponse = await openAIService.generateResponse(prompt, {
+        taskType: 'simple',
+        operation: 'framework:suggestion'
+      });
       
       // Parse AI response (in a real implementation, this would be more sophisticated)
       const suggestion: AIFrameworkSuggestion = {
@@ -475,7 +478,7 @@ export class FrameworkManager {
         alternativeOptions: this.generateAlternativeOptions(demand.type),
         integration: {
           aiEnabled: true,
-          externalTools: ['Mistral AI'],
+          externalTools: ['OpenAI'],
           apiEndpoints: [],
           dataSources: [],
           aiModels: ['Mistral-7B'],

@@ -2,7 +2,7 @@ import { type Demand, type ChatMessage } from "@shared/schema";
 import { storage } from "../storage";
 import fs from "fs";
 import path from "path";
-import { mistralAIService } from "./mistral-ai";
+import { openAIService } from "./openai-ai";
 import yaml from "js-yaml";
 import { pdfGenerator } from "./pdf-generator";
 import { demandRoutingOrchestrator } from "../routing/orchestrator";
@@ -16,8 +16,6 @@ import { gitHubService } from './github';
 import { repoService } from './repo-service';
 import { contextBuilder } from './context-builder';
 import { RealityBasedRefinement } from '../cognitive-core/reality-based-refinement';
-
-// Using Mistral AI service instead of OpenAI
 
 // Adicionando interface para gerenciamento de SSE
 interface SSEConnection {
@@ -702,13 +700,15 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
       const maxTokens = intensityLevel === 'baixa' ? 800 : intensityLevel === 'media' ? 1500 : 2500;
       const model = agentConfig?.model || undefined;
 
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.7,
           maxTokens: maxTokens,
-          model: model
+          model: model,
+          taskType: 'analysis',
+          operation: `agent:${agentName}`
         }
       );
 
@@ -902,12 +902,14 @@ IMPORTANTE:
 - Não escreva em formato RF/RNF e não detalhe implementação técnica`;
 
     try {
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.5,
-          maxTokens: 4000
+          maxTokens: 4000,
+          taskType: 'document',
+          operation: 'document:prd'
         }
       );
 
@@ -994,12 +996,14 @@ IMPORTANTE:
 - Crie tarefas que estejam claramente alinhadas com as sugestões dos agentes do refinamento`;
 
     try {
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.5,
-          maxTokens: 2000
+          maxTokens: 2000,
+          taskType: 'document',
+          operation: 'document:tasks'
         }
       );
 

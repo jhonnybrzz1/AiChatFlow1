@@ -1,13 +1,13 @@
-import { mistralAIService } from './services/mistral-ai';
+import { openAIService } from './services/openai-ai';
 
-// This script tests the Mistral AI integration
-async function testMistralAI() {
-  console.log('Testing Mistral AI integration...');
+// This script tests the OpenAI integration
+async function testOpenAI() {
+  console.log('Testing OpenAI integration...');
   
   try {
     // Test basic chat completion
     console.log('Testing basic chat completion...');
-    const response = await mistralAIService.generateChatCompletion(
+    const response = await openAIService.generateChatCompletion(
       'You are a helpful assistant.',
       'What is the capital of France?',
       { temperature: 0.7 }
@@ -17,7 +17,7 @@ async function testMistralAI() {
     
     // Test multiple chat completions
     console.log('\nTesting multiple chat completions...');
-    const responses = await mistralAIService.generateMultipleChatCompletions(
+    const responses = await openAIService.generateMultipleChatCompletions(
       [
         { 
           systemPrompt: 'You are a helpful assistant.', 
@@ -38,7 +38,7 @@ async function testMistralAI() {
     
     // Test JSON response
     console.log('\nTesting JSON response...');
-    const jsonResponse = await mistralAIService.generateJSONResponse(
+    const jsonResponse = await openAIService.generateJSONResponse(
       'You are a helpful assistant that provides information in JSON format.',
       'Provide information about France, including capital, population, and language.',
       { temperature: 0.3 }
@@ -46,12 +46,12 @@ async function testMistralAI() {
     console.log('JSON Response:', JSON.stringify(jsonResponse, null, 2));
     console.log('JSON response test passed!');
     
-    console.log('\nAll tests passed! Mistral AI integration is working correctly.');
+    console.log('\nAll tests passed! OpenAI integration is working correctly.');
   } catch (error) {
-    console.error('Error testing Mistral AI integration:', error);
+    console.error('Error testing OpenAI integration:', error);
     process.exit(1);
   }
 }
 
 // Run the test
-testMistralAI();
+testOpenAI();

@@ -5,7 +5,7 @@
  */
 
 import { Demand, ChatMessage } from '@shared/schema';
-import { mistralAIService } from './mistral-ai';
+import { openAIService } from './openai-ai';
 import { pdfGenerator } from './pdf-generator';
 import fs from 'fs';
 import path from 'path';
@@ -75,12 +75,14 @@ ${insightsSummary ? `\n--- INSIGHTS DA SQUAD ---\n${insightsSummary}` : ''}
 
 Se você incluir qualquer sugestão de overengineering, o documento será REJEITADO e regenerado.`;
 
-        const response = await mistralAIService.generateChatCompletion(
+        const response = await openAIService.generateChatCompletion(
           constrainedSystemPrompt,
           userPrompt,
           {
             temperature: 0.5,
-            maxTokens: 4000
+            maxTokens: 4000,
+            taskType: 'document',
+            operation: `document_generator:${this.getDocumentType()}`
           }
         );
 

@@ -1,5 +1,5 @@
 import { BasePlugin, PluginResult, DemandContext } from './base-plugin';
-import { mistralAIService } from '../services/mistral-ai';
+import { openAIService } from '../services/openai-ai';
 
 export class ImprovementPlugin extends BasePlugin {
   readonly name = 'ImprovementPlugin';
@@ -62,12 +62,14 @@ Prioridade: ${demand.priority}
 Por favor, forneça sugestões específicas para melhorar o desempenho ou a qualidade do sistema com base nesta demanda de melhoria.`;
 
     try {
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.6,
-          maxTokens: 1000
+          maxTokens: 1000,
+          taskType: 'analysis',
+          operation: 'plugin:improvement'
         }
       );
 

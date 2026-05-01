@@ -1,5 +1,5 @@
 import { BasePlugin, PluginResult, DemandContext } from './base-plugin';
-import { mistralAIService } from '../services/mistral-ai';
+import { openAIService } from '../services/openai-ai';
 
 export class DiscoveryPlugin extends BasePlugin {
   readonly name = 'DiscoveryPlugin';
@@ -18,7 +18,7 @@ export class DiscoveryPlugin extends BasePlugin {
 
   async process(context: DemandContext): Promise<PluginResult> {
     try {
-      // Generate market research suggestions using Mistral AI
+      // Generate market research suggestions using OpenAI
       const suggestions = await this.generateDiscoverySuggestions(context.demand);
       
       return {
@@ -60,12 +60,14 @@ Prioridade: ${demand.priority}
 Forneça 5 sugestões específicas para esta demanda de discovery ou análise exploratória.`;
 
     try {
-      const response = await mistralAIService.generateChatCompletion(
+      const response = await openAIService.generateChatCompletion(
         systemPrompt,
         userPrompt,
         {
           temperature: 0.7,
-          maxTokens: 1000
+          maxTokens: 1000,
+          taskType: 'analysis',
+          operation: 'plugin:discovery'
         }
       );
 

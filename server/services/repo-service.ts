@@ -2,10 +2,23 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { InsertRepo, InsertRepoFile, Repo, RepoFile, repos, repoFiles } from '@shared/schema';
 import { GitHubService } from './github';
-import { mistralAIService } from './mistral-ai';
+import { openAIService } from './openai-ai';
+import { z } from 'zod';
 
 const isSupportedGitHubToken = (token: string): boolean =>
   token.startsWith('github_pat_');
+
+const repositoryContextSchema = z.object({
+  repositoryBriefing: z.object({
+    projectType: z.string().default('outro'),
+    techStack: z.array(z.string()).default([]),
+    architecturalPattern: z.string().default('Desconhecido'),
+    technicalStage: z.string().default('em desenvolvimento ativo'),
+    criticalAreas: z.array(z.string()).default([]),
+    sensitiveAreas: z.array(z.string()).default([])
+  }).passthrough(),
+  systemMap: z.string().default('')
+});
 
 export class RepoService {
   private gitHubService: GitHubService;
@@ -80,7 +93,7 @@ export class RepoService {
         for (const file of filesToRead) {
           try {
             const content = await this.gitHubService.getRepoContent(owner, name, file.path);
-            if (content && content.encoding === 'base64') {
+            if (content && !Array.isArray(content) && 'encoding' in content && content.encoding === 'base64' && 'content' in content && content.content) {
               const decodedContent = Buffer.from(content.content, 'base64').toString('utf8');
               keyFilesContent += `--- CONTEÚDO DO ARQUIVO: ${file.path} ---\n${decodedContent}\n\n`;
             }
@@ -134,8 +147,16 @@ Gere o "Repository Briefing" e o "System Map" no formato JSON solicitado.`;
 
     // 3. Chamar a IA para gerar o contexto
     try {
-      const response = await mistralAIService.generateChatCompletion(systemPrompt, userPrompt, { maxTokens: 4000 });
-      const contextJson = JSON.parse(response);
+      const contextJson = await openAIService.generateJSONResponse(
+        systemPrompt,
+        userPrompt,
+        {
+          maxTokens: 4000,
+          taskType: 'analysis',
+          operation: 'repo:structural_context',
+          schema: repositoryContextSchema
+        }
+      );
 
       // 4. Salvar no banco de dados
       await db.update(repos).set({
@@ -163,7 +184,7 @@ Gere o "Repository Briefing" e o "System Map" no formato JSON solicitado.`;
    * @returns The repository record
    */
   async getOrCreateRepo(owner: string, name: string): Promise<Repo> {
-    const repo = await db.select().from(repos).where(
+    const [repo] = await db.select().from(repos).where(
       eq(repos.fullName, `${owner}/${name}`)
     ).limit(1);
 
