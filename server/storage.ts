@@ -80,6 +80,7 @@ export class MemStorage implements IStorage {
 
       // Governance fields
       requiresApproval: insertDemand.requiresApproval ?? false,
+      requiresHumanReview: insertDemand.requiresHumanReview ?? insertDemand.requiresApproval ?? false,
       documentState: "DRAFT",
       reviewSnapshotId: null,
       approvedSnapshotId: null,
@@ -87,6 +88,9 @@ export class MemStorage implements IStorage {
       finalSnapshotId: null,
       finalizedFromHash: null,
       approvalSessionId: null,
+      revisionNumber: 0,
+      reviewRequestedAt: null,
+      approvedAt: null,
 
       createdAt: now,
       updatedAt: now,

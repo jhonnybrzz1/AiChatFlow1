@@ -2,7 +2,7 @@ import { Lock, CheckCircle } from "lucide-react";
 import Alert from "@/components/ui/alert";
 
 interface ReviewBannerProps {
-  documentState: "DRAFT" | "APPROVAL_REQUIRED" | "FINAL";
+  documentState: "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "FINAL" | "APPROVAL_REQUIRED";
   reviewSnapshotId?: string;
   snapshotHash?: string;
   approvalSessionId?: string;
@@ -18,13 +18,13 @@ export function ReviewBanner({
     return null; // No banner for draft state
   }
 
-  if (documentState === "APPROVAL_REQUIRED") {
+  if (documentState === "APPROVAL_REQUIRED" || documentState === "UNDER_REVIEW") {
     return (
       <Alert
         variant="warning"
         className="mb-4"
         title="Documento em Revisão (Versão Congelada)"
-        icon={<Lock className="h-4 w-4 text-yellow-600" />}
+        icon={<Lock className="h-4 w-4 text-yellow-800" />}
       >
         <div className="space-y-2 mt-1">
           <p>
@@ -50,6 +50,20 @@ export function ReviewBanner({
             )}
           </div>
         </div>
+      </Alert>
+    );
+  }
+
+  if (documentState === "APPROVED") {
+    return (
+      <Alert
+        variant="success"
+        className="mb-4"
+        title="Documento Aprovado"
+        icon={<CheckCircle className="h-4 w-4 text-green-600" />}
+      >
+        O conteúdo foi aprovado a partir do snapshot de revisão e está pronto para
+        finalização.
       </Alert>
     );
   }

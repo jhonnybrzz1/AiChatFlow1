@@ -280,6 +280,10 @@ export class AISquadService {
 
       console.log(`📊 Demand classified as: ${classification.classification.category}`);
       console.log(`🔧 Execution order: ${classification.agentExecutionOrder.join(' → ')}`);
+      const readiness = classification.classification.personalReadiness;
+      const readinessMessage = readiness
+        ? `\nProntidão pessoal: ${readiness.score}% (${readiness.level})\nRecomendação: ${readiness.recommendation}`
+        : '';
 
       // Send classification update
       if (onProgress) {
@@ -287,7 +291,7 @@ export class AISquadService {
           id: `${demandId}-classification`,
           agent: 'cognitive_core',
           message: `📊 Classificação: ${classification.classification.category}\n` +
-                   `🔧 Ordem: ${classification.agentExecutionOrder.join(' → ')}`,
+                   `🔧 Ordem: ${classification.agentExecutionOrder.join(' → ')}${readinessMessage}`,
           timestamp: new Date().toISOString(),
           type: 'completed',
           progress: 10
@@ -902,59 +906,82 @@ ${requirements}`;
 4. Foque em soluções SIMPLES e INCREMENTAIS
 5. Priorize código existente sobre novas abstrações
 
+--- MODO PRODUTO PESSOAL (OBRIGATÓRIO) ---
+1. Escreva para um builder solo que precisa executar, não para um comitê enterprise
+2. Se a demanda for simples, mantenha o documento curto
+3. Separe claramente: fazer agora, fazer depois e não fazer
+4. Inclua lacunas e perguntas abertas apenas quando bloquearem a execução
+5. Evite linguagem de startup, ARR, TAM, stakeholders corporativos, SSO e compliance pesado
+
 ${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
 Crie um PRD TÉCNICO em Markdown seguindo EXATAMENTE este formato:
 
 # PRD Técnico - [Título]
 
-## 1. Visão Geral Técnica
-[Descrição do problema do ponto de vista de engenharia - O que precisa ser resolvido tecnicamente?]
+## 1. Plano Executivo
+[3-5 linhas: problema técnico, resultado esperado e menor entrega útil]
 
-## 2. Arquitetura Proposta
-### 2.1 Componentes Afetados
+## 2. Prontidão Da Demanda
+- **Status:** [Pronta / Precisa refinar / Bloqueada]
+- **Por que:** [Justificativa objetiva]
+- **Perguntas abertas:** [Somente perguntas que bloqueiam execução]
+
+## 3. Escopo
+### 3.1 Fazer Agora
+- [Entrega incremental 1]
+- [Entrega incremental 2]
+
+### 3.2 Fazer Depois
+- [Melhoria ou expansão futura]
+
+### 3.3 Não Fazer
+- [Item explicitamente fora de escopo]
+
+## 4. Implementação Proposta
+### 4.1 Componentes Afetados
 - [Lista de arquivos/módulos que serão modificados]
 - [Novos componentes se necessário - mínimo possível]
 
-### 2.2 Diagrama de Fluxo
+### 4.2 Fluxo
 [Descrição textual do fluxo de dados - entrada → processamento → saída]
 
-### 2.3 Integrações
+### 4.3 Integrações
 - [APIs internas/externas necessárias]
 - [Dependências entre módulos]
 
-## 3. Especificações Técnicas
-### 3.1 Modelo de Dados
+## 5. Especificações Técnicas
+### 5.1 Modelo de Dados
 [Alterações em schemas, tabelas, tipos TypeScript]
 
-### 3.2 Endpoints/Interfaces
+### 5.2 Endpoints/Interfaces
 [Novas rotas, parâmetros, retornos esperados]
 
-### 3.3 Regras de Validação
+### 5.3 Regras de Validação
 [Validações de entrada, regras de negócio técnicas]
 
-## 4. Dependências e Requisitos
-### 4.1 Dependências de Código
+## 6. Dependências e Requisitos
+### 6.1 Dependências de Código
 - [Bibliotecas existentes a utilizar]
 - [Novas dependências - APENAS se estritamente necessário]
 
-### 4.2 Pré-requisitos
+### 6.2 Pré-requisitos
 - [O que precisa estar pronto antes de começar]
 
-## 5. Trade-offs e Decisões
+## 7. Trade-offs e Decisões
 | Decisão | Alternativa Descartada | Justificativa |
 |---------|------------------------|---------------|
 | [Escolha feita] | [Opção não escolhida] | [Por que essa escolha] |
 
-## 6. Riscos Técnicos
+## 8. Riscos Técnicos
 - **Risco:** [Descrição] | **Mitigação:** [Como evitar/resolver]
 
-## 7. Critérios de Aceite Técnicos
+## 9. Critérios de Aceite Técnicos
 - [ ] [Critério técnico verificável 1]
 - [ ] [Critério técnico verificável 2]
 - [ ] [Testes passando]
 - [ ] [Performance dentro do esperado]
 
-## 8. Estimativa de Esforço
+## 10. Estimativa de Esforço
 | Fase | Esforço |
 |------|---------|
 | Desenvolvimento | [X dias] |
@@ -966,7 +993,8 @@ IMPORTANTE:
 - Este é um documento TÉCNICO para engenheiros
 - Inclua detalhes de implementação específicos
 - Mantenha seções de arquitetura, componentes e trade-offs
-- Estimativas devem ser conservadoras e realistas`;
+- Estimativas devem ser conservadoras e realistas
+- Não aumente o escopo apenas para preencher seções`;
   }
 
   /**

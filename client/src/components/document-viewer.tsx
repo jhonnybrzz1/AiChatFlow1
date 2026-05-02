@@ -25,7 +25,7 @@ interface DocumentViewerProps {
   pdfUrl?: string;
   refinementType?: 'technical' | 'business' | null;
   typeAdherence?: TypeAdherenceResult | null;
-  documentState?: "DRAFT" | "APPROVAL_REQUIRED" | "FINAL";
+  documentState?: "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "FINAL" | "APPROVAL_REQUIRED";
   reviewSnapshotId?: string;
   snapshotHash?: string;
   approvalSessionId?: string;
@@ -260,7 +260,7 @@ export function DocumentViewer({
       </div>
 
       {/* Governance Actions (only for PRD when expanded) */}
-      {isExpanded && documentType === "prd" && documentState === "APPROVAL_REQUIRED" && (
+      {isExpanded && documentType === "prd" && (documentState === "UNDER_REVIEW" || documentState === "APPROVAL_REQUIRED") && (
         <div className="p-4 border-t-2 border-[var(--border)] bg-[var(--muted)] space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ApprovalActions

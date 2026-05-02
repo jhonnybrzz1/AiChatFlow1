@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "ai-engineer": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ai-engineer/SKILL.md",
+      "computedHash": "4d2fd22bee2b694ebff50e2d5a1944ba57022bf94e3ab1ed85256f59d561d474"
+    },
+    "audit": {
+      "source": "accesslint/claude-marketplace",
+      "sourceType": "github",
+      "skillPath": "plugins/accesslint/skills/audit/SKILL.md",
+      "computedHash": "d1e09b5db3c48de90af1f895355a8ad581b4754fbbc945e3a499f97e5dda5607"
+    },
+    "breakdown-epic-pm": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/breakdown-epic-pm/SKILL.md",
+      "computedHash": "4417e67abc0e21034ebf077aa8aed9ec5dae5976c1aa862c83e1652bc2e1e2e0"
+    },
+    "prompt-builder": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/prompt-builder/SKILL.md",
+      "computedHash": "1591d452ec2ba6d70faaa96b481f7c8261a280df838fee9c5295804fa28acbd3"
+    }
+  }
+}

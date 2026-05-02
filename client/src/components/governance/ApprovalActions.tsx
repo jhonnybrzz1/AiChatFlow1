@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface ApprovalActionsProps {
   demandId: number;
   reviewSnapshotId: string;
-  documentState: "DRAFT" | "APPROVAL_REQUIRED" | "FINAL";
+  documentState: "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "FINAL" | "APPROVAL_REQUIRED";
   onApprovalComplete?: () => void;
 }
 
@@ -19,11 +19,12 @@ export function ApprovalActions({
 }: ApprovalActionsProps) {
   const [comments, setComments] = useState("");
   const [isApproving, setIsApproving] = useState(false);
-  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isRequestingChanges, setIsRequestingChanges] = useState(false);
   const { toast } = useToast();
+  const isUnderReview = documentState === "UNDER_REVIEW" || documentState === "APPROVAL_REQUIRED";
 
-  // Only show actions if in APPROVAL_REQUIRED state
-  if (documentState !== "APPROVAL_REQUIRED") {
+  // Only show actions while the review snapshot is awaiting a human decision.
+  if (!isUnderReview) {
     return null;
   }
 
@@ -54,8 +55,8 @@ export function ApprovalActions({
       }
 
       toast({
-        title: "Documento Aprovado",
-        description: "O documento foi aprovado com sucesso. Agora você pode finalizá-lo.",
+          title: "Documento Aprovado",
+          description: "O documento foi aprovado e finalizado a partir do snapshot revisado.",
       });
 
       setComments("");
@@ -72,36 +73,40 @@ export function ApprovalActions({
     }
   };
 
-  const handleFinalize = async () => {
-    setIsFinalizing(true);
+  const handleRequestChanges = async () => {
+    setIsRequestingChanges(true);
     try {
-      const response = await fetch(`/api/governance/demands/${demandId}/finalize`, {
+      const response = await fetch(`/api/governance/demands/${demandId}/request-changes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // Empty body - no content fields allowed
+        body: JSON.stringify({
+          reviewSnapshotId,
+          comments: comments.trim() || undefined,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Falha ao finalizar documento");
+        throw new Error(data.error || "Falha ao solicitar ajustes");
       }
 
       toast({
-        title: "Documento Finalizado",
-        description: "O documento foi finalizado com sucesso e está agora bloqueado.",
+        title: "Ajustes Solicitados",
+        description: "O documento voltou para rascunho para uma nova rodada.",
       });
 
+      setComments("");
       onApprovalComplete?.();
     } catch (error) {
-      console.error("Error finalizing document:", error);
+      console.error("Error requesting changes:", error);
       toast({
-        title: "Erro ao Finalizar",
+        title: "Erro ao Solicitar Ajustes",
         description: error instanceof Error ? error.message : "Erro desconhecido",
         variant: "destructive",
       });
     } finally {
-      setIsFinalizing(false);
+      setIsRequestingChanges(false);
     }
   };
 
@@ -126,7 +131,7 @@ export function ApprovalActions({
       <div className="flex gap-3">
         <Button
           onClick={handleApprove}
-          disabled={isApproving || isFinalizing}
+          disabled={isApproving || isRequestingChanges}
           className="flex-1"
           variant="default"
         >
@@ -138,35 +143,35 @@ export function ApprovalActions({
           ) : (
             <>
               <CheckCircle className="mr-2 h-4 w-4" />
-              Aprovar
+              Aprovar e Finalizar
             </>
           )}
         </Button>
 
         <Button
-          onClick={handleFinalize}
-          disabled={isApproving || isFinalizing}
+          onClick={handleRequestChanges}
+          disabled={isApproving || isRequestingChanges}
           className="flex-1"
           variant="outline"
         >
-          {isFinalizing ? (
+          {isRequestingChanges ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Finalizando...
+              Solicitando...
             </>
           ) : (
             <>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Aprovar e Finalizar
+              <XCircle className="mr-2 h-4 w-4" />
+              Solicitar Ajustes
             </>
           )}
         </Button>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        <strong>Aprovar:</strong> Marca o documento como aprovado, mas mantém em revisão.
+        <strong>Aprovar e Finalizar:</strong> usa exatamente o snapshot revisado como fonte final.
         <br />
-        <strong>Aprovar e Finalizar:</strong> Aprova e finaliza o documento em uma única ação.
+        <strong>Solicitar Ajustes:</strong> devolve o documento para rascunho com o feedback registrado.
       </p>
     </div>
   );

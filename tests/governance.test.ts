@@ -24,6 +24,7 @@ describe('DocumentSnapshotService', () => {
     typeAdherence: null,
     completedAt: null,
     requiresApproval: true,
+    requiresHumanReview: true,
     documentState: 'DRAFT',
     reviewSnapshotId: null,
     approvedSnapshotId: null,
@@ -31,6 +32,9 @@ describe('DocumentSnapshotService', () => {
     finalSnapshotId: null,
     finalizedFromHash: null,
     approvalSessionId: null,
+    revisionNumber: 0,
+    reviewRequestedAt: null,
+    approvedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -130,20 +134,20 @@ describe('DocumentStateMachine', () => {
       expect(DocumentStateMachine.canTransition('DRAFT', 'FINAL', false)).toBe(true);
     });
 
-    it('should allow DRAFT to APPROVAL_REQUIRED with approval', () => {
-      expect(DocumentStateMachine.canTransition('DRAFT', 'APPROVAL_REQUIRED', true)).toBe(true);
+    it('should allow DRAFT to UNDER_REVIEW with human review', () => {
+      expect(DocumentStateMachine.canTransition('DRAFT', 'UNDER_REVIEW', true)).toBe(true);
     });
 
-    it('should allow APPROVAL_REQUIRED to FINAL with approval', () => {
-      expect(DocumentStateMachine.canTransition('APPROVAL_REQUIRED', 'FINAL', true)).toBe(true);
+    it('should allow UNDER_REVIEW to FINAL with approve and finalize', () => {
+      expect(DocumentStateMachine.canTransition('UNDER_REVIEW', 'FINAL', true)).toBe(true);
     });
 
-    it('should reject DRAFT to APPROVAL_REQUIRED without approval requirement', () => {
-      expect(DocumentStateMachine.canTransition('DRAFT', 'APPROVAL_REQUIRED', false)).toBe(false);
+    it('should reject DRAFT to UNDER_REVIEW without human review requirement', () => {
+      expect(DocumentStateMachine.canTransition('DRAFT', 'UNDER_REVIEW', false)).toBe(false);
     });
 
     it('should reject invalid transitions', () => {
-      expect(DocumentStateMachine.canTransition('FINAL', 'APPROVAL_REQUIRED', true)).toBe(false);
+      expect(DocumentStateMachine.canTransition('FINAL', 'UNDER_REVIEW', true)).toBe(false);
     });
   });
 
@@ -154,15 +158,16 @@ describe('DocumentStateMachine', () => {
       expect(actions).not.toContain('submit_for_approval');
     });
 
-    it('should return submit_for_approval for DRAFT with approval', () => {
+    it('should return submit_for_review for DRAFT with human review', () => {
       const actions = DocumentStateMachine.getNextActions('DRAFT', true);
-      expect(actions).toContain('submit_for_approval');
+      expect(actions).toContain('submit_for_review');
       expect(actions).not.toContain('finalize');
     });
 
-    it('should return approve_and_finalize for APPROVAL_REQUIRED', () => {
-      const actions = DocumentStateMachine.getNextActions('APPROVAL_REQUIRED', true);
+    it('should return approve_and_finalize for UNDER_REVIEW', () => {
+      const actions = DocumentStateMachine.getNextActions('UNDER_REVIEW', true);
       expect(actions).toContain('approve_and_finalize');
+      expect(actions).toContain('request_changes');
     });
   });
 
@@ -191,7 +196,7 @@ describe('DocumentStateMachine', () => {
     });
 
     it('should reject finalize with approval but no approved snapshot', () => {
-      const result = DocumentStateMachine.validateFinalize('APPROVAL_REQUIRED', true, false);
+      const result = DocumentStateMachine.validateFinalize('UNDER_REVIEW', true, false);
 
       expect(result.valid).toBe(false);
       expect(result.error).toContain('no approved snapshot exists');
@@ -205,16 +210,16 @@ describe('DocumentStateMachine', () => {
     });
 
     it('should allow finalize with approval and approved snapshot', () => {
-      const result = DocumentStateMachine.validateFinalize('APPROVAL_REQUIRED', true, true);
+      const result = DocumentStateMachine.validateFinalize('APPROVED', true, true);
       expect(result.valid).toBe(true);
     });
   });
 
   describe('validateApprove', () => {
-    it('should validate approve in APPROVAL_REQUIRED state', () => {
+    it('should validate approve in UNDER_REVIEW state', () => {
       const snapshotId = 'test-snapshot-id';
       const result = DocumentStateMachine.validateApprove(
-        'APPROVAL_REQUIRED',
+        'UNDER_REVIEW',
         snapshotId,
         snapshotId
       );
@@ -226,12 +231,12 @@ describe('DocumentStateMachine', () => {
       const result = DocumentStateMachine.validateApprove('DRAFT', 'snapshot-id', 'snapshot-id');
 
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('expected \'APPROVAL_REQUIRED\'');
+      expect(result.error).toContain('expected \'UNDER_REVIEW\'');
     });
 
     it('should reject approve with outdated snapshot', () => {
       const result = DocumentStateMachine.validateApprove(
-        'APPROVAL_REQUIRED',
+        'UNDER_REVIEW',
         'old-snapshot',
         'new-snapshot'
       );
@@ -244,7 +249,8 @@ describe('DocumentStateMachine', () => {
   describe('getStateDescription', () => {
     it('should return description for each state', () => {
       expect(DocumentStateMachine.getStateDescription('DRAFT')).toContain('draft');
-      expect(DocumentStateMachine.getStateDescription('APPROVAL_REQUIRED')).toContain('review');
+      expect(DocumentStateMachine.getStateDescription('UNDER_REVIEW')).toContain('review');
+      expect(DocumentStateMachine.getStateDescription('APPROVED')).toContain('approved');
       expect(DocumentStateMachine.getStateDescription('FINAL')).toContain('finalized');
     });
   });
@@ -252,8 +258,9 @@ describe('DocumentStateMachine', () => {
   describe('getActionDescription', () => {
     it('should return description for each action', () => {
       expect(DocumentStateMachine.getActionDescription('finalize')).toContain('Finalize');
-      expect(DocumentStateMachine.getActionDescription('submit_for_approval')).toContain('Submit');
+      expect(DocumentStateMachine.getActionDescription('submit_for_review')).toContain('Submit');
       expect(DocumentStateMachine.getActionDescription('approve_and_finalize')).toContain('Approve');
+      expect(DocumentStateMachine.getActionDescription('request_changes')).toContain('Request');
     });
   });
 });
@@ -281,6 +288,7 @@ describe('Governance Integration Tests', () => {
         typeAdherence: null,
         completedAt: null,
         requiresApproval: true,
+        requiresHumanReview: true,
         documentState: 'DRAFT',
         reviewSnapshotId: null,
         approvedSnapshotId: null,
@@ -288,6 +296,9 @@ describe('Governance Integration Tests', () => {
         finalSnapshotId: null,
         finalizedFromHash: null,
         approvalSessionId: null,
+        revisionNumber: 0,
+        reviewRequestedAt: null,
+        approvedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -296,17 +307,17 @@ describe('Governance Integration Tests', () => {
       const reviewSnapshot = DocumentSnapshotService.createSnapshot(mockDemand, 'REVIEW');
       expect(reviewSnapshot.snapshotType).toBe('REVIEW');
 
-      // Step 2: Validate transition to APPROVAL_REQUIRED
+      // Step 2: Validate transition to UNDER_REVIEW
       const submitValidation = DocumentStateMachine.validateTransition(
         'DRAFT',
-        'submit_for_approval',
+        'submit_for_review',
         true
       );
       expect(submitValidation.valid).toBe(true);
 
       // Step 3: Validate approve
       const approveValidation = DocumentStateMachine.validateApprove(
-        'APPROVAL_REQUIRED',
+        'UNDER_REVIEW',
         reviewSnapshot.snapshotId,
         reviewSnapshot.snapshotId
       );
@@ -316,9 +327,9 @@ describe('Governance Integration Tests', () => {
       const approvedSnapshot = DocumentSnapshotService.createSnapshot(mockDemand, 'APPROVED');
       expect(approvedSnapshot.snapshotType).toBe('APPROVED');
 
-      // Step 5: Validate finalize
+      // Step 5: Validate finalize from approved state
       const finalizeValidation = DocumentStateMachine.validateFinalize(
-        'APPROVAL_REQUIRED',
+        'APPROVED',
         true,
         true
       );
@@ -335,7 +346,7 @@ describe('Governance Integration Tests', () => {
   describe('Guardrails', () => {
     it('should prevent finalization without approval when required', () => {
       const validation = DocumentStateMachine.validateFinalize(
-        'APPROVAL_REQUIRED',
+        'UNDER_REVIEW',
         true,
         false // No approved snapshot
       );
@@ -365,6 +376,7 @@ describe('Governance Integration Tests', () => {
         typeAdherence: null,
         completedAt: null,
         requiresApproval: true,
+        requiresHumanReview: true,
         documentState: 'DRAFT',
         reviewSnapshotId: null,
         approvedSnapshotId: null,
@@ -372,6 +384,9 @@ describe('Governance Integration Tests', () => {
         finalSnapshotId: null,
         finalizedFromHash: null,
         approvalSessionId: null,
+        revisionNumber: 0,
+        reviewRequestedAt: null,
+        approvedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

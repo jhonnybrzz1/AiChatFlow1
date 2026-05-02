@@ -454,5 +454,3 @@ export interface GitHubApiResponse<T> {
   headers: Record<string, string>;
   config?: any;
 }
-
-export type { GitHubUser, Repository, RepositoryContent, Branch, Commit, PullRequest, Issue, GitHubError, RateLimit, GitHubApiResponse };

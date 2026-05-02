@@ -8,13 +8,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
+function requiresHumanReview(demand: { requiresHumanReview?: boolean | null; requiresApproval?: boolean | null }): boolean {
+  return Boolean(demand.requiresHumanReview ?? demand.requiresApproval);
+}
+
 /**
  * Submit document for approval
- * Creates immutable review snapshot and transitions to APPROVAL_REQUIRED
+ * Creates immutable review snapshot and transitions to UNDER_REVIEW
  */
 router.post('/demands/:id/submit-for-approval', async (req, res) => {
   const demandId = parseInt(req.params.id);
   const approvalSessionId = uuidv4();
+  const now = new Date();
 
   try {
     // Get current demand
@@ -30,7 +35,7 @@ router.post('/demands/:id/submit-for-approval', async (req, res) => {
     const validation = DocumentStateMachine.validateTransition(
       demand.documentState || 'DRAFT',
       'submit_for_approval',
-      demand.requiresApproval || false
+      requiresHumanReview(demand)
     );
 
     if (!validation.valid) {
@@ -57,27 +62,28 @@ router.post('/demands/:id/submit-for-approval', async (req, res) => {
     // Update demand state
     await db.update(demands)
       .set({
-        documentState: 'APPROVAL_REQUIRED',
+        documentState: 'UNDER_REVIEW',
         reviewSnapshotId: snapshot.snapshotId,
         approvalSessionId,
-        updatedAt: new Date(),
+        reviewRequestedAt: now,
+        updatedAt: now,
       })
       .where(eq(demands.id, demandId));
 
     // Record lifecycle event
     await db.insert(documentLifecycleEvents).values({
       demandId,
-      requiresApproval: demand.requiresApproval || false,
+      requiresApproval: requiresHumanReview(demand),
       approvalSessionId,
       eventType: 'DRAFT_TO_APPROVAL_REQUIRED',
       reviewSnapshotId: snapshot.snapshotId,
       resultCode: 'SUCCESS',
-      createdAt: new Date(),
+      createdAt: now,
     });
 
     res.json({
       success: true,
-      documentState: 'APPROVAL_REQUIRED',
+      documentState: 'UNDER_REVIEW',
       reviewSnapshotId: snapshot.snapshotId,
       snapshotHash: snapshot.snapshotHash,
       approvalSessionId,
@@ -100,12 +106,14 @@ router.post('/demands/:id/submit-for-approval', async (req, res) => {
 });
 
 /**
- * Approve document
- * Validates snapshot and creates approved snapshot
+ * Approve document.
+ * Validates snapshot, creates approved snapshot, increments revision and
+ * finalizes from the approved snapshot in one reviewer decision.
  */
 router.post('/demands/:id/approve', async (req, res) => {
   const demandId = parseInt(req.params.id);
   const { reviewSnapshotId, comments } = req.body;
+  const now = new Date();
 
   if (!reviewSnapshotId) {
     return res.status(400).json({ error: 'reviewSnapshotId is required' });
@@ -184,7 +192,7 @@ router.post('/demands/:id/approve', async (req, res) => {
       ...reviewSnapshot,
       snapshotId: uuidv4(),
       snapshotType: 'APPROVED' as const,
-      createdAt: new Date(),
+      createdAt: now,
     };
 
     // Persist approved snapshot
@@ -193,9 +201,16 @@ router.post('/demands/:id/approve', async (req, res) => {
     // Update demand with approved snapshot
     await db.update(demands)
       .set({
+        documentState: 'FINAL',
+        status: 'completed',
         approvedSnapshotId: approvedSnapshot.snapshotId,
         approvedSnapshotHash: approvedSnapshot.snapshotHash,
-        updatedAt: new Date(),
+        finalSnapshotId: approvedSnapshot.snapshotId,
+        finalizedFromHash: approvedSnapshot.snapshotHash,
+        revisionNumber: (demand.revisionNumber ?? 0) + 1,
+        approvedAt: now,
+        completedAt: now,
+        updatedAt: now,
       })
       .where(eq(demands.id, demandId));
 
@@ -207,7 +222,7 @@ router.post('/demands/:id/approve', async (req, res) => {
         approvedSnapshotId: approvedSnapshot.snapshotId,
         author: 'Reviewer', // TODO: Get from auth context
         content: comments,
-        createdAt: new Date(),
+        createdAt: now,
       });
     }
 
@@ -219,15 +234,32 @@ router.post('/demands/:id/approve', async (req, res) => {
       eventType: 'APPROVAL_REQUIRED_TO_APPROVED',
       reviewSnapshotId,
       approvedSnapshotId: approvedSnapshot.snapshotId,
+      finalSnapshotId: approvedSnapshot.snapshotId,
+      finalizedFromHash: approvedSnapshot.snapshotHash,
       resultCode: 'SUCCESS',
-      createdAt: new Date(),
+      createdAt: now,
+    });
+
+    await db.insert(documentLifecycleEvents).values({
+      demandId,
+      requiresApproval: true,
+      approvalSessionId: demand.approvalSessionId || undefined,
+      eventType: 'APPROVED_TO_FINAL',
+      approvedSnapshotId: approvedSnapshot.snapshotId,
+      finalSnapshotId: approvedSnapshot.snapshotId,
+      finalizedFromHash: approvedSnapshot.snapshotHash,
+      resultCode: 'SUCCESS',
+      createdAt: now,
     });
 
     res.json({
       success: true,
-      documentState: 'APPROVAL_REQUIRED',
+      documentState: 'FINAL',
       approvedSnapshotId: approvedSnapshot.snapshotId,
       approvedSnapshotHash: approvedSnapshot.snapshotHash,
+      finalSnapshotId: approvedSnapshot.snapshotId,
+      finalizedFromHash: approvedSnapshot.snapshotHash,
+      revisionNumber: (demand.revisionNumber ?? 0) + 1,
     });
   } catch (error) {
     console.error('Error approving document:', error);
@@ -244,6 +276,91 @@ router.post('/demands/:id/approve', async (req, res) => {
     });
 
     res.status(500).json({ error: 'Failed to approve document' });
+  }
+});
+
+/**
+ * Request changes and return the document to DRAFT.
+ */
+router.post('/demands/:id/request-changes', async (req, res) => {
+  const demandId = parseInt(req.params.id);
+  const { reviewSnapshotId, comments } = req.body;
+  const now = new Date();
+
+  try {
+    const demand = await db.query.demands.findFirst({
+      where: eq(demands.id, demandId)
+    });
+
+    if (!demand) {
+      return res.status(404).json({ error: 'Demand not found' });
+    }
+
+    const validation = DocumentStateMachine.validateRequestChanges(demand.documentState || 'DRAFT');
+    if (!validation.valid) {
+      return res.status(409).json({
+        error: validation.error,
+        currentState: demand.documentState,
+        allowedActions: validation.allowedActions,
+      });
+    }
+
+    if (reviewSnapshotId && reviewSnapshotId !== demand.reviewSnapshotId) {
+      await db.insert(documentLifecycleEvents).values({
+        demandId,
+        requiresApproval: requiresHumanReview(demand),
+        approvalSessionId: demand.approvalSessionId || undefined,
+        eventType: 'SNAPSHOT_OUTDATED',
+        reviewSnapshotId,
+        resultCode: 'REJECTED',
+        errorMessage: 'SNAPSHOT_OUTDATED: The review snapshot has changed. Please reload.',
+        createdAt: now,
+      });
+
+      return res.status(409).json({
+        error: 'SNAPSHOT_OUTDATED: The review snapshot has changed. Please reload.',
+        currentState: demand.documentState,
+        currentReviewSnapshotId: demand.reviewSnapshotId,
+      });
+    }
+
+    if (comments) {
+      await db.insert(approvalComments).values({
+        demandId,
+        reviewSnapshotId: demand.reviewSnapshotId || reviewSnapshotId,
+        author: 'Reviewer',
+        content: comments,
+        createdAt: now,
+      });
+    }
+
+    await db.update(demands)
+      .set({
+        documentState: 'DRAFT',
+        approvalSessionId: null,
+        reviewSnapshotId: null,
+        updatedAt: now,
+      })
+      .where(eq(demands.id, demandId));
+
+    await db.insert(documentLifecycleEvents).values({
+      demandId,
+      requiresApproval: requiresHumanReview(demand),
+      approvalSessionId: demand.approvalSessionId || undefined,
+      eventType: 'APPROVE_ATTEMPT',
+      reviewSnapshotId: demand.reviewSnapshotId || reviewSnapshotId,
+      resultCode: 'CHANGES_REQUESTED',
+      createdAt: now,
+    });
+
+    res.json({
+      success: true,
+      documentState: 'DRAFT',
+      message: 'Changes requested; document returned to draft',
+    });
+  } catch (error) {
+    console.error('Error requesting changes:', error);
+    res.status(500).json({ error: 'Failed to request changes' });
   }
 });
 
@@ -289,7 +406,7 @@ router.post('/demands/:id/finalize', async (req, res) => {
     // Validate finalize action
     const validation = DocumentStateMachine.validateFinalize(
       demand.documentState || 'DRAFT',
-      demand.requiresApproval || false,
+      requiresHumanReview(demand),
       !!demand.approvedSnapshotId
     );
 
@@ -297,7 +414,7 @@ router.post('/demands/:id/finalize', async (req, res) => {
       // Record failed attempt
       await db.insert(documentLifecycleEvents).values({
         demandId,
-        requiresApproval: demand.requiresApproval || false,
+        requiresApproval: requiresHumanReview(demand),
         approvalSessionId: demand.approvalSessionId || undefined,
         eventType: 'FINALIZE_ATTEMPT',
         resultCode: 'REJECTED',
@@ -308,7 +425,8 @@ router.post('/demands/:id/finalize', async (req, res) => {
       return res.status(409).json({
         error: validation.error,
         currentState: demand.documentState,
-        requiresApproval: demand.requiresApproval,
+        requiresApproval: requiresHumanReview(demand),
+        requiresHumanReview: requiresHumanReview(demand),
         allowedActions: validation.allowedActions,
       });
     }
@@ -317,7 +435,7 @@ router.post('/demands/:id/finalize', async (req, res) => {
     let finalizedFromHash: string | undefined;
 
     // If requires approval, derive from approved snapshot
-    if (demand.requiresApproval && demand.approvedSnapshotId) {
+    if (requiresHumanReview(demand) && demand.approvedSnapshotId) {
       const approvedSnapshot = await db.query.documentSnapshots.findFirst({
         where: eq(documentSnapshots.snapshotId, demand.approvedSnapshotId)
       });
@@ -420,7 +538,8 @@ router.get('/demands/:id/review-snapshot', async (req, res) => {
       return res.status(404).json({ error: 'Demand not found' });
     }
 
-    if (demand.documentState !== 'APPROVAL_REQUIRED') {
+    const normalizedState = DocumentStateMachine.normalizeState(demand.documentState || 'DRAFT');
+    if (normalizedState !== 'UNDER_REVIEW' && normalizedState !== 'APPROVED') {
       return res.status(400).json({
         error: 'Document is not in review state',
         currentState: demand.documentState,
@@ -456,8 +575,9 @@ router.get('/demands/:id/review-snapshot', async (req, res) => {
       demandInfo: {
         id: demand.id,
         title: demand.title,
-        documentState: demand.documentState,
+        documentState: normalizedState,
         approvalSessionId: demand.approvalSessionId,
+        revisionNumber: demand.revisionNumber,
       },
     });
   } catch (error) {
@@ -509,15 +629,35 @@ router.get('/demands/:id/lifecycle-events', async (req, res) => {
  */
 router.get('/metrics', async (req, res) => {
   try {
-    // This would contain SQL queries for metrics
-    // For now, return placeholder
+    const allDemands = await db.query.demands.findMany();
+    const allEvents = await db.query.documentLifecycleEvents.findMany();
+    const comments = await db.query.approvalComments.findMany();
+
+    const reviewRequestedEvents = allEvents.filter(event => event.eventType === 'DRAFT_TO_APPROVAL_REQUIRED');
+    const approvedEvents = allEvents.filter(event => event.eventType === 'APPROVAL_REQUIRED_TO_APPROVED');
+    const finalizedEvents = allEvents.filter(event => event.eventType === 'APPROVED_TO_FINAL');
+    const conflictEvents = allEvents.filter(event => event.resultCode === 'REJECTED');
+
+    const approvalDurations = approvedEvents
+      .map(approvedEvent => {
+        const requestedEvent = reviewRequestedEvents.find(event => event.demandId === approvedEvent.demandId);
+        if (!requestedEvent) return null;
+        return approvedEvent.createdAt.getTime() - requestedEvent.createdAt.getTime();
+      })
+      .filter((duration): duration is number => typeof duration === 'number');
+
     res.json({
-      adoptionRate: 0,
-      avgTimeToApproval: 0,
+      finalizedDocumentCount: finalizedEvents.length,
+      reviewRequestedCount: reviewRequestedEvents.length,
+      approvedReviewCount: approvedEvents.length,
+      reviewAdoptionRate: allDemands.length > 0 ? reviewRequestedEvents.length / allDemands.length : 0,
+      avgTimeToApprovalMs: approvalDurations.length > 0
+        ? Math.round(approvalDurations.reduce((sum, duration) => sum + duration, 0) / approvalDurations.length)
+        : 0,
+      avgCommentsPerReview: reviewRequestedEvents.length > 0 ? comments.length / reviewRequestedEvents.length : 0,
+      conflictRate: allEvents.length > 0 ? conflictEvents.length / allEvents.length : 0,
+      snapshotMismatchCount: allEvents.filter(event => event.errorMessage?.includes('Hash mismatch')).length,
       reworkRate: 0,
-      avgComments: 0,
-      conflictRate: 0,
-      message: 'Metrics calculation not yet implemented',
     });
   } catch (error) {
     console.error('Error fetching governance metrics:', error);

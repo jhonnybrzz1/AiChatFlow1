@@ -1,4 +1,4 @@
-import { Demand } from '../shared/schema';
+import { Demand } from '@shared/schema';
 import { ProjectRealityReader } from './project-reality-reader';
 import { RealityConstraints } from './reality-constraints';
 import { CompatibilityBlockGenerator } from './compatibility-block';

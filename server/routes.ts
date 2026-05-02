@@ -18,6 +18,7 @@ import { repoService } from './services/repo-service';
 import { aiUsageTracker } from './services/ai-usage-tracker';
 import { aiResponseCache } from './services/ai-cache';
 import { contextBuilder } from './services/context-builder';
+import { RefinementInputError, resolveRefinementInput } from './services/refinement-input';
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -32,6 +33,17 @@ const upload = multer({
 });
 
 function sendValidationError(res: Response, error: unknown): void {
+  if (error instanceof RefinementInputError) {
+    res.status(422).json({
+      error: error.message,
+      errorCode: error.errorCode,
+      refinementInputSource: 'document',
+      documentTextLength: 0,
+      ideaTextLength: 0
+    });
+    return;
+  }
+
   if (error instanceof z.ZodError) {
     res.status(400).json({
       error: "Invalid demand data",
@@ -44,6 +56,12 @@ function sendValidationError(res: Response, error: unknown): void {
   }
 
   res.status(400).json({ error: "Invalid demand data" });
+}
+
+function cleanupUploadedFiles(files: Express.Multer.File[] = []): void {
+  for (const file of files) {
+    fs.promises.unlink(file.path).catch(() => undefined);
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -236,6 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create new demand with cognitive core
   app.post("/api/demands/cognitive", upload.array('files'), async (req: Request, res: Response) => {
+    const files = req.files as Express.Multer.File[] || [];
     try {
       const demandData = insertDemandSchema.parse(req.body);
 
@@ -245,23 +264,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validar refinementType com Zod (evita valores inválidos)
       const refinementTypeRaw = req.body.refinementType;
       const refinementType = refinementTypeSchema.parse(refinementTypeRaw) as RefinementType;
-      let updatedDescription = demandData.description;
+      const refinementInput = await resolveRefinementInput(demandData.description, files);
+      let updatedDescription = refinementInput.ideaText;
 
       // If GitHub repository information is provided, incorporate it into the description
-      if (githubRepoOwner && githubRepoName) {
+      if (refinementInput.refinementInputSource === 'description' && githubRepoOwner && githubRepoName) {
         try {
           // Attempt to fetch repository information to enrich the demand
           const repoInfo = await repoService.getOrCreateRepo(githubRepoOwner, githubRepoName);
 
           if (repoInfo && repoInfo.description) {
-            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${repoInfo.fullName}\nDescrição: ${repoInfo.description}\nLinguagem Principal: ${repoInfo.language || 'N/A'}\n`;
+            updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${repoInfo.fullName}\nDescrição: ${repoInfo.description}\nLinguagem Principal: ${repoInfo.language || 'N/A'}\n`;
           } else {
-            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+            updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
           }
         } catch (repoError) {
           console.warn(`Could not fetch GitHub repository info for ${githubRepoOwner}/${githubRepoName}:`, repoError);
           // Still include the basic repo info even if we can't fetch details
-          updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+          updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
         }
       }
 
@@ -273,7 +293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Handle uploaded files
-      const files = req.files as Express.Multer.File[];
       if (files && files.length > 0) {
         for (const file of files) {
           const fileData = insertFileSchema.parse({
@@ -300,14 +319,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.updateDemand(demand.id, { status: 'error' });
       });
 
-      res.json(demand);
+      res.json({
+        ...demand,
+        refinementInputSource: refinementInput.refinementInputSource,
+        documentTextLength: refinementInput.documentTextLength,
+        ideaTextLength: updatedDescription.length
+      });
     } catch (error) {
+      cleanupUploadedFiles(files);
       sendValidationError(res, error);
     }
   });
 
   // Create new demand
   app.post("/api/demands", upload.array('files'), async (req: Request, res: Response) => {
+    const files = req.files as Express.Multer.File[] || [];
     try {
       const demandData = insertDemandSchema.parse(req.body);
 
@@ -318,23 +344,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const refinementTypeRaw = req.body.refinementType;
       const refinementType = refinementTypeSchema.parse(refinementTypeRaw) as RefinementType;
 
-      let updatedDescription = demandData.description;
+      const refinementInput = await resolveRefinementInput(demandData.description, files);
+      let updatedDescription = refinementInput.ideaText;
 
       // If GitHub repository information is provided, incorporate it into the description
-      if (githubRepoOwner && githubRepoName) {
+      if (refinementInput.refinementInputSource === 'description' && githubRepoOwner && githubRepoName) {
         try {
           // Attempt to fetch repository information to enrich the demand
           const repoInfo = await repoService.getOrCreateRepo(githubRepoOwner, githubRepoName);
 
           if (repoInfo && repoInfo.description) {
-            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${repoInfo.fullName}\nDescrição: ${repoInfo.description}\nLinguagem Principal: ${repoInfo.language || 'N/A'}\n`;
+            updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${repoInfo.fullName}\nDescrição: ${repoInfo.description}\nLinguagem Principal: ${repoInfo.language || 'N/A'}\n`;
           } else {
-            updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+            updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
           }
         } catch (repoError) {
           console.warn(`Could not fetch GitHub repository info for ${githubRepoOwner}/${githubRepoName}:`, repoError);
           // Still include the basic repo info even if we can't fetch details
-          updatedDescription = `${demandData.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
+          updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
         }
       }
 
@@ -346,7 +373,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Handle uploaded files
-      const files = req.files as Express.Multer.File[];
       if (files && files.length > 0) {
         for (const file of files) {
           const fileData = insertFileSchema.parse({
@@ -373,8 +399,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.updateDemand(demand.id, { status: 'error' });
       });
 
-      res.json(demand);
+      res.json({
+        ...demand,
+        refinementInputSource: refinementInput.refinementInputSource,
+        documentTextLength: refinementInput.documentTextLength,
+        ideaTextLength: updatedDescription.length
+      });
     } catch (error) {
+      cleanupUploadedFiles(files);
       sendValidationError(res, error);
     }
   });

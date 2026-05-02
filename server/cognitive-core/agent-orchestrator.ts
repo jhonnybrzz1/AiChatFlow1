@@ -327,7 +327,7 @@ export class AgentOrchestrator {
     await storage.updateDemand(plan.demandId, {
       status: 'completed',
       progress: 100,
-      completedAt: new Date().toISOString()
+      completedAt: new Date()
     });
     
     onProgress(100, 'Orchestration completed successfully');

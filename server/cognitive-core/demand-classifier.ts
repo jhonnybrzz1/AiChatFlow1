@@ -25,6 +25,14 @@ export interface ClassificationCriteria {
   urgency: number; // 0-100 (higher = more urgent)
 }
 
+export interface PersonalReadinessScore {
+  score: number; // 0-100 (higher = more ready to execute)
+  level: 'ready' | 'needs_refinement' | 'blocked';
+  blockers: string[];
+  nextQuestions: string[];
+  recommendation: string;
+}
+
 /**
  * Classification result
  */
@@ -34,6 +42,7 @@ export interface DemandClassification {
   confidence: number; // 0-100
   recommendedAgents: string[];
   notes: string;
+  personalReadiness: PersonalReadinessScore;
   realityConstraints?: {
     maturityLevel: string;
     forbiddenTechnologies: string[];
@@ -70,14 +79,16 @@ export class DemandClassifier {
     const category = this.determineCategory(demand, criteria);
     const confidence = this.calculateConfidence(demand, criteria, category);
     const recommendedAgents = this.getRecommendedAgents(category, criteria);
-    const notes = this.generateClassificationNotes(demand, criteria, category);
+    const personalReadiness = this.calculatePersonalReadiness(demand, criteria);
+    const notes = this.generateClassificationNotes(demand, criteria, category, personalReadiness);
 
     return {
       category,
       criteria,
       confidence,
       recommendedAgents,
-      notes
+      notes,
+      personalReadiness
     };
   }
 
@@ -408,6 +419,69 @@ export class DemandClassifier {
     return Array.from(new Set(agents)); // Remove duplicates
   }
 
+  private calculatePersonalReadiness(demand: Demand, criteria: ClassificationCriteria): PersonalReadinessScore {
+    const text = `${demand.title} ${demand.description}`.toLowerCase();
+    const blockers: string[] = [];
+    const nextQuestions: string[] = [];
+
+    let score = 100;
+    score -= Math.round(criteria.ambiguity * 0.3);
+    score -= Math.round(criteria.interpretationRisk * 0.25);
+    score -= Math.round(Math.max(0, criteria.complexity - 55) * 0.15);
+
+    if (demand.description.trim().length < 80) {
+      score -= 18;
+      blockers.push('Descricao curta demais para gerar plano confiavel.');
+      nextQuestions.push('Qual e o resultado concreto esperado quando isso estiver pronto?');
+    }
+
+    const hasUserOrActor = ['usuario', 'user', 'cliente', 'admin', 'builder', 'eu ', 'meu ', 'minha ', 'pessoa'].some(term => text.includes(term));
+    if (!hasUserOrActor) {
+      score -= 12;
+      blockers.push('Usuario ou ator principal nao esta claro.');
+      nextQuestions.push('Quem vai usar ou se beneficiar diretamente desta entrega?');
+    }
+
+    const hasOutcome = ['para ', 'objetivo', 'resultado', 'beneficio', 'resolver', 'reduzir', 'aumentar', 'melhorar', 'economizar'].some(term => text.includes(term));
+    if (!hasOutcome) {
+      score -= 12;
+      blockers.push('Objetivo ou beneficio esperado nao esta explicito.');
+      nextQuestions.push('Qual problema esta sendo resolvido e como voce vai saber que resolveu?');
+    }
+
+    const hasAcceptanceSignal = ['criterio', 'aceite', 'pronto', 'deve', 'quando', 'validar', 'testar', 'medir'].some(term => text.includes(term));
+    if (!hasAcceptanceSignal) {
+      score -= 10;
+      nextQuestions.push('Quais criterios tornam esta demanda pronta para considerar concluida?');
+    }
+
+    const hasScopeBoundary = ['nao', 'fora de escopo', 'apenas', 'somente', 'sem ', 'limite', 'restricao'].some(term => text.includes(term));
+    if (!hasScopeBoundary && criteria.complexity > 60) {
+      score -= 8;
+      nextQuestions.push('O que explicitamente nao deve ser feito nesta primeira versao?');
+    }
+
+    score = Math.min(100, Math.max(0, score));
+
+    const level: PersonalReadinessScore['level'] =
+      score >= 75 ? 'ready' : score >= 45 ? 'needs_refinement' : 'blocked';
+
+    const recommendation =
+      level === 'ready'
+        ? 'Pode gerar PRD e tasks enxutos para execucao.'
+        : level === 'needs_refinement'
+          ? 'Refine as perguntas principais antes de implementar.'
+          : 'Nao implemente ainda; esclareca objetivo, usuario e criterio de aceite.';
+
+    return {
+      score,
+      level,
+      blockers,
+      nextQuestions: nextQuestions.slice(0, 4),
+      recommendation
+    };
+  }
+
   /**
    * Generates classification notes
    * @param demand - The demand
@@ -415,11 +489,18 @@ export class DemandClassifier {
    * @param category - Determined category
    * @returns Classification notes
    */
-  private generateClassificationNotes(demand: Demand, criteria: ClassificationCriteria, category: DemandCategory): string {
+  private generateClassificationNotes(
+    demand: Demand,
+    criteria: ClassificationCriteria,
+    category: DemandCategory,
+    personalReadiness: PersonalReadinessScore
+  ): string {
     const notes: string[] = [];
 
     notes.push(`Demand classified as: ${category}`);
     notes.push(`Confidence: ${this.calculateConfidence(demand, criteria, category)}%`);
+    notes.push(`Personal readiness: ${personalReadiness.score}% (${personalReadiness.level})`);
+    notes.push(`Recommendation: ${personalReadiness.recommendation}`);
 
     if (criteria.ambiguity > 60) {
       notes.push(`⚠️ High ambiguity detected (${criteria.ambiguity}%) - may require clarification`);
@@ -462,6 +543,7 @@ export class DemandClassifier {
         criteria: classification.criteria,
         confidence: classification.confidence,
         recommendedAgents: classification.recommendedAgents,
+        personalReadiness: classification.personalReadiness,
         notes: classification.notes,
         classifiedAt: new Date().toISOString()
       }

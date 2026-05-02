@@ -30,8 +30,9 @@ export const demands = sqliteTable("demands", {
 
   // Governance fields (Human Review)
   requiresApproval: integer("requires_approval", { mode: "boolean" }).default(false),
+  requiresHumanReview: integer("requires_human_review", { mode: "boolean" }).default(false),
   documentState: text("document_state", {
-    enum: ["DRAFT", "APPROVAL_REQUIRED", "FINAL"]
+    enum: ["DRAFT", "UNDER_REVIEW", "APPROVED", "FINAL", "APPROVAL_REQUIRED"]
   }).default("DRAFT"),
   reviewSnapshotId: text("review_snapshot_id"),
   approvedSnapshotId: text("approved_snapshot_id"),
@@ -39,6 +40,9 @@ export const demands = sqliteTable("demands", {
   finalSnapshotId: text("final_snapshot_id"),
   finalizedFromHash: text("finalized_from_hash"),
   approvalSessionId: text("approval_session_id"),
+  revisionNumber: integer("revision_number").notNull().default(0),
+  reviewRequestedAt: integer("review_requested_at", { mode: "timestamp" }),
+  approvedAt: integer("approved_at", { mode: "timestamp" }),
 
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
@@ -76,6 +80,9 @@ export const documentLifecycleEvents = sqliteTable("document_lifecycle_events", 
       "DRAFT_TO_APPROVAL_REQUIRED",
       "APPROVAL_REQUIRED_TO_APPROVED",
       "APPROVED_TO_FINAL",
+      "DRAFT_TO_UNDER_REVIEW",
+      "UNDER_REVIEW_TO_APPROVED",
+      "UNDER_REVIEW_TO_DRAFT",
       "APPROVE_ATTEMPT",
       "FINALIZE_ATTEMPT",
       "SNAPSHOT_OUTDATED",
@@ -89,6 +96,26 @@ export const documentLifecycleEvents = sqliteTable("document_lifecycle_events", 
   resultCode: text("result_code"), // SUCCESS, ERROR, REJECTED
   errorMessage: text("error_message"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
+export const operationAttempts = sqliteTable("operation_attempts", {
+  attemptId: text("attempt_id").primaryKey(),
+  operationId: text("operation_id").notNull(),
+  operationType: text("operation_type").notNull(),
+  demandId: integer("demand_id").references(() => demands.id),
+  status: text("status", {
+    enum: ["blocked", "processing", "completed", "error"]
+  }).notNull(),
+  gateStatus: text("gate_status", {
+    enum: ["ready", "blocked"]
+  }).notNull(),
+  missingFields: text("missing_fields", { mode: "json" }).$type<string[]>().notNull(),
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  completedAt: integer("completed_at", { mode: "timestamp" }),
 });
 
 export const repos = sqliteTable("repos", {
@@ -227,6 +254,7 @@ export const insertDemandSchema = createInsertSchema(demands).pick({
   priority: true,
   refinementType: true,
   requiresApproval: true,
+  requiresHumanReview: true,
 }).extend({
   type: demandTypeSchema,
   priority: prioritySchema,

@@ -2,196 +2,180 @@
  * Document State Machine
  *
  * Manages document lifecycle states and validates transitions
- * according to governance requirements.
+ * according to optional human-review governance requirements.
  */
 
-export type DocumentState = "DRAFT" | "APPROVAL_REQUIRED" | "FINAL";
+export type DocumentState = "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "FINAL" | "APPROVAL_REQUIRED";
+
+type CanonicalDocumentState = "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "FINAL";
 
 export interface StateTransition {
-  from: DocumentState;
-  to: DocumentState;
+  from: CanonicalDocumentState;
+  to: CanonicalDocumentState;
   action: string;
-  requiresApproval: boolean;
+  requiresHumanReview: boolean;
 }
 
-/**
- * Allowed state transitions based on approval requirements
- */
 export const ALLOWED_TRANSITIONS: StateTransition[] = [
-  // Without approval requirement (direct finalization)
   {
     from: "DRAFT",
     to: "FINAL",
     action: "finalize",
-    requiresApproval: false
+    requiresHumanReview: false,
   },
-
-  // With approval requirement
   {
     from: "DRAFT",
-    to: "APPROVAL_REQUIRED",
-    action: "submit_for_approval",
-    requiresApproval: true
+    to: "UNDER_REVIEW",
+    action: "submit_for_review",
+    requiresHumanReview: true,
   },
   {
-    from: "APPROVAL_REQUIRED",
+    from: "DRAFT",
+    to: "UNDER_REVIEW",
+    action: "submit_for_approval",
+    requiresHumanReview: true,
+  },
+  {
+    from: "UNDER_REVIEW",
+    to: "APPROVED",
+    action: "approve",
+    requiresHumanReview: true,
+  },
+  {
+    from: "UNDER_REVIEW",
     to: "FINAL",
     action: "approve_and_finalize",
-    requiresApproval: true
+    requiresHumanReview: true,
   },
-
-  // Reopen after finalization (edge case)
+  {
+    from: "UNDER_REVIEW",
+    to: "DRAFT",
+    action: "request_changes",
+    requiresHumanReview: true,
+  },
+  {
+    from: "APPROVED",
+    to: "FINAL",
+    action: "finalize",
+    requiresHumanReview: true,
+  },
   {
     from: "FINAL",
     to: "DRAFT",
     action: "reopen",
-    requiresApproval: false
+    requiresHumanReview: false,
   },
 ];
 
 export interface TransitionValidation {
   valid: boolean;
-  targetState?: DocumentState;
+  targetState?: CanonicalDocumentState;
   error?: string;
   allowedActions?: string[];
 }
 
-/**
- * Document State Machine
- *
- * Validates state transitions and provides next available actions
- */
 export class DocumentStateMachine {
-  /**
-   * Checks if a transition is allowed
-   *
-   * @param currentState - Current document state
-   * @param targetState - Target document state
-   * @param requiresApproval - Whether document requires approval
-   * @returns true if transition is allowed
-   */
+  static normalizeState(state: DocumentState | string | null | undefined): CanonicalDocumentState {
+    if (state === "APPROVAL_REQUIRED") return "UNDER_REVIEW";
+    if (state === "UNDER_REVIEW" || state === "APPROVED" || state === "FINAL") return state;
+    return "DRAFT";
+  }
+
   static canTransition(
     currentState: DocumentState,
     targetState: DocumentState,
-    requiresApproval: boolean
+    requiresHumanReview: boolean
   ): boolean {
+    const from = this.normalizeState(currentState);
+    const to = this.normalizeState(targetState);
+
     return ALLOWED_TRANSITIONS.some(
-      t => t.from === currentState &&
-           t.to === targetState &&
-           t.requiresApproval === requiresApproval
+      t => t.from === from &&
+        t.to === to &&
+        t.requiresHumanReview === requiresHumanReview
     );
   }
 
-  /**
-   * Gets available actions for current state
-   *
-   * @param currentState - Current document state
-   * @param requiresApproval - Whether document requires approval
-   * @returns Array of available action names
-   */
   static getNextActions(
     currentState: DocumentState,
-    requiresApproval: boolean
+    requiresHumanReview: boolean
   ): string[] {
+    const from = this.normalizeState(currentState);
+
     return ALLOWED_TRANSITIONS
-      .filter(t => t.from === currentState && t.requiresApproval === requiresApproval)
+      .filter(t => t.from === from && t.requiresHumanReview === requiresHumanReview)
       .map(t => t.action);
   }
 
-  /**
-   * Validates a state transition attempt
-   *
-   * @param currentState - Current document state
-   * @param action - Action being attempted
-   * @param requiresApproval - Whether document requires approval
-   * @returns Validation result with target state or error
-   */
   static validateTransition(
     currentState: DocumentState,
     action: string,
-    requiresApproval: boolean
+    requiresHumanReview: boolean
   ): TransitionValidation {
+    const from = this.normalizeState(currentState);
     const transition = ALLOWED_TRANSITIONS.find(
-      t => t.from === currentState &&
-           t.action === action &&
-           t.requiresApproval === requiresApproval
+      t => t.from === from &&
+        t.action === action &&
+        t.requiresHumanReview === requiresHumanReview
     );
 
     if (!transition) {
-      const allowedActions = this.getNextActions(currentState, requiresApproval);
+      const allowedActions = this.getNextActions(currentState, requiresHumanReview);
 
       return {
         valid: false,
-        error: `Invalid transition: action '${action}' not allowed in state '${currentState}' (requiresApproval: ${requiresApproval})`,
+        error: `Invalid transition: action '${action}' not allowed in state '${from}' (requiresHumanReview: ${requiresHumanReview})`,
         allowedActions,
       };
     }
 
     return {
       valid: true,
-      targetState: transition.to
+      targetState: transition.to,
     };
   }
 
-  /**
-   * Validates finalize action with specific guardrails
-   *
-   * @param currentState - Current document state
-   * @param requiresApproval - Whether document requires approval
-   * @param hasApprovedSnapshot - Whether approved snapshot exists
-   * @returns Validation result
-   */
   static validateFinalize(
     currentState: DocumentState,
-    requiresApproval: boolean,
+    requiresHumanReview: boolean,
     hasApprovedSnapshot: boolean
   ): TransitionValidation {
-    // If requires approval, must have approved snapshot
-    if (requiresApproval && !hasApprovedSnapshot) {
+    const normalizedState = this.normalizeState(currentState);
+
+    if (requiresHumanReview && !hasApprovedSnapshot) {
       return {
         valid: false,
-        error: "Cannot finalize: document requires approval but no approved snapshot exists",
-        allowedActions: ["submit_for_approval"],
+        error: "Cannot finalize: document requires human review but no approved snapshot exists",
+        allowedActions: normalizedState === "DRAFT" ? ["submit_for_review"] : this.getNextActions(currentState, true),
       };
     }
 
-    // If requires approval, must be in APPROVAL_REQUIRED state
-    if (requiresApproval && currentState !== "APPROVAL_REQUIRED") {
+    if (requiresHumanReview && normalizedState !== "APPROVED") {
       return {
         valid: false,
-        error: `Cannot finalize: document requires approval but is in state '${currentState}'`,
-        allowedActions: this.getNextActions(currentState, requiresApproval),
+        error: `Cannot finalize: document requires human review but is in state '${normalizedState}'`,
+        allowedActions: this.getNextActions(currentState, true),
       };
     }
 
-    // Validate normal transition
-    const action = requiresApproval ? "approve_and_finalize" : "finalize";
-    return this.validateTransition(currentState, action, requiresApproval);
+    return this.validateTransition(currentState, "finalize", requiresHumanReview);
   }
 
-  /**
-   * Validates approve action with snapshot checks
-   *
-   * @param currentState - Current document state
-   * @param reviewSnapshotId - Snapshot being approved
-   * @param currentReviewSnapshotId - Current review snapshot in document
-   * @returns Validation result
-   */
   static validateApprove(
     currentState: DocumentState,
     reviewSnapshotId: string,
     currentReviewSnapshotId: string | null
   ): TransitionValidation {
-    // Must be in APPROVAL_REQUIRED state
-    if (currentState !== "APPROVAL_REQUIRED") {
+    const normalizedState = this.normalizeState(currentState);
+
+    if (normalizedState !== "UNDER_REVIEW") {
       return {
         valid: false,
-        error: `Cannot approve: document is in state '${currentState}', expected 'APPROVAL_REQUIRED'`,
+        error: `Cannot approve: document is in state '${normalizedState}', expected 'UNDER_REVIEW'`,
         allowedActions: this.getNextActions(currentState, true),
       };
     }
 
-    // Snapshot must match current review snapshot
     if (reviewSnapshotId !== currentReviewSnapshotId) {
       return {
         valid: false,
@@ -202,36 +186,45 @@ export class DocumentStateMachine {
 
     return {
       valid: true,
-      targetState: "APPROVAL_REQUIRED" // Stays in same state until finalize
+      targetState: "APPROVED",
     };
   }
 
-  /**
-   * Gets human-readable state description
-   *
-   * @param state - Document state
-   * @returns Description string
-   */
+  static validateRequestChanges(currentState: DocumentState): TransitionValidation {
+    const normalizedState = this.normalizeState(currentState);
+
+    if (normalizedState !== "UNDER_REVIEW") {
+      return {
+        valid: false,
+        error: `Cannot request changes: document is in state '${normalizedState}', expected 'UNDER_REVIEW'`,
+        allowedActions: this.getNextActions(currentState, true),
+      };
+    }
+
+    return {
+      valid: true,
+      targetState: "DRAFT",
+    };
+  }
+
   static getStateDescription(state: DocumentState): string {
-    const descriptions: Record<DocumentState, string> = {
+    const descriptions: Record<CanonicalDocumentState, string> = {
       DRAFT: "Document is in draft mode and can be edited",
-      APPROVAL_REQUIRED: "Document is under review and awaiting approval",
+      UNDER_REVIEW: "Document is under human review and awaiting a decision",
+      APPROVED: "Document was approved and can be finalized from the approved snapshot",
       FINAL: "Document has been finalized and is read-only",
     };
-    return descriptions[state];
+    return descriptions[this.normalizeState(state)];
   }
 
-  /**
-   * Gets human-readable action description
-   *
-   * @param action - Action name
-   * @returns Description string
-   */
   static getActionDescription(action: string): string {
     const descriptions: Record<string, string> = {
-      finalize: "Finalize document directly (no approval required)",
-      submit_for_approval: "Submit document for review and approval",
+      finalize: "Finalize document directly or from an approved snapshot",
+      submit_for_review: "Submit document for human review",
+      submit_for_approval: "Submit document for human review",
+      approve: "Approve reviewed content",
       approve_and_finalize: "Approve reviewed content and finalize document",
+      request_changes: "Request changes and return document to draft",
       reopen: "Reopen finalized document for editing",
     };
     return descriptions[action] || action;
