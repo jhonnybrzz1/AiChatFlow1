@@ -118,6 +118,34 @@ export const operationAttempts = sqliteTable("operation_attempts", {
   completedAt: integer("completed_at", { mode: "timestamp" }),
 });
 
+export const modelRoutingStageRuns = sqliteTable("model_routing_stage_runs", {
+  runId: text("run_id").primaryKey(),
+  demandId: integer("demand_id").notNull().references(() => demands.id, { onDelete: "cascade" }),
+  executionId: text("execution_id"),
+  stageName: text("stage_name").notNull(),
+  modelUsed: text("model_used").notNull(),
+  attemptIndex: integer("attempt_index").notNull(),
+  status: text("status", {
+    enum: ["processing", "completed", "failed", "fallback_triggered", "failed_after_retries"]
+  }).notNull(),
+  validationPassed: integer("validation_passed", { mode: "boolean" }),
+  validationErrorsCount: integer("validation_errors_count"),
+  qaPassed: integer("qa_passed", { mode: "boolean" }),
+  qaBlockersCount: integer("qa_blockers_count"),
+  failureReason: text("failure_reason", {
+    enum: [
+      "schema_failed",
+      "schema_parse_failed",
+      "validation_failed",
+      "qa_failed_critical",
+      "budget_exhausted"
+    ]
+  }),
+  finalArtifactAccepted: integer("final_artifact_accepted", { mode: "boolean" }),
+  metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
 export const repos = sqliteTable("repos", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   owner: text("owner").notNull(),

@@ -20,6 +20,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import governanceRoutes from './routes/governance-routes';
+import { modelRoutingService } from './services/model-routing';
 
 // Validador de refinementType
 const refinementTypeSchema = z.enum(['technical', 'business']).nullable().optional();
@@ -72,6 +73,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cache: aiResponseCache.getStats(),
       context: contextBuilder.getContextStats()
     });
+  });
+
+  app.get("/api/demands/:id/model-routing", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const demand = await storage.getDemand(id);
+      if (!demand) {
+        return res.status(404).json({ error: "Demand not found" });
+      }
+
+      const stageRuns = await modelRoutingService.getDemandStageRuns(id, demand.executionId);
+      res.json({
+        demandId: id,
+        executionId: demand.executionId,
+        stageRuns,
+      });
+    } catch (error) {
+      console.error('Error fetching model routing stage runs:', error);
+      res.status(500).json({ error: "Failed to fetch model routing stage runs" });
+    }
   });
 
   app.post("/api/ai/usage/reset", (_req: Request, res: Response) => {

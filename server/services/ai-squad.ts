@@ -24,6 +24,12 @@ import {
   improvementExecutionService
 } from './improvement-execution';
 import { canonicalAgentKey, isProductManagerAgent } from './agent-identity';
+import {
+  MODEL_MINI,
+  MODEL_NANO,
+  modelRoutingService,
+  type ModelRoutingFailureReason,
+} from './model-routing';
 
 // Adicionando interface para gerenciamento de SSE
 interface SSEConnection {
@@ -457,6 +463,21 @@ export class AISquadService {
       const routingPrediction = await demandRoutingOrchestrator.routeDemand(demandId);
       console.log(`Demand ${demandId} routed to team: ${routingPrediction.team} with ${routingPrediction.confidence}% confidence`);
 
+      await modelRoutingService.recordStageRun({
+        demandId,
+        stageName: 'router',
+        modelUsed: modelRoutingService.classifyRouterModel(),
+        attemptIndex: 1,
+        status: 'completed',
+        validationPassed: true,
+        validationErrorsCount: 0,
+        metadata: {
+          team: routingPrediction.team,
+          confidence: routingPrediction.confidence,
+          decisionContract: 'router_classification_always_nano',
+        },
+      });
+
       // Update demand with routing information
       await storage.updateDemand(demandId, {
         status: 'routed',
@@ -471,7 +492,15 @@ export class AISquadService {
           message: `Rota otimizada: ${routingPrediction.team} (confiança: ${routingPrediction.confidence}%)`,
           timestamp: new Date().toISOString(),
           type: 'completed',
-          progress: 5
+          progress: 5,
+          metadata: {
+            modelRouting: {
+              stageName: 'router',
+              modelUsed: MODEL_NANO,
+              attemptIndex: 1,
+              status: 'completed',
+            },
+          },
         });
       }
     } catch (error) {
@@ -686,7 +715,7 @@ export class AISquadService {
     });
 
     // GERAR PRD COM PM (FORA DO LOOP)
-    const prdContent = await this.generatePRDWithPM(demand, messages);
+    let prdContent = await this.generatePRDWithPM(demand, messages);
 
     // Progresso 92%: PRD gerado, gerando tasks
     await storage.updateDemand(demandId, {
@@ -695,7 +724,7 @@ export class AISquadService {
     });
 
     // GERAR TASKS COM PM
-    const tasksContent = await this.generateTasksWithPM(demand, prdContent);
+    let tasksContent = await this.generateTasksWithPM(demand, prdContent);
 
     // Progresso 97%: Validando aderência ao tipo e salvando documentos
     await storage.updateDemand(demandId, {
@@ -706,9 +735,173 @@ export class AISquadService {
     // Validate type adherence if refinement type is set
     const refinementType = demand.refinementType as RefinementType;
     const typeAdherence = typeContractValidator.validateTypeAdherence(prdContent, refinementType);
-    const qualityChecklist = demand.type === 'melhoria'
+    let qualityChecklist = demand.type === 'melhoria'
       ? improvementExecutionService.validateImprovementPlan(prdContent)
       : { qualityPassed: typeAdherence.isAdherent, missingSections: [] };
+    const templateValidationErrorsCount = demand.type === 'melhoria'
+      ? qualityChecklist.missingSections.length
+      : (typeAdherence.isAdherent ? 0 : Math.max(1, typeAdherence.sectionsRequired - typeAdherence.sectionsMet));
+
+    await modelRoutingService.recordStageRun({
+      demandId,
+      executionId,
+      stageName: 'template_validator',
+      modelUsed: MODEL_NANO,
+      attemptIndex: 1,
+      status: qualityChecklist.qualityPassed ? 'completed' : 'fallback_triggered',
+      validationPassed: qualityChecklist.qualityPassed,
+      validationErrorsCount: templateValidationErrorsCount,
+      failureReason: qualityChecklist.qualityPassed ? null : 'validation_failed',
+      metadata: {
+        missingSections: qualityChecklist.missingSections,
+        typeAdherenceScore: typeAdherence.score,
+      },
+    });
+
+    if (!qualityChecklist.qualityPassed) {
+      const fallback = modelRoutingService.shouldFallback({
+        demandId,
+        executionId,
+        stageName: 'template_validator',
+        attemptIndex: 1,
+        failureReason: 'validation_failed',
+      });
+
+      if (fallback.allowed) {
+        prdContent = await this.generatePRDWithPM(demand, messages, MODEL_MINI);
+        tasksContent = await this.generateTasksWithPM(demand, prdContent, MODEL_MINI);
+
+        const retryTypeAdherence = typeContractValidator.validateTypeAdherence(prdContent, refinementType);
+        qualityChecklist = demand.type === 'melhoria'
+          ? improvementExecutionService.validateImprovementPlan(prdContent)
+          : { qualityPassed: retryTypeAdherence.isAdherent, missingSections: [] };
+        const retryErrorsCount = demand.type === 'melhoria'
+          ? qualityChecklist.missingSections.length
+          : (retryTypeAdherence.isAdherent ? 0 : Math.max(1, retryTypeAdherence.sectionsRequired - retryTypeAdherence.sectionsMet));
+
+        await modelRoutingService.recordStageRun({
+          demandId,
+          executionId,
+          stageName: 'template_validator',
+          modelUsed: MODEL_MINI,
+          attemptIndex: fallback.nextAttemptIndex,
+          status: qualityChecklist.qualityPassed ? 'completed' : 'failed',
+          validationPassed: qualityChecklist.qualityPassed,
+          validationErrorsCount: retryErrorsCount,
+          failureReason: qualityChecklist.qualityPassed ? null : fallback.failureReason,
+          metadata: {
+            fallbackFromModel: MODEL_NANO,
+            missingSections: qualityChecklist.missingSections,
+          },
+        });
+      } else {
+        await modelRoutingService.recordStageRun({
+          demandId,
+          executionId,
+          stageName: 'template_validator',
+          modelUsed: MODEL_MINI,
+          attemptIndex: 1,
+          status: 'failed_after_retries',
+          validationPassed: false,
+          validationErrorsCount: templateValidationErrorsCount,
+          failureReason: 'budget_exhausted',
+          metadata: {
+            missingSections: qualityChecklist.missingSections,
+          },
+        });
+      }
+    }
+
+    const qaResult = this.validatePilotQualityInvariants(demand, prdContent, qualityChecklist.qualityPassed);
+    await modelRoutingService.recordStageRun({
+      demandId,
+      executionId,
+      stageName: 'qa',
+      modelUsed: qaResult.qaPassed ? MODEL_NANO : MODEL_MINI,
+      attemptIndex: 1,
+      status: qaResult.qaPassed ? 'completed' : 'fallback_triggered',
+      qaPassed: qaResult.qaPassed,
+      qaBlockersCount: qaResult.blockers.length,
+      failureReason: qaResult.qaPassed ? null : 'qa_failed_critical',
+      finalArtifactAccepted: qaResult.qaPassed && qualityChecklist.qualityPassed,
+      metadata: {
+        blockers: qaResult.blockers,
+        invariants: qaResult.invariants,
+      },
+    });
+
+    if (!qaResult.qaPassed) {
+      const fallback = modelRoutingService.shouldFallback({
+        demandId,
+        executionId,
+        stageName: 'qa',
+        attemptIndex: 1,
+        failureReason: 'qa_failed_critical',
+      });
+      if (!fallback.allowed) {
+        await modelRoutingService.recordStageRun({
+          demandId,
+          executionId,
+          stageName: 'qa',
+          modelUsed: MODEL_MINI,
+          attemptIndex: 1,
+          status: 'failed_after_retries',
+          qaPassed: false,
+          qaBlockersCount: qaResult.blockers.length,
+          failureReason: 'budget_exhausted',
+          finalArtifactAccepted: false,
+          metadata: { blockers: qaResult.blockers },
+        });
+      }
+    }
+
+    const routingSummaryMessages: ChatMessage[] = [
+      {
+        id: `${demandId}-template-validator-routing`,
+        agent: 'template_validator',
+        message: qualityChecklist.qualityPassed
+          ? 'Template Validator aprovado.'
+          : `Template Validator encontrou ${qualityChecklist.missingSections.length} pendência(s) estrutural(is).`,
+        timestamp: new Date().toISOString(),
+        type: qualityChecklist.qualityPassed ? 'completed' : 'error',
+        category: qualityChecklist.qualityPassed ? 'system' : 'alert',
+        progress: 98,
+        metadata: {
+          modelRouting: {
+            stageName: 'template_validator',
+            modelUsed: qualityChecklist.qualityPassed ? MODEL_NANO : MODEL_MINI,
+            attemptIndex: qualityChecklist.qualityPassed ? 1 : 2,
+            status: qualityChecklist.qualityPassed ? 'completed' : 'failed',
+            failureReason: qualityChecklist.qualityPassed ? null : 'validation_failed',
+          },
+        },
+      },
+      {
+        id: `${demandId}-qa-routing`,
+        agent: 'qa',
+        message: qaResult.qaPassed
+          ? 'QA de invariantes mínimas aprovado.'
+          : `QA encontrou ${qaResult.blockers.length} blocker(s): ${qaResult.blockers.join(', ')}`,
+        timestamp: new Date().toISOString(),
+        type: qaResult.qaPassed ? 'completed' : 'error',
+        category: qaResult.qaPassed ? 'system' : 'alert',
+        progress: 99,
+        metadata: {
+          modelRouting: {
+            stageName: 'qa',
+            modelUsed: qaResult.qaPassed ? MODEL_NANO : MODEL_MINI,
+            attemptIndex: 1,
+            status: qaResult.qaPassed ? 'completed' : 'fallback_triggered',
+            failureReason: qaResult.qaPassed ? null : 'qa_failed_critical',
+          },
+        },
+      },
+    ];
+    messages = [...messages, ...routingSummaryMessages];
+    await storage.updateDemandChat(demandId, messages);
+    if (onProgress) {
+      routingSummaryMessages.forEach(onProgress);
+    }
 
     if (executionId) {
       improvementExecutionService.recordEvent({
@@ -743,7 +936,7 @@ export class AISquadService {
       qualityPassed: qualityChecklist.qualityPassed,
       missingSections: qualityChecklist.missingSections,
       validationNotes: demand.type === 'melhoria'
-        ? `quality_passed=${qualityChecklist.qualityPassed}; missing_sections=${qualityChecklist.missingSections.join(', ') || 'none'}`
+        ? `quality_passed=${qualityChecklist.qualityPassed}; missing_sections=${qualityChecklist.missingSections.join(', ') || 'none'}; qa_passed=${qaResult.qaPassed}; qa_blockers=${qaResult.blockers.length}`
         : undefined
     });
 
@@ -880,6 +1073,48 @@ Saída Esperada: ${config.outputType}
 Esforço Máximo: ${config.maxEffortDays} dias
 Requisitos Obrigatórios por Tipo:
 ${requirements}`;
+  }
+
+  private validatePilotQualityInvariants(
+    demand: Demand,
+    prdContent: string,
+    templatePassed: boolean,
+  ): {
+    qaPassed: boolean;
+    blockers: string[];
+    invariants: Record<string, boolean>;
+  } {
+    const normalized = prdContent
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    const demandTypeLabel = getDemandTypeConfig(demand.type).label
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    const invariants = {
+      prd_reflects_extracted_fields:
+        normalized.includes(demand.type) ||
+        normalized.includes(demandTypeLabel) ||
+        normalized.includes('tipo de demanda'),
+      tags_do_not_contradict_area_type:
+        !normalized.includes('bug') || demand.type === 'bug' || normalized.includes('nao fazer'),
+      risk_complexity_coherent:
+        normalized.includes('risco') &&
+        (normalized.includes('escopo') || normalized.includes('complexidade') || normalized.includes('mitigacao')),
+      template_validator_passed: templatePassed,
+    };
+
+    const blockers = Object.entries(invariants)
+      .filter(([, passed]) => !passed)
+      .map(([name]) => name);
+
+    return {
+      qaPassed: blockers.length === 0,
+      blockers,
+      invariants,
+    };
   }
 
   // ===== PROMPTS DIFERENCIADOS POR TIPO DE REFINAMENTO =====
@@ -1097,7 +1332,8 @@ IMPORTANTE:
 
   private async generatePRDWithPM(
     demand: Demand,
-    refinementMessages: ChatMessage[]
+    refinementMessages: ChatMessage[],
+    model?: string,
   ): Promise<string> {
     const refinementSummary = refinementMessages
       .filter(msg => msg.type === 'completed')
@@ -1153,6 +1389,7 @@ ${isTechnical
         {
           temperature: 0.5,
           maxTokens: 4000,
+          model,
           taskType: 'document',
           operation: 'document:prd'
         }
@@ -1167,7 +1404,8 @@ ${isTechnical
 
   private async generateTasksWithPM(
     demand: Demand,
-    prdContent: string
+    prdContent: string,
+    model?: string,
   ): Promise<string> {
     // Get insights from evolved context
     const insightsSummary = contextBuilder.getInsightsSummary(demand.id);
@@ -1253,6 +1491,7 @@ IMPORTANTE:
         {
           temperature: 0.5,
           maxTokens: 2000,
+          model,
           taskType: 'document',
           operation: 'document:tasks'
         }

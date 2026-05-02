@@ -7,6 +7,7 @@ import {
   IMPROVEMENT_PARALLEL_AGENTS,
   improvementExecutionService
 } from './improvement-execution';
+import { modelRoutingService } from './model-routing';
 
 export interface AgentMessage {
   agent: string;
@@ -242,6 +243,23 @@ Demanda: ${demand.description}`;
       hasAntiRepeatInstruction: systemPrompt.includes('NÃO repita'),
       hasRoleInstruction: systemPrompt.includes(`Como ${agentName}`) && systemPrompt.includes('Seu papel é:'),
     };
+    const modelDecision = modelRoutingService.decideStageModel({
+      demand,
+      classification: demand.classification,
+      stageName: `agent:${agentName}`,
+    });
+    const modelRoutingMetadata = {
+      stageName: `agent:${agentName}`,
+      modelUsed: agentConfig.model || modelDecision.model,
+      attemptIndex: 1,
+      status: 'processing',
+      decisionReason: modelDecision.reason,
+      complexity: modelDecision.complexity,
+      risk: modelDecision.risk,
+      clarity: modelDecision.clarity,
+      criticality: modelDecision.criticality,
+    };
+    let stageRunStatus: 'completed' | 'failed' = 'completed';
 
     try {
       if (onProgress) {
@@ -255,6 +273,7 @@ Demanda: ${demand.description}`;
           progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length))),
           metadata: {
             promptContext: promptContextAudit,
+            modelRouting: modelRoutingMetadata,
           },
         });
       }
@@ -265,7 +284,7 @@ Demanda: ${demand.description}`;
         {
           temperature: 0.8,
           maxTokens: 1500,
-          model: agentConfig.model,
+          model: agentConfig.model || modelDecision.model,
           taskType: 'analysis',
           operation: `agent_interaction:${agentName}`
         }
@@ -281,6 +300,10 @@ Demanda: ${demand.description}`;
             phase: 'collaboration',
             originalDemand: demand.id,
             promptContext: promptContextAudit,
+            modelRouting: {
+              ...modelRoutingMetadata,
+              status: 'completed',
+            },
           }
         };
 
@@ -299,6 +322,10 @@ Demanda: ${demand.description}`;
           progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length))),
           metadata: {
             promptContext: promptContextAudit,
+            modelRouting: {
+              ...modelRoutingMetadata,
+              status: 'completed',
+            },
           },
         });
       }
@@ -322,6 +349,10 @@ Demanda: ${demand.description}`;
           progress: currentCompleteness,
           metadata: {
             promptContext: promptContextAudit,
+            modelRouting: {
+              ...modelRoutingMetadata,
+              status: 'completed',
+            },
           },
         };
         const updatedMessages = [...currentMessages, newMessage];
@@ -339,6 +370,7 @@ Demanda: ${demand.description}`;
       }
     } catch (error) {
       console.error(`Error processing agent ${agentName} in round ${round}:`, error);
+      stageRunStatus = 'failed';
 
       if (onProgress) {
         onProgress({
@@ -361,6 +393,10 @@ Demanda: ${demand.description}`;
           phase: 'error',
           error: error instanceof Error ? error.message : 'Unknown error',
           promptContext: promptContextAudit,
+          modelRouting: {
+            ...modelRoutingMetadata,
+            status: 'failed',
+          },
         }
       };
       conversationHistory.push(errorMessage);
@@ -368,6 +404,19 @@ Demanda: ${demand.description}`;
 
     const endTime = new Date();
     if (options.executionId) {
+      await modelRoutingService.recordStageRun({
+        executionId: options.executionId,
+        demandId: demand.id,
+        stageName: `agent:${agentName}`,
+        modelUsed: agentConfig.model || modelDecision.model,
+        attemptIndex: 1,
+        status: stageRunStatus,
+        metadata: {
+          round,
+          decisionReason: modelDecision.reason,
+          parallelSubset: Boolean(options.enableParallelSubset && IMPROVEMENT_PARALLEL_AGENTS.includes(agentName as any)),
+        },
+      });
       improvementExecutionService.recordEvent({
         executionId: options.executionId,
         demandId: demand.id,

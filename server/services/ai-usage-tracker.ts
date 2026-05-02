@@ -43,7 +43,9 @@ const DEFAULT_MODEL_PRICING: Record<string, ModelPricing> = {
   'gpt-4o-mini': { inputUsdPer1M: 0.15, outputUsdPer1M: 0.6 },
   'gpt-4o': { inputUsdPer1M: 2.5, outputUsdPer1M: 10 },
   'gpt-4.1-mini': { inputUsdPer1M: 0.4, outputUsdPer1M: 1.6 },
-  'gpt-4.1': { inputUsdPer1M: 2, outputUsdPer1M: 8 }
+  'gpt-4.1': { inputUsdPer1M: 2, outputUsdPer1M: 8 },
+  'gpt-5.4-nano': { inputUsdPer1M: 0, outputUsdPer1M: 0 },
+  'gpt-5.4-mini': { inputUsdPer1M: 0, outputUsdPer1M: 0 }
 };
 
 const parsePositiveNumber = (value: string | undefined): number | null => {

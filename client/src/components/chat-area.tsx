@@ -362,6 +362,16 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                 const agent = agentConfig[message.agent] || { icon: "🤖", color: "var(--foreground-muted)", name: message.agent };
                 const category = message.category || 'answer';
                 const stageId = `${selectedDemand?.id ?? "unknown"}:${message.agent}`;
+                const modelRouting = message.metadata?.modelRouting as
+                  | {
+                      stageName?: string;
+                      modelUsed?: string;
+                      attemptIndex?: number;
+                      status?: string;
+                      failureReason?: string | null;
+                      decisionReason?: string;
+                    }
+                  | undefined;
 
                 return (
                   <div
@@ -404,6 +414,25 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                             </div>
                           )}
                         </div>
+                        {modelRouting && (
+                          <div className="mb-3 flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-normal text-[var(--foreground-muted)]">
+                            {modelRouting.modelUsed && (
+                              <span className="border border-[var(--border)] px-2 py-1">
+                                Modelo: {modelRouting.modelUsed}
+                              </span>
+                            )}
+                            {modelRouting.status && (
+                              <span className="border border-[var(--border)] px-2 py-1">
+                                Status: {modelRouting.status}
+                              </span>
+                            )}
+                            {modelRouting.failureReason && (
+                              <span className="border border-[var(--destructive)] px-2 py-1 text-[var(--destructive)]">
+                                Motivo: {modelRouting.failureReason}
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                         <RefinementAgentMessagePlainText
                           messageId={message.id}
