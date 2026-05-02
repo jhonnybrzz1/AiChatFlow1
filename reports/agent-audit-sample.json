@@ -1,0 +1,1428 @@
+{
+  "generatedAt": "2026-05-02T14:36:35.877Z",
+  "sampleType": "runtime_controlled_no_external_ai",
+  "demandInitial": "O fluxo multi-agente apresenta pouca interação, repetição da demanda inicial e baixa aderência à persona.",
+  "selectedAgents": [
+    "refinador",
+    "scrum_master",
+    "qa",
+    "ux",
+    "analista_de_dados",
+    "tech_lead"
+  ],
+  "missingAgents": [],
+  "samples": [
+    {
+      "runId": "agent_audit_run_1",
+      "roundIndex": 0,
+      "agentName": "refinador",
+      "promptContext": {
+        "previousOutputPresent": false,
+        "previousOutputLength": 0,
+        "conversationContextLength": 0,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": false,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Resume a demanda em uma frase e abre lacunas para a squad. Run 1 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Perguntas Críticas:** Qual variavel representa contexto anterior? Onde o output por rodada e salvo? Qual baseline mede repeticao?\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.098,
+        "dca": null,
+        "pta": null,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_1",
+      "roundIndex": 0,
+      "agentName": "scrum_master",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 659,
+        "conversationContextLength": 674,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 1 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Checklist de Execução:** corrigir contrato de chaves; validar contexto anterior; rodar amostra; revisar metricas.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.076,
+        "dca": 0.644,
+        "pta": 0.644,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_1",
+      "roundIndex": 0,
+      "agentName": "qa",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 1323,
+        "conversationContextLength": 1353,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 1 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Casos de Teste:** chave canonica com espaco; chave canonica snake_case; historico com contexto vazio; historico preenchido.\n**Evidências:** status do teste, metadata.promptContext e arquivo de amostra gerado.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.069,
+        "dca": 0.759,
+        "pta": 0.759,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_1",
+      "roundIndex": 0,
+      "agentName": "ux",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2082,
+        "conversationContextLength": 2127,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 1 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Validação UX:** comparar conversa antes/depois por legibilidade, progresso entre agentes e ausencia de repeticao literal.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.083,
+        "dca": 0.708,
+        "pta": 0.708,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_1",
+      "roundIndex": 0,
+      "agentName": "analista_de_dados",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2754,
+        "conversationContextLength": 2814,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 1 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Métrica Principal:** PTA medio entre agentes consecutivos; direcao esperada: queda de sobreposicao repetitiva com aumento de campos novos.\n**Métricas Auxiliares:** DDI, DCA, REDT e completude de assinatura.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.684,
+        "pta": 0.684,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_1",
+      "roundIndex": 0,
+      "agentName": "tech_lead",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 3511,
+        "conversationContextLength": 3586,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 1 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Trade-offs:** metadata pequena reduz risco de vazamento, mas exige script para reconstruir metricas sem texto completo.\n**Riscos Técnicos:** contexto em memoria pode sumir; mitigar persistindo resumo e tamanhos por turno.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.598,
+        "pta": 0.598,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_2",
+      "roundIndex": 0,
+      "agentName": "refinador",
+      "promptContext": {
+        "previousOutputPresent": false,
+        "previousOutputLength": 0,
+        "conversationContextLength": 0,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": false,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Resume a demanda em uma frase e abre lacunas para a squad. Run 2 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Perguntas Críticas:** Qual variavel representa contexto anterior? Onde o output por rodada e salvo? Qual baseline mede repeticao?\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.098,
+        "dca": null,
+        "pta": null,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_2",
+      "roundIndex": 0,
+      "agentName": "scrum_master",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 659,
+        "conversationContextLength": 674,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 2 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Checklist de Execução:** corrigir contrato de chaves; validar contexto anterior; rodar amostra; revisar metricas.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.076,
+        "dca": 0.644,
+        "pta": 0.644,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_2",
+      "roundIndex": 0,
+      "agentName": "qa",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 1323,
+        "conversationContextLength": 1353,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 2 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Casos de Teste:** chave canonica com espaco; chave canonica snake_case; historico com contexto vazio; historico preenchido.\n**Evidências:** status do teste, metadata.promptContext e arquivo de amostra gerado.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.069,
+        "dca": 0.759,
+        "pta": 0.759,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_2",
+      "roundIndex": 0,
+      "agentName": "ux",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2082,
+        "conversationContextLength": 2127,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 2 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Validação UX:** comparar conversa antes/depois por legibilidade, progresso entre agentes e ausencia de repeticao literal.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.083,
+        "dca": 0.708,
+        "pta": 0.708,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_2",
+      "roundIndex": 0,
+      "agentName": "analista_de_dados",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2754,
+        "conversationContextLength": 2814,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 2 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Métrica Principal:** PTA medio entre agentes consecutivos; direcao esperada: queda de sobreposicao repetitiva com aumento de campos novos.\n**Métricas Auxiliares:** DDI, DCA, REDT e completude de assinatura.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.684,
+        "pta": 0.684,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_2",
+      "roundIndex": 0,
+      "agentName": "tech_lead",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 3511,
+        "conversationContextLength": 3586,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 2 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Trade-offs:** metadata pequena reduz risco de vazamento, mas exige script para reconstruir metricas sem texto completo.\n**Riscos Técnicos:** contexto em memoria pode sumir; mitigar persistindo resumo e tamanhos por turno.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.598,
+        "pta": 0.598,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_3",
+      "roundIndex": 0,
+      "agentName": "refinador",
+      "promptContext": {
+        "previousOutputPresent": false,
+        "previousOutputLength": 0,
+        "conversationContextLength": 0,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": false,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Resume a demanda em uma frase e abre lacunas para a squad. Run 3 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Perguntas Críticas:** Qual variavel representa contexto anterior? Onde o output por rodada e salvo? Qual baseline mede repeticao?\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.096,
+        "dca": null,
+        "pta": null,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_3",
+      "roundIndex": 0,
+      "agentName": "scrum_master",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 659,
+        "conversationContextLength": 674,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 3 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Checklist de Execução:** corrigir contrato de chaves; validar contexto anterior; rodar amostra; revisar metricas.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.075,
+        "dca": 0.648,
+        "pta": 0.648,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_3",
+      "roundIndex": 0,
+      "agentName": "qa",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 1323,
+        "conversationContextLength": 1353,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 3 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Casos de Teste:** chave canonica com espaco; chave canonica snake_case; historico com contexto vazio; historico preenchido.\n**Evidências:** status do teste, metadata.promptContext e arquivo de amostra gerado.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.068,
+        "dca": 0.762,
+        "pta": 0.762,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_3",
+      "roundIndex": 0,
+      "agentName": "ux",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2082,
+        "conversationContextLength": 2127,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 3 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Validação UX:** comparar conversa antes/depois por legibilidade, progresso entre agentes e ausencia de repeticao literal.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.082,
+        "dca": 0.711,
+        "pta": 0.711,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_3",
+      "roundIndex": 0,
+      "agentName": "analista_de_dados",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2754,
+        "conversationContextLength": 2814,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 3 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Métrica Principal:** PTA medio entre agentes consecutivos; direcao esperada: queda de sobreposicao repetitiva com aumento de campos novos.\n**Métricas Auxiliares:** DDI, DCA, REDT e completude de assinatura.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.688,
+        "pta": 0.688,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_3",
+      "roundIndex": 0,
+      "agentName": "tech_lead",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 3511,
+        "conversationContextLength": 3586,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 3 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Trade-offs:** metadata pequena reduz risco de vazamento, mas exige script para reconstruir metricas sem texto completo.\n**Riscos Técnicos:** contexto em memoria pode sumir; mitigar persistindo resumo e tamanhos por turno.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.062,
+        "dca": 0.602,
+        "pta": 0.602,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_4",
+      "roundIndex": 0,
+      "agentName": "refinador",
+      "promptContext": {
+        "previousOutputPresent": false,
+        "previousOutputLength": 0,
+        "conversationContextLength": 0,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": false,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Resume a demanda em uma frase e abre lacunas para a squad. Run 4 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Perguntas Críticas:** Qual variavel representa contexto anterior? Onde o output por rodada e salvo? Qual baseline mede repeticao?\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.098,
+        "dca": null,
+        "pta": null,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_4",
+      "roundIndex": 0,
+      "agentName": "scrum_master",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 659,
+        "conversationContextLength": 674,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 4 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Checklist de Execução:** corrigir contrato de chaves; validar contexto anterior; rodar amostra; revisar metricas.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.076,
+        "dca": 0.644,
+        "pta": 0.644,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_4",
+      "roundIndex": 0,
+      "agentName": "qa",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 1323,
+        "conversationContextLength": 1353,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 4 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Casos de Teste:** chave canonica com espaco; chave canonica snake_case; historico com contexto vazio; historico preenchido.\n**Evidências:** status do teste, metadata.promptContext e arquivo de amostra gerado.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.069,
+        "dca": 0.759,
+        "pta": 0.759,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_4",
+      "roundIndex": 0,
+      "agentName": "ux",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2082,
+        "conversationContextLength": 2127,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 4 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Validação UX:** comparar conversa antes/depois por legibilidade, progresso entre agentes e ausencia de repeticao literal.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.083,
+        "dca": 0.708,
+        "pta": 0.708,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_4",
+      "roundIndex": 0,
+      "agentName": "analista_de_dados",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2754,
+        "conversationContextLength": 2814,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 4 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Métrica Principal:** PTA medio entre agentes consecutivos; direcao esperada: queda de sobreposicao repetitiva com aumento de campos novos.\n**Métricas Auxiliares:** DDI, DCA, REDT e completude de assinatura.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.684,
+        "pta": 0.684,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_4",
+      "roundIndex": 0,
+      "agentName": "tech_lead",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 3511,
+        "conversationContextLength": 3586,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 4 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Trade-offs:** metadata pequena reduz risco de vazamento, mas exige script para reconstruir metricas sem texto completo.\n**Riscos Técnicos:** contexto em memoria pode sumir; mitigar persistindo resumo e tamanhos por turno.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.598,
+        "pta": 0.598,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_5",
+      "roundIndex": 0,
+      "agentName": "refinador",
+      "promptContext": {
+        "previousOutputPresent": false,
+        "previousOutputLength": 0,
+        "conversationContextLength": 0,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": false,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Resume a demanda em uma frase e abre lacunas para a squad. Run 5 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Perguntas Críticas:** Qual variavel representa contexto anterior? Onde o output por rodada e salvo? Qual baseline mede repeticao?\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.096,
+        "dca": null,
+        "pta": null,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Perguntas Críticas",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_5",
+      "roundIndex": 0,
+      "agentName": "scrum_master",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 659,
+        "conversationContextLength": 674,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 5 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Checklist de Execução:** corrigir contrato de chaves; validar contexto anterior; rodar amostra; revisar metricas.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.075,
+        "dca": 0.648,
+        "pta": 0.648,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Checklist de Execução",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_5",
+      "roundIndex": 0,
+      "agentName": "qa",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 1323,
+        "conversationContextLength": 1353,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 5 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Casos de Teste:** chave canonica com espaco; chave canonica snake_case; historico com contexto vazio; historico preenchido.\n**Evidências:** status do teste, metadata.promptContext e arquivo de amostra gerado.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.068,
+        "dca": 0.762,
+        "pta": 0.762,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Casos de Teste",
+          "Evidências"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_5",
+      "roundIndex": 0,
+      "agentName": "ux",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2082,
+        "conversationContextLength": 2127,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 5 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Validação UX:** comparar conversa antes/depois por legibilidade, progresso entre agentes e ausencia de repeticao literal.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.082,
+        "dca": 0.711,
+        "pta": 0.711,
+        "redt": 0,
+        "mec": {
+          "lines": 9,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 9
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Validação UX",
+          "Premissas"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_5",
+      "roundIndex": 0,
+      "agentName": "analista_de_dados",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 2754,
+        "conversationContextLength": 2814,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 5 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Métrica Principal:** PTA medio entre agentes consecutivos; direcao esperada: queda de sobreposicao repetitiva com aumento de campos novos.\n**Métricas Auxiliares:** DDI, DCA, REDT e completude de assinatura.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.063,
+        "dca": 0.688,
+        "pta": 0.688,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Métrica Principal",
+          "Métricas Auxiliares"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    },
+    {
+      "runId": "agent_audit_run_5",
+      "roundIndex": 0,
+      "agentName": "tech_lead",
+      "promptContext": {
+        "previousOutputPresent": true,
+        "previousOutputLength": 3511,
+        "conversationContextLength": 3586,
+        "hasConversationContextMarker": true,
+        "hasAccumulatedInsightsMarker": true,
+        "hasAntiRepeatInstruction": true,
+        "hasRoleInstruction": true
+      },
+      "output": "**Análise:** Complementa o agente anterior com uma decisao nova e um criterio verificavel. Run 5 foca em contrato multi-agente observavel.\n**Problema Identificado:** chaves de agente e contexto anterior precisam ser verificaveis no payload final.\n**Impacto:** sem contrato, a squad pode rodar incompleta e parecer generica.\n**Recomendação:** manter chave canonica, metadata de contexto e regra de progresso por persona.\n**Trade-offs:** metadata pequena reduz risco de vazamento, mas exige script para reconstruir metricas sem texto completo.\n**Riscos Técnicos:** contexto em memoria pode sumir; mitigar persistindo resumo e tamanhos por turno.\n**ROI:** 4:1\n**Esforço:** 2 dias\n**Prioridade:** Importante\n**Premissas:** amostra local controlada sem chamada externa de IA.",
+      "metrics": {
+        "ddi": 0.062,
+        "dca": 0.602,
+        "pta": 0.602,
+        "redt": 0,
+        "mec": {
+          "lines": 10,
+          "bullets": 0,
+          "headings": 0,
+          "fields": 10
+        }
+      },
+      "uxSignature": {
+        "expectedSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "presentSections": [
+          "Análise",
+          "Problema Identificado",
+          "Recomendação",
+          "Trade-offs",
+          "Riscos Técnicos"
+        ],
+        "isComplete": true,
+        "hasNewSectionVsPrevious": true
+      }
+    }
+  ],
+  "aggregate": {
+    "refinador": {
+      "runs": 5,
+      "avgDdi": 0.097,
+      "avgDca": null,
+      "avgPta": null,
+      "avgRedt": 0,
+      "signatureCompleteRate": 1,
+      "newSectionRate": 1,
+      "avgFields": 9
+    },
+    "scrum_master": {
+      "runs": 5,
+      "avgDdi": 0.076,
+      "avgDca": 0.646,
+      "avgPta": 0.646,
+      "avgRedt": 0,
+      "signatureCompleteRate": 1,
+      "newSectionRate": 1,
+      "avgFields": 9
+    },
+    "qa": {
+      "runs": 5,
+      "avgDdi": 0.069,
+      "avgDca": 0.76,
+      "avgPta": 0.76,
+      "avgRedt": 0,
+      "signatureCompleteRate": 1,
+      "newSectionRate": 1,
+      "avgFields": 10
+    },
+    "ux": {
+      "runs": 5,
+      "avgDdi": 0.083,
+      "avgDca": 0.709,
+      "avgPta": 0.709,
+      "avgRedt": 0,
+      "signatureCompleteRate": 1,
+      "newSectionRate": 1,
+      "avgFields": 9
+    },
+    "analista_de_dados": {
+      "runs": 5,
+      "avgDdi": 0.063,
+      "avgDca": 0.686,
+      "avgPta": 0.686,
+      "avgRedt": 0,
+      "signatureCompleteRate": 1,
+      "newSectionRate": 1,
+      "avgFields": 10
+    },
+    "tech_lead": {
+      "runs": 5,
+      "avgDdi": 0.063,
+      "avgDca": 0.6,
+      "avgPta": 0.6,
+      "avgRedt": 0,
+      "signatureCompleteRate": 1,
+      "newSectionRate": 1,
+      "avgFields": 10
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { RefinementAgentMessageContent } from './refinement-agent-message-plain-text';
 import './refinement-dialog.css';
 
 interface RefinementDialogProps {
@@ -44,6 +45,7 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const bodyEndRef = useRef<HTMLDivElement>(null);
 
   const agentClass = agentClassMap[agent] || 'agent-qa';
 
@@ -56,6 +58,11 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    bodyEndRef.current?.scrollIntoView({ block: 'end' });
+  }, [isOpen, message]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -122,7 +129,12 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
           className="body"
           id="refinement-dialog-description"
         >
-          <p tabIndex={0}>{message}</p>
+          <div className="dialog-chat-thread" tabIndex={0}>
+            <div className="dialog-chat-bubble agent">
+              <RefinementAgentMessageContent content={message} />
+            </div>
+            <div ref={bodyEndRef} />
+          </div>
         </div>
 
         <div className="footer">

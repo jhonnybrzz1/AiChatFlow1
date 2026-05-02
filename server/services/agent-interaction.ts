@@ -15,6 +15,23 @@ export interface AgentMessage {
   metadata?: Record<string, any>;
 }
 
+export interface AgentPromptContextAudit {
+  demandId: number;
+  agentName: string;
+  round: number;
+  previousAgentCount: number;
+  previousOutputPresent: boolean;
+  previousOutputLength: number;
+  conversationContextLength: number;
+  evolvedContextLength: number;
+  systemPromptLength: number;
+  userPromptLength: number;
+  hasConversationContextMarker: boolean;
+  hasAccumulatedInsightsMarker: boolean;
+  hasAntiRepeatInstruction: boolean;
+  hasRoleInstruction: boolean;
+}
+
 export interface AgentInteractionResult {
   finalOutput: string;
   conversationHistory: AgentMessage[];
@@ -204,6 +221,28 @@ Considere as contribuições anteriores dos outros agentes e adicione seu valor 
 NÃO repita análises já feitas - traga novos insights da sua área.
 Demanda: ${demand.description}`;
 
+    const previousAgentMessages = conversationHistory.filter(msg => msg.agent !== 'system');
+    const previousOutputLength = previousAgentMessages.reduce(
+      (total, msg) => total + msg.message.length,
+      0
+    );
+    const promptContextAudit: AgentPromptContextAudit = {
+      demandId: demand.id,
+      agentName,
+      round,
+      previousAgentCount: previousAgentMessages.length,
+      previousOutputPresent: previousAgentMessages.length > 0 && previousOutputLength > 0,
+      previousOutputLength,
+      conversationContextLength: conversationContext.length,
+      evolvedContextLength: evolvedContext.length,
+      systemPromptLength: systemPrompt.length,
+      userPromptLength: userPrompt.length,
+      hasConversationContextMarker: systemPrompt.includes('CONTEXTO DA CONVERSA ATÉ AGORA'),
+      hasAccumulatedInsightsMarker: systemPrompt.includes('INSIGHTS ACUMULADOS DOS AGENTES'),
+      hasAntiRepeatInstruction: systemPrompt.includes('NÃO repita'),
+      hasRoleInstruction: systemPrompt.includes(`Como ${agentName}`) && systemPrompt.includes('Seu papel é:'),
+    };
+
     try {
       if (onProgress) {
         onProgress({
@@ -213,7 +252,10 @@ Demanda: ${demand.description}`;
           timestamp: new Date().toISOString(),
           type: 'processing',
           category: 'system',
-          progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
+          progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length))),
+          metadata: {
+            promptContext: promptContextAudit,
+          },
         });
       }
 
@@ -237,7 +279,8 @@ Demanda: ${demand.description}`;
           metadata: {
             round,
             phase: 'collaboration',
-            originalDemand: demand.id
+            originalDemand: demand.id,
+            promptContext: promptContextAudit,
           }
         };
 
@@ -251,11 +294,14 @@ Demanda: ${demand.description}`;
             agent: agentName,
             message: response,
             timestamp: new Date().toISOString(),
-            type: 'completed',
-            category: 'system',
-            progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
-          });
-        }
+          type: 'completed',
+          category: 'system',
+          progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length))),
+          metadata: {
+            promptContext: promptContextAudit,
+          },
+        });
+      }
 
         const currentDemand = await storage.getDemand(demand.id);
         const currentMessages = currentDemand?.chatMessages || [];
@@ -273,7 +319,10 @@ Demanda: ${demand.description}`;
           timestamp: new Date().toISOString(),
           type: 'completed',
           category: 'system',
-          progress: currentCompleteness
+          progress: currentCompleteness,
+          metadata: {
+            promptContext: promptContextAudit,
+          },
         };
         const updatedMessages = [...currentMessages, newMessage];
         await storage.updateDemandChat(demand.id, updatedMessages);
@@ -310,7 +359,8 @@ Demanda: ${demand.description}`;
         metadata: {
           round,
           phase: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
+          promptContext: promptContextAudit,
         }
       };
       conversationHistory.push(errorMessage);

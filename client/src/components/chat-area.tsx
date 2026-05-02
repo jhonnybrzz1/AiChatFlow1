@@ -103,6 +103,10 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   const chatMessages = selectedDemand?.chatMessages || [];
 
   useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [chatMessages.length, selectedDemand?.id]);
+
+  useEffect(() => {
     const latestMessage = chatMessages[chatMessages.length - 1];
     if (!selectedDemand || !latestMessage) return;
 
@@ -330,7 +334,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
 
         {/* Messages Container */}
         <div
-          className="p-4 max-h-[500px] overflow-y-auto bg-[var(--background)]"
+          className="p-4 max-h-[500px] overflow-y-auto bg-[var(--background)] chat-online-thread"
           data-chat-area
           onScroll={handleMessageScroll}
         >
@@ -354,10 +358,10 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                 return (
                   <div
                     key={message.id}
-                    className="chat-message from-agent"
+                    className="chat-message from-agent chat-online-row"
                     style={{ borderLeftColor: agent.color }}
                   >
-                    <div className="flex items-start gap-4 p-4 bg-[var(--muted)]">
+                    <div className="chat-online-bubble flex items-start gap-4 p-4">
                       {/* Agent Avatar */}
                       <div
                         className="agent-avatar flex-shrink-0"

@@ -23,6 +23,7 @@ import {
   IMPROVEMENT_EXECUTION_CONFIG_VERSION,
   improvementExecutionService
 } from './improvement-execution';
+import { canonicalAgentKey, isProductManagerAgent } from './agent-identity';
 
 // Adicionando interface para gerenciamento de SSE
 interface SSEConnection {
@@ -136,7 +137,7 @@ export class AISquadService {
 
       // Map agent names to their configurations
       agentConfigs.forEach(config => {
-        const agentName = config.name.toLowerCase().replace(' agent', '');
+        const agentName = canonicalAgentKey(config.name);
         this.agentConfigs[agentName] = {
           system_prompt: config.system_prompt,
           description: config.description,
@@ -163,21 +164,10 @@ export class AISquadService {
 
       // PM não deve estar no loop de agentes - será chamado separadamente
       // Remover PM se foi adicionado via YAML
-      this.agents = this.agents.filter(a => {
-        const lowerName = a.name.toLowerCase();
-        return lowerName !== 'pm' &&
-               lowerName !== 'product_manager' &&
-               !(lowerName.includes('product') && lowerName.includes('manager'));
-      });
+      this.agents = this.agents.filter(a => !isProductManagerAgent(a.name));
 
       // IMPORTANTE: Também remover PM do agentConfigs (usado na interação multi-agente)
-      const pmKeys = Object.keys(this.agentConfigs).filter(key => {
-        const lowerKey = key.toLowerCase();
-        return lowerKey === 'pm' ||
-               lowerKey === 'product_manager' ||
-               lowerKey === 'productmanager' ||
-               (lowerKey.includes('product') && lowerKey.includes('manager'));
-      });
+      const pmKeys = Object.keys(this.agentConfigs).filter(key => isProductManagerAgent(key));
 
       pmKeys.forEach(key => {
         delete this.agentConfigs[key];
@@ -586,7 +576,8 @@ export class AISquadService {
           timestamp: agentMsg.timestamp,
           type: 'completed',
           category: 'system' as const,
-          progress: 10 + Math.min(75, Math.round((index + 1) * 75 / interactionResult!.conversationHistory.length))
+          progress: 10 + Math.min(75, Math.round((index + 1) * 75 / interactionResult!.conversationHistory.length)),
+          metadata: agentMsg.metadata
         }));
 
         // Update with all interaction messages

@@ -438,6 +438,47 @@
     border-color: var(--accent-cyan);
   }
 
+  .chat-online-thread {
+    scroll-behavior: smooth;
+  }
+
+  .chat-online-row {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .chat-online-bubble {
+    width: min(100%, 880px);
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .refinement-agent-message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .refinement-agent-paragraph {
+    margin: 0;
+  }
+
+  .refinement-agent-list {
+    margin: 0;
+    padding-left: 18px;
+    list-style: disc;
+  }
+
+  .refinement-agent-list li {
+    padding-left: 4px;
+    margin: 4px 0;
+  }
+
   /* Progress bar */
   .progress-brutal {
     height: 8px;

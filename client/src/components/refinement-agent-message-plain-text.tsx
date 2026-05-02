@@ -2,9 +2,11 @@ import { useEffect, useMemo } from "react";
 import {
   getMessageLengthBucket,
   normalizeRefinementAgentText,
+  parseRefinementAgentText,
   shouldUseRefinementPlainTextRenderer,
   trackRefinementEvent,
 } from "@/lib/refinement-telemetry";
+import { cn } from "@/lib/utils";
 
 const renderedMessages = new Set<string>();
 
@@ -15,6 +17,40 @@ interface RefinementAgentMessagePlainTextProps {
   mode?: "refinement";
   role?: "agent";
   timestampRendered?: number;
+}
+
+interface RefinementAgentMessageContentProps {
+  content: string;
+  className?: string;
+}
+
+export function RefinementAgentMessageContent({
+  content,
+  className,
+}: RefinementAgentMessageContentProps) {
+  const blocks = useMemo(() => parseRefinementAgentText(content), [content]);
+
+  return (
+    <div className={cn("refinement-agent-message-content", className)}>
+      {blocks.map((block, blockIndex) => {
+        if (block.type === "list") {
+          return (
+            <ul key={`list-${blockIndex}`} className="refinement-agent-list">
+              {block.items.map((item, itemIndex) => (
+                <li key={`${blockIndex}-${itemIndex}`}>{item}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <p key={`paragraph-${blockIndex}`} className="refinement-agent-paragraph">
+            {block.text}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 export function RefinementAgentMessagePlainText({
@@ -68,9 +104,10 @@ export function RefinementAgentMessagePlainText({
       <div className="font-mono text-[10px] font-bold uppercase tracking-normal text-[var(--foreground-muted)] mb-2">
         Orientação do agente
       </div>
-      <div className="font-mono text-sm text-[var(--foreground)] leading-relaxed">
-        {normalizedContent}
-      </div>
+      <RefinementAgentMessageContent
+        content={normalizedContent}
+        className="font-mono text-sm text-[var(--foreground)] leading-relaxed"
+      />
     </div>
   );
 }

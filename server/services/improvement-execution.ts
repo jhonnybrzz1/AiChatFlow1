@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import type { Demand, DemandDomain } from '@shared/schema';
+import { canonicalizeAgentConfigMap } from './agent-identity';
 
 export const IMPROVEMENT_EXECUTION_CONFIG_VERSION = 'improvement-domain-parallel-v1';
 export const IMPROVEMENT_PARALLEL_AGENTS = ['qa', 'ux', 'analista_de_dados'] as const;
@@ -96,8 +97,10 @@ export class ImprovementExecutionService {
     configs: Record<string, T>,
     demand: Demand,
   ): { configs: Record<string, T>; fallbackUsed: boolean; fallbackReason?: string } {
+    const canonicalConfigs = canonicalizeAgentConfigMap(configs);
+
     if (demand.type !== 'melhoria') {
-      return { configs, fallbackUsed: false };
+      return { configs: canonicalConfigs, fallbackUsed: false };
     }
 
     const domain = this.normalizeDomain(demand.domain);
@@ -106,7 +109,7 @@ export class ImprovementExecutionService {
     const fallbackReasons: string[] = [];
 
     for (const agentName of IMPROVEMENT_REQUIRED_AGENTS) {
-      const baseConfig = configs[agentName];
+      const baseConfig = canonicalConfigs[agentName];
       if (!baseConfig) continue;
 
       const domainPrompt = this.resolveDomainPrompt(domain, demand, agentName);

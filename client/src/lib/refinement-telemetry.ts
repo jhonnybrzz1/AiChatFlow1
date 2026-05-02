@@ -1,5 +1,9 @@
 export type RefinementMessageLengthBucket = "short" | "medium" | "long";
 
+export type RefinementAgentTextBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "list"; items: string[] };
+
 export type RefinementTelemetryEventName =
   | "refinement_agent_message_rendered"
   | "refinement_next_action_clicked"
@@ -34,6 +38,47 @@ declare global {
 
 export function normalizeRefinementAgentText(content: string): string {
   return content.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
+}
+
+export function parseRefinementAgentText(content: string): RefinementAgentTextBlock[] {
+  const normalizedContent = normalizeRefinementAgentText(content);
+  const lines = normalizedContent.split("\n");
+  const blocks: RefinementAgentTextBlock[] = [];
+  let paragraphLines: string[] = [];
+  let listItems: string[] = [];
+
+  const flushParagraph = () => {
+    const text = paragraphLines.join("\n").trim();
+    if (text) {
+      blocks.push({ type: "paragraph", text });
+    }
+    paragraphLines = [];
+  };
+
+  const flushList = () => {
+    if (listItems.length > 0) {
+      blocks.push({ type: "list", items: listItems });
+    }
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const listMatch = line.match(/^\s*\*\s+(.+)$/);
+
+    if (listMatch) {
+      flushParagraph();
+      listItems.push(listMatch[1].trim());
+      continue;
+    }
+
+    flushList();
+    paragraphLines.push(line);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks;
 }
 
 export function shouldUseRefinementPlainTextRenderer(mode: string, role: string): boolean {

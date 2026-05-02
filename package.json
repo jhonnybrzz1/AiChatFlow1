@@ -10,6 +10,7 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
+    "audit:agents": "tsx scripts/agent-audit-sample.ts",
     "test:openai": "tsx server/test-openai.ts"
   },
   "dependencies": {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getMessageLengthBucket,
   normalizeRefinementAgentText,
+  parseRefinementAgentText,
   shouldUseRefinementPlainTextRenderer,
 } from "../client/src/lib/refinement-telemetry";
 
@@ -18,6 +19,21 @@ describe("refinement plain text helpers", () => {
     expect(normalizeRefinementAgentText(content)).toContain("- Primeiro");
     expect(normalizeRefinementAgentText(content)).toContain("```");
     expect(normalizeRefinementAgentText(content)).toContain("[ver](url)");
+  });
+
+  it("parses leading asterisk list items without changing inline asterisks", () => {
+    expect(parseRefinementAgentText("* item 1\\n* item 2")).toEqual([
+      { type: "list", items: ["item 1", "item 2"] },
+    ]);
+
+    expect(parseRefinementAgentText("isso é *importante* no texto")).toEqual([
+      { type: "paragraph", text: "isso é *importante* no texto" },
+    ]);
+
+    expect(parseRefinementAgentText("Aqui vai:\\n* item")).toEqual([
+      { type: "paragraph", text: "Aqui vai:" },
+      { type: "list", items: ["item"] },
+    ]);
   });
 
   it("classifies message length buckets deterministically", () => {

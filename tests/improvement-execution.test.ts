@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Demand } from '../shared/schema';
 import { improvementExecutionService } from '../server/services/improvement-execution';
+import {
+  canonicalAgentKey,
+  canonicalizeAgentConfigMap,
+} from '../server/services/agent-identity';
 
 const demand: Demand = {
   id: 1,
@@ -58,6 +62,38 @@ describe('ImprovementExecutionService', () => {
       tech_lead: { system_prompt: 'base', description: 'Tech' },
       product_manager: { system_prompt: 'base', description: 'PM' },
     }, demand);
+
+    expect(Object.keys(result.configs)).toEqual([
+      'refinador',
+      'scrum_master',
+      'qa',
+      'ux',
+      'analista_de_dados',
+      'tech_lead',
+    ]);
+  });
+
+  it('canonicalizes agent display names used by YAML files', () => {
+    expect(canonicalAgentKey('Scrum Master Agent')).toBe('scrum_master');
+    expect(canonicalAgentKey('UX Designer Agent')).toBe('ux');
+    expect(canonicalAgentKey('Analista de Dados Agent')).toBe('analista_de_dados');
+    expect(canonicalAgentKey('Tech Lead Agent')).toBe('tech_lead');
+    expect(canonicalAgentKey('Product Owner Agent')).toBe('product_owner');
+    expect(canonicalAgentKey('Product Manager Agent')).toBe('product_manager');
+  });
+
+  it('selects the real squad when configs use YAML display names', () => {
+    const configs = canonicalizeAgentConfigMap({
+      'Refinador Agent': { system_prompt: 'base', description: 'Refina' },
+      'Scrum Master Agent': { system_prompt: 'base', description: 'Scrum' },
+      'QA Agent': { system_prompt: 'base', description: 'QA' },
+      'UX Designer Agent': { system_prompt: 'base', description: 'UX' },
+      'Analista de Dados Agent': { system_prompt: 'base', description: 'Dados' },
+      'Tech Lead Agent': { system_prompt: 'base', description: 'Tech' },
+      'Product Manager Agent': { system_prompt: 'base', description: 'PM' },
+    });
+
+    const result = improvementExecutionService.getImprovementAgentConfigs(configs, demand);
 
     expect(Object.keys(result.configs)).toEqual([
       'refinador',

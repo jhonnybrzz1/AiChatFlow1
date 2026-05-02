@@ -243,6 +243,7 @@ export type ChatMessage = {
   type: 'processing' | 'completed' | 'error';
   category?: MessageCategory; // Visual category for message styling
   progress?: number; // Progress percentage 0-100
+  metadata?: Record<string, unknown>;
 };
 
 // Schema específico para criação de demanda via API
