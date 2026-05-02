@@ -5,6 +5,25 @@ import { validatePRDDocument, validateTasksDocument, formatValidationErrors, typ
 import { validatePRD as validatePRDSchema, validateTasksDocument as validateTasksSchema, formatValidationErrors as formatZodErrors } from '../../shared/document-schemas';
 
 export class PDFGenerator {
+  private readonly professionalLayout = {
+    pageWidth: 612,
+    pageHeight: 792,
+    marginX: 54,
+    headerHeight: 116,
+    footerHeight: 58,
+    bodyFontSize: 10.5,
+    bodyLineHeight: 15,
+    sectionGap: 12,
+    paragraphGap: 5,
+    bulletIndent: 14,
+    primaryColor: rgb(0.08, 0.18, 0.31),
+    accentColor: rgb(0.0, 0.45, 0.62),
+    mutedColor: rgb(0.38, 0.43, 0.5),
+    bodyColor: rgb(0.1, 0.1, 0.1),
+    borderColor: rgb(0.82, 0.85, 0.88),
+    headerFill: rgb(0.96, 0.98, 0.99),
+  };
+
   /**
    * Extrai dados estruturados de um documento PRD em Markdown
    * para validação com schema Zod
@@ -339,8 +358,9 @@ export class PDFGenerator {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Draw content across multiple pages
-    await this.drawMultiPageContent(pdfDoc, helveticaFont, helveticaBoldFont, formattedContent, demandId, 'PRD Executivo');
+    // Draw PRD with the professional layout contract. This changes presentation
+    // only: content order and text are preserved from formattedContent.
+    await this.drawProfessionalPRDContent(pdfDoc, helveticaFont, helveticaBoldFont, formattedContent, demandId);
 
     // Serialize the PDFDocument to bytes
     const pdfBytes = await pdfDoc.save();
@@ -772,6 +792,364 @@ ${summaryContent || 'Nenhum resumo disponível.'}
 
     // Draw footer on last page
     this.drawFooter(currentPage, font, pageNumber);
+  }
+
+  private async drawProfessionalPRDContent(
+    pdfDoc: any,
+    font: any,
+    boldFont: any,
+    content: string,
+    demandId: number
+  ): Promise<void> {
+    const layout = this.professionalLayout;
+    const maxWidth = layout.pageWidth - layout.marginX * 2;
+    const cleanContent = this.removeEmojis(content);
+    const lines = cleanContent.split('\n');
+    const generatedAt = new Date();
+
+    console.log('[PDF-GENERATOR] Drawing PRD with professional layout', {
+      demandId,
+      lineCount: lines.length,
+      timestamp: generatedAt.toISOString()
+    });
+
+    let currentPage = pdfDoc.addPage([layout.pageWidth, layout.pageHeight]);
+    let pageNumber = 1;
+    this.drawProfessionalHeader(currentPage, boldFont, font, demandId, generatedAt);
+    let yPosition = layout.pageHeight - layout.headerHeight;
+
+    const ensureSpace = (requiredHeight: number) => {
+      if (yPosition >= layout.footerHeight + requiredHeight) return;
+
+      this.drawProfessionalFooter(currentPage, font, pageNumber);
+      pageNumber++;
+      currentPage = pdfDoc.addPage([layout.pageWidth, layout.pageHeight]);
+      this.drawProfessionalHeader(currentPage, boldFont, font, demandId, generatedAt);
+      yPosition = layout.pageHeight - layout.headerHeight;
+    };
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      if (!trimmedLine) {
+        yPosition -= layout.paragraphGap;
+        continue;
+      }
+
+      const style = this.getProfessionalLineStyle(trimmedLine, font, boldFont);
+      const availableWidth = maxWidth - style.indent;
+      const text = this.getProfessionalLineText(trimmedLine, style.prefix);
+      const wrappedLines = this.wrapTextByFontMetrics(text, availableWidth, style.font, style.fontSize);
+      const blockHeight = wrappedLines.length * style.lineHeight + style.afterGap + style.beforeGap;
+
+      ensureSpace(blockHeight);
+      yPosition -= style.beforeGap;
+
+      if (style.drawRule) {
+        currentPage.drawLine({
+          start: { x: layout.marginX, y: yPosition + 7 },
+          end: { x: layout.pageWidth - layout.marginX, y: yPosition + 7 },
+          thickness: 0.7,
+          color: layout.borderColor,
+        });
+      }
+
+      for (let index = 0; index < wrappedLines.length; index++) {
+        ensureSpace(style.lineHeight + layout.paragraphGap);
+
+        const linePrefix = index === 0 ? style.prefix : style.continuationPrefix;
+        const prefixWidth = linePrefix ? style.font.widthOfTextAtSize(linePrefix, style.fontSize) : 0;
+        const x = layout.marginX + style.indent;
+
+        if (linePrefix) {
+          currentPage.drawText(linePrefix, {
+            x,
+            y: yPosition,
+            size: style.fontSize,
+            font: style.prefixFont,
+            color: style.color,
+          });
+        }
+
+        currentPage.drawText(wrappedLines[index], {
+          x: x + prefixWidth,
+          y: yPosition,
+          size: style.fontSize,
+          font: style.font,
+          color: style.color,
+        });
+
+        yPosition -= style.lineHeight;
+      }
+
+      yPosition -= style.afterGap;
+    }
+
+    this.drawProfessionalFooter(currentPage, font, pageNumber);
+  }
+
+  private getProfessionalLineStyle(trimmedLine: string, font: any, boldFont: any) {
+    const layout = this.professionalLayout;
+
+    if (/^#\s+/.test(trimmedLine)) {
+      return {
+        font: boldFont,
+        prefixFont: boldFont,
+        fontSize: 20,
+        lineHeight: 25,
+        beforeGap: 4,
+        afterGap: 12,
+        indent: 0,
+        prefix: '',
+        continuationPrefix: '',
+        color: layout.primaryColor,
+        drawRule: false,
+      };
+    }
+
+    if (/^##\s+/.test(trimmedLine)) {
+      return {
+        font: boldFont,
+        prefixFont: boldFont,
+        fontSize: 13,
+        lineHeight: 18,
+        beforeGap: layout.sectionGap,
+        afterGap: 6,
+        indent: 0,
+        prefix: '',
+        continuationPrefix: '',
+        color: layout.accentColor,
+        drawRule: true,
+      };
+    }
+
+    if (/^###\s+/.test(trimmedLine)) {
+      return {
+        font: boldFont,
+        prefixFont: boldFont,
+        fontSize: 11.5,
+        lineHeight: 16,
+        beforeGap: 8,
+        afterGap: 3,
+        indent: 0,
+        prefix: '',
+        continuationPrefix: '',
+        color: layout.primaryColor,
+        drawRule: false,
+      };
+    }
+
+    if (/^-\s+\[[ xX]\]\s*/.test(trimmedLine)) {
+      return {
+        font,
+        prefixFont: boldFont,
+        fontSize: layout.bodyFontSize,
+        lineHeight: layout.bodyLineHeight,
+        beforeGap: 1,
+        afterGap: 2,
+        indent: layout.bulletIndent,
+        prefix: '□ ',
+        continuationPrefix: '  ',
+        color: layout.bodyColor,
+        drawRule: false,
+      };
+    }
+
+    if (/^\d+\.\s+/.test(trimmedLine)) {
+      const numberPrefix = trimmedLine.match(/^(\d+\.\s+)/)?.[1] || '';
+      return {
+        font,
+        prefixFont: boldFont,
+        fontSize: layout.bodyFontSize,
+        lineHeight: layout.bodyLineHeight,
+        beforeGap: 1,
+        afterGap: 2,
+        indent: layout.bulletIndent,
+        prefix: numberPrefix,
+        continuationPrefix: ' '.repeat(numberPrefix.length),
+        color: layout.bodyColor,
+        drawRule: false,
+      };
+    }
+
+    if (/^-\s+/.test(trimmedLine)) {
+      return {
+        font,
+        prefixFont: boldFont,
+        fontSize: layout.bodyFontSize,
+        lineHeight: layout.bodyLineHeight,
+        beforeGap: 1,
+        afterGap: 2,
+        indent: layout.bulletIndent,
+        prefix: '• ',
+        continuationPrefix: '  ',
+        color: layout.bodyColor,
+        drawRule: false,
+      };
+    }
+
+    return {
+      font,
+      prefixFont: boldFont,
+      fontSize: layout.bodyFontSize,
+      lineHeight: layout.bodyLineHeight,
+      beforeGap: 0,
+      afterGap: layout.paragraphGap,
+      indent: 0,
+      prefix: '',
+      continuationPrefix: '',
+      color: layout.bodyColor,
+      drawRule: false,
+    };
+  }
+
+  private getProfessionalLineText(trimmedLine: string, prefix: string): string {
+    let text = trimmedLine
+      .replace(/^#{1,6}\s*/, '')
+      .replace(/^-\s+\[[ xX]\]\s*/, '')
+      .replace(/^-\s+/, '');
+
+    if (prefix && /^\d+\.\s+/.test(text)) {
+      text = text.replace(/^\d+\.\s+/, '');
+    }
+
+    return this.stripMarkdownForPdf(text);
+  }
+
+  private wrapTextByFontMetrics(text: string, maxWidth: number, font: any, fontSize: number): string[] {
+    const normalizedText = text.replace(/\s+/g, ' ').trim();
+    if (!normalizedText) return [''];
+
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of normalizedText.split(' ')) {
+      const candidate = currentLine ? `${currentLine} ${word}` : word;
+
+      if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+        currentLine = candidate;
+        continue;
+      }
+
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+
+      if (font.widthOfTextAtSize(word, fontSize) <= maxWidth) {
+        currentLine = word;
+      } else {
+        const brokenWordLines = this.breakLongWord(word, maxWidth, font, fontSize);
+        lines.push(...brokenWordLines.slice(0, -1));
+        currentLine = brokenWordLines[brokenWordLines.length - 1] || '';
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines;
+  }
+
+  private breakLongWord(word: string, maxWidth: number, font: any, fontSize: number): string[] {
+    const chunks: string[] = [];
+    let currentChunk = '';
+
+    for (const char of word) {
+      const candidate = currentChunk + char;
+      if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth || !currentChunk) {
+        currentChunk = candidate;
+      } else {
+        chunks.push(currentChunk);
+        currentChunk = char;
+      }
+    }
+
+    if (currentChunk) {
+      chunks.push(currentChunk);
+    }
+
+    return chunks.length ? chunks : [word];
+  }
+
+  private drawProfessionalHeader(page: any, boldFont: any, font: any, demandId: number, generatedAt: Date) {
+    const layout = this.professionalLayout;
+    const { width, height } = page.getSize();
+
+    page.drawRectangle({
+      x: 0,
+      y: height - layout.headerHeight + 14,
+      width,
+      height: layout.headerHeight - 14,
+      color: layout.headerFill,
+    });
+
+    page.drawText('AICHATFLOW', {
+      x: layout.marginX,
+      y: height - 42,
+      size: 10,
+      font: boldFont,
+      color: layout.mutedColor,
+    });
+
+    page.drawText('PRD Executivo', {
+      x: layout.marginX,
+      y: height - 69,
+      size: 18,
+      font: boldFont,
+      color: layout.primaryColor,
+    });
+
+    page.drawText(`Demanda #${demandId}`, {
+      x: width - layout.marginX - 112,
+      y: height - 48,
+      size: 9.5,
+      font,
+      color: layout.mutedColor,
+    });
+
+    page.drawText(`Gerado em ${generatedAt.toLocaleDateString('pt-BR')}`, {
+      x: width - layout.marginX - 112,
+      y: height - 64,
+      size: 9.5,
+      font,
+      color: layout.mutedColor,
+    });
+
+    page.drawLine({
+      start: { x: layout.marginX, y: height - layout.headerHeight + 16 },
+      end: { x: width - layout.marginX, y: height - layout.headerHeight + 16 },
+      thickness: 1,
+      color: layout.borderColor,
+    });
+  }
+
+  private drawProfessionalFooter(page: any, font: any, pageNumber: number) {
+    const layout = this.professionalLayout;
+    const { width } = page.getSize();
+
+    page.drawLine({
+      start: { x: layout.marginX, y: 42 },
+      end: { x: width - layout.marginX, y: 42 },
+      thickness: 0.7,
+      color: layout.borderColor,
+    });
+
+    page.drawText('AICHATflow - Documento confidencial', {
+      x: layout.marginX,
+      y: 24,
+      size: 8.5,
+      font,
+      color: layout.mutedColor,
+    });
+
+    page.drawText(`Pagina ${pageNumber}`, {
+      x: width - layout.marginX - 58,
+      y: 24,
+      size: 8.5,
+      font,
+      color: layout.mutedColor,
+    });
   }
 
   private drawHeader(page: any, font: any, demandId: number, docType: string = 'PRD') {

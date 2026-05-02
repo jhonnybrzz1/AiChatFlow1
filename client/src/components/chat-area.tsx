@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type UIEvent } from "react";
 import { Progress } from "@/components/ui/progress";
 import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle, FileJson, FileText, Copy, Terminal, Cpu } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,9 +7,11 @@ import { type Demand, type ChatMessage } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import RefinementDialog from "./refinement-dialog";
-import { MessageCategoryBadge, categoryConfig } from "./message-category";
+import { MessageCategoryBadge } from "./message-category";
 import { cn } from "@/lib/utils";
 import { DocumentViewer } from "./document-viewer";
+import { RefinementAgentMessagePlainText } from "./refinement-agent-message-plain-text";
+import { trackRefinementEvent } from "@/lib/refinement-telemetry";
 
 const agentConfig: Record<string, { icon: string; color: string; name: string }> = {
   refinador: { icon: "🧠", color: "var(--accent-violet)", name: "Refinador" },
@@ -33,10 +35,19 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
     agent: string;
     header: string;
     message: string;
+    messageId?: string;
+    stageId?: string;
   }>({ isOpen: false, agent: '', header: '', message: '' });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastScrollTopRef = useRef(0);
+  const lastAgentRenderRef = useRef<{
+    messageId: string;
+    stageId: string;
+    renderedAt: number;
+    scrollTracked: boolean;
+  } | null>(null);
 
   const { data: demands = [] } = useQuery({
     queryKey: ['/api/demands'],
@@ -91,6 +102,18 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
 
   const chatMessages = selectedDemand?.chatMessages || [];
 
+  useEffect(() => {
+    const latestMessage = chatMessages[chatMessages.length - 1];
+    if (!selectedDemand || !latestMessage) return;
+
+    lastAgentRenderRef.current = {
+      messageId: latestMessage.id,
+      stageId: `${selectedDemand.id}:${latestMessage.agent}`,
+      renderedAt: Date.now(),
+      scrollTracked: false,
+    };
+  }, [chatMessages.length, selectedDemand?.id]);
+
   const handleDownloadDocument = (url: string) => {
     window.open(url, '_blank');
   };
@@ -132,13 +155,21 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
     }
   };
 
-  const openRefinementDialog = (agent: string, message: string) => {
+  const openRefinementDialog = (agent: string, message: string, messageId: string, stageId: string) => {
     const config = agentConfig[agent] || { name: agent };
+    trackRefinementEvent("refinement_next_action_clicked", {
+      messageId,
+      stageId,
+      clickedAt: Date.now(),
+    });
+
     setRefinementDialog({
       isOpen: true,
       agent,
       header: `Refinamento de ${config.name}`,
-      message
+      message,
+      messageId,
+      stageId,
     });
   };
 
@@ -148,8 +179,35 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
 
   const handleApplyRefinement = () => {
     const config = agentConfig[refinementDialog.agent] || { name: refinementDialog.agent };
+    if (refinementDialog.messageId) {
+      trackRefinementEvent("refinement_next_action_clicked", {
+        messageId: refinementDialog.messageId,
+        stageId: refinementDialog.stageId,
+        clickedAt: Date.now(),
+      });
+    }
+
     toast({ title: "Refinamento aplicado", description: `Refinamento do ${config.name} aplicado.` });
     closeRefinementDialog();
+  };
+
+  const handleClarityFeedback = (clarityValue: "yes" | "no") => {
+    if (!refinementDialog.messageId) return;
+
+    trackRefinementEvent("refinement_clarity_prompt_answered", {
+      messageId: refinementDialog.messageId,
+      stageId: refinementDialog.stageId,
+      clarityValue,
+      answeredAt: Date.now(),
+      qualityFlags: refinementDialog.stageId ? [] : ["missing_stage_id"],
+    });
+
+    toast({
+      title: clarityValue === "yes" ? "Clareza registrada" : "Sinalização registrada",
+      description: clarityValue === "yes"
+        ? "Obrigado pelo feedback."
+        : "Vamos usar esse sinal para melhorar as orientações.",
+    });
   };
 
   const handleReviewLater = () => {
@@ -173,6 +231,31 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
 
   const statusConfig = getStatusConfig();
   const StatusIcon = statusConfig.icon;
+
+  const handleMessageScroll = (event: UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = event.currentTarget.scrollTop;
+    const scrollDeltaPx = lastScrollTopRef.current - currentScrollTop;
+    const activeMessage = lastAgentRenderRef.current;
+
+    if (
+      activeMessage &&
+      !activeMessage.scrollTracked &&
+      scrollDeltaPx >= 24 &&
+      Date.now() - activeMessage.renderedAt <= 60_000
+    ) {
+      activeMessage.scrollTracked = true;
+      trackRefinementEvent("refinement_scroll_up_after_agent", {
+        messageId: activeMessage.messageId,
+        stageId: activeMessage.stageId,
+        occurred: true,
+        occurredAt: Date.now(),
+        scrollDeltaPx,
+        qualityFlags: ["real_scroll_up_delta_met"],
+      });
+    }
+
+    lastScrollTopRef.current = currentScrollTop;
+  };
 
   return (
     <>
@@ -249,6 +332,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
         <div
           className="p-4 max-h-[500px] overflow-y-auto bg-[var(--background)]"
           data-chat-area
+          onScroll={handleMessageScroll}
         >
           {chatMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -265,6 +349,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
               {chatMessages.map((message) => {
                 const agent = agentConfig[message.agent] || { icon: "🤖", color: "var(--foreground-muted)", name: message.agent };
                 const category = message.category || 'answer';
+                const stageId = `${selectedDemand?.id ?? "unknown"}:${message.agent}`;
 
                 return (
                   <div
@@ -308,12 +393,16 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
                           )}
                         </div>
 
-                        <p className="font-mono text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
-                          {message.message}
-                        </p>
+                        <RefinementAgentMessagePlainText
+                          messageId={message.id}
+                          stageId={stageId}
+                          mode="refinement"
+                          role="agent"
+                          content={message.message}
+                        />
 
                         <button
-                          onClick={() => openRefinementDialog(message.agent, message.message)}
+                          onClick={() => openRefinementDialog(message.agent, message.message, message.id, stageId)}
                           className="mt-3 font-mono text-xs text-[var(--accent-cyan)] hover:underline"
                         >
                           [VER COMPLETO]
@@ -432,6 +521,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
         onClose={closeRefinementDialog}
         onApply={handleApplyRefinement}
         onReviewLater={handleReviewLater}
+        onClarityFeedback={handleClarityFeedback}
       />
     </>
   );

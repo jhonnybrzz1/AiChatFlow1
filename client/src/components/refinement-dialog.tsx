@@ -10,6 +10,7 @@ interface RefinementDialogProps {
   onClose: () => void;
   onApply: () => void;
   onReviewLater: () => void;
+  onClarityFeedback?: (clarityValue: "yes" | "no") => void;
 }
 
 const agentClassMap: Record<string, string> = {
@@ -38,7 +39,8 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
   isOpen = false,
   onClose,
   onApply,
-  onReviewLater
+  onReviewLater,
+  onClarityFeedback
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -124,6 +126,29 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
         </div>
 
         <div className="footer">
+          {onClarityFeedback && (
+            <div className="flex items-center gap-2 mr-auto">
+              <span className="font-mono text-xs text-[var(--foreground-muted)]">
+                Ficou claro?
+              </span>
+              <button
+                className="btn btn-secondary"
+                tabIndex={0}
+                onClick={() => onClarityFeedback("yes")}
+                aria-label="Marcar orientação como clara"
+              >
+                Sim
+              </button>
+              <button
+                className="btn btn-secondary"
+                tabIndex={0}
+                onClick={() => onClarityFeedback("no")}
+                aria-label="Marcar orientação como não clara"
+              >
+                Não
+              </button>
+            </div>
+          )}
           <button
             className="btn btn-secondary"
             tabIndex={0}
