@@ -174,7 +174,7 @@ export class ProjectRealityReader {
                 if (packageJson.dependencies['@tensorflow/tfjs']) technologies.push('TensorFlow.js');
                 if (packageJson.dependencies['@xenova/transformers']) technologies.push('Transformers.js');
                 if (packageJson.dependencies['langchain']) technologies.push('LangChain');
-                if (packageJson.dependencies['mistralai']) technologies.push('Mistral AI');
+                if (packageJson.dependencies['openai']) technologies.push('OpenAI');
             }
         }
 

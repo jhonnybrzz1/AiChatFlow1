@@ -9,5 +9,11 @@ vite.config.ts.*
 *.tar.gz
 documents/
 uploads/
+logs/
+server.log
+sqlite.db
+data/demand_metrics.json
+data/historical_demands.csv
+data/system_metrics.json
 *.pdf
 *.txt

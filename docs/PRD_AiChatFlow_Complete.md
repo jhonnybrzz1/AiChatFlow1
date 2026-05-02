@@ -221,7 +221,7 @@ Um sistema automatizado que:
 ## 📦 Dependências
 
 ### Internas
-- Serviço de IA (Mistral AI)
+- Serviço de IA (OpenAI)
 - Banco de dados para armazenamento de demandas
 - Sistema de armazenamento de documentos
 - Modelo de ML para roteamento
@@ -407,7 +407,7 @@ Um sistema automatizado que:
 ### Backend
 - **Linguagem:** TypeScript/Node.js
 - **Framework:** Vite para servidor
-- **IA:** Mistral AI Service
+- **IA:** OpenAI Service
 - **Roteamento:** ML Router com plugins
 - **Armazenamento:** Storage Service
 - **PDF Generation:** pdf-lib
@@ -419,7 +419,7 @@ Um sistema automatizado que:
 
 ### Integrações
 - **GitHub API:** Para importação de repositórios
-- **Mistral AI API:** Para processamento de linguagem natural
+- **OpenAI API:** Para processamento de linguagem natural
 - **Sistema de Arquivos:** Para armazenamento de documentos
 
 ## 📋 Tasks de Implementação
@@ -432,8 +432,8 @@ Um sistema automatizado que:
   **Dependências:** Nenhuma
   **Vinculado ao PRD:** RF2, RF3
 
-- **T2:** Implementar serviço de IA com Mistral
-  - Integração com API do Mistral
+- **T2:** Implementar serviço de IA com OpenAI
+  - Integração com API da OpenAI
   - Gerenciamento de prompts e respostas
   - Controle de tokens e modelos
   **Dependências:** Nenhuma

@@ -436,7 +436,7 @@ export class FrameworkManager {
           externalTools: ['OpenAI'],
           apiEndpoints: [],
           dataSources: [],
-          aiModels: ['Mistral-7B'],
+          aiModels: ['OpenAI'],
           knowledgeBases: ['Framework Best Practices'],
           decisionEngines: ['Rule-Based', 'ML-Based']
         }
@@ -817,7 +817,7 @@ Format your response as JSON with the following structure:
       },
       'auto-suggest': {
         aiEnabled: true,
-        externalTools: ['OpenAI', 'Mistral AI'],
+        externalTools: ['OpenAI'],
         apiEndpoints: ['/api/ai/suggest'],
         dataSources: ['Knowledge base', 'Historical data']
       }

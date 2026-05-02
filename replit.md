@@ -108,7 +108,6 @@ The core feature is an AI-powered squad of agents that collaborate to refine pro
 /client          # React frontend
 /server          # Express backend
 /shared          # Shared TypeScript types and schemas
-/attached_assets # File uploads and attachments
 /migrations      # Database migration files
 ```
 

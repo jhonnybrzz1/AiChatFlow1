@@ -163,7 +163,7 @@ The AICHATflow platform includes a comprehensive **Framework Manager** that supp
 - User satisfaction with suggestions
 
 **Integrations:**
-- AI models (Mistral AI)
+- AI models (OpenAI)
 - Knowledge bases
 - Decision engines
 

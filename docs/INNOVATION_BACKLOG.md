@@ -27,7 +27,7 @@ Este documento apresenta um backlog priorizado de **25 features e evoluções** 
 |-----------|-------------------|------------|-------------------|
 | **UX/Interface** | ✅ Formulário de demandas<br>✅ Chat em tempo real<br>✅ Histórico com filtros<br>✅ Visualização de documentos<br>✅ Exportação (JSON/TXT) | 🟢 Alta | ❌ Sem edição inline de documentos<br>❌ Sem colaboração em tempo real<br>❌ Sem templates customizáveis<br>❌ Sem preview de mudanças |
 | **Fluxo de Conversa** | ✅ 8 agentes especializados<br>✅ Processamento sequencial<br>✅ Progresso em tempo real<br>✅ SSE para updates | 🟢 Alta | ❌ Sem interrupção/retomada granular<br>❌ Sem feedback loop do usuário<br>❌ Sem modo "conversacional"<br>❌ Sem sugestões contextuais |
-| **Integrações** | ✅ GitHub (repos, content, search)<br>✅ Mistral AI<br>✅ PDF generation | 🟡 Média | ❌ Sem Jira/Trello/Asana<br>❌ Sem Slack/Teams<br>❌ Sem webhooks<br>❌ Sem API pública<br>❌ Sem Figma/Miro |
+| **Integrações** | ✅ GitHub (repos, content, search)<br>✅ OpenAI<br>✅ PDF generation | 🟡 Média | ❌ Sem Jira/Trello/Asana<br>❌ Sem Slack/Teams<br>❌ Sem webhooks<br>❌ Sem API pública<br>❌ Sem Figma/Miro |
 | **Governança & Segurança** | ✅ Sistema de aprovação<br>✅ Document snapshots<br>✅ Lifecycle events<br>✅ Approval comments | 🟢 Alta | ❌ Sem RBAC granular<br>❌ Sem audit trail completo<br>❌ Sem data redaction<br>❌ Sem compliance reports |
 | **Observabilidade** | ✅ Métricas básicas<br>✅ AI usage tracking<br>✅ Cache stats<br>✅ Logs estruturados | 🟡 Média | ❌ Sem tracing distribuído<br>❌ Sem alertas proativos<br>❌ Sem dashboards<br>❌ Sem análise de qualidade |
 | **Performance** | ✅ AI response cache<br>✅ Context builder<br>✅ Processamento assíncrono | 🟡 Média | ❌ Sem CDN para assets<br>❌ Sem lazy loading<br>❌ Sem otimização de prompts<br>❌ Sem rate limiting inteligente |
@@ -40,7 +40,7 @@ Este documento apresenta um backlog priorizado de **25 features e evoluções** 
 - **Frontend:** React + TypeScript + Vite + TailwindCSS + ShadCN UI
 - **Backend:** Node.js + Express + TypeScript
 - **Database:** SQLite + Drizzle ORM
-- **AI:** Mistral AI (primary), OpenAI (secondary)
+- **AI:** OpenAI (primary)
 - **Storage:** File system (documents, uploads)
 - **Real-time:** Server-Sent Events (SSE)
 
@@ -120,7 +120,7 @@ Acceptance Criteria:
 
 #### **IDEA-03: Retry Inteligente com Fallback** ⭐ QUICK WIN 🎯 RICE: 60.0
 **Problema:** Quando um agente falha (timeout, erro de API), o refinamento inteiro para sem recuperação.
-**Proposta:** Sistema de retry automático com fallback para modelo alternativo (ex: Mistral → OpenAI).
+**Proposta:** Sistema de retry automático com fallback para modelo alternativo (ex: OpenAI → Anthropic).
 **Diferencial:** Aumenta confiabilidade e reduz frustração do usuário.
 **Como o usuário percebe valor:** Refinamentos não falham por problemas temporários de API.
 
@@ -138,7 +138,7 @@ Acceptance Criteria:
 - [ ] Fallback para provider alternativo após 3 falhas
 - [ ] Notificação ao usuário sobre uso de fallback
 - [ ] Métricas de falha por provider no dashboard
-- [ ] Configuração de ordem de fallback (Mistral → OpenAI → Claude)
+- [ ] Configuração de ordem de fallback (OpenAI → Anthropic → Claude)
 ```
 
 **RICE:** Reach: 100% | Impact: 2 | Confidence: 90% | Effort: 3 weeks | **Score: 60.0** ⭐

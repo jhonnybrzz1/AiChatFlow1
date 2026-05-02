@@ -62,7 +62,7 @@
 1. **AISquadService** - Orquestração de agentes
 2. **DemandRoutingOrchestrator** - Roteamento inteligente
 3. **MLRouter** - Modelo de machine learning
-4. **MistralAIService** - Integração com IA
+4. **OpenAIService** - Integração com IA
 5. **PDFGenerator** - Geração de documentos
 
 ### Fluxo de Processamento
@@ -135,7 +135,7 @@
 
 ### Backend (5 tasks)
 - T1: Serviço de armazenamento
-- T2: Integração Mistral AI
+- T2: Integração OpenAI
 - T3: Roteamento inteligente
 - T4: Processamento multi-agente
 - T5: Geração de documentos

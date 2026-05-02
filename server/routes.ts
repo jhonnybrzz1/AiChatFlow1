@@ -8,10 +8,7 @@ import { demandClassifier } from "./cognitive-core/demand-classifier";
 import { agentOrchestrator } from "./cognitive-core/agent-orchestrator";
 import { frameworkManager } from "./frameworks/framework-manager";
 import { z } from "zod";
-import { pdfGenerator } from "./services/pdf-generator";
 import { gitHubService } from './services/github';
-// import { githubAnalyzer } from './services/github-analyzer';
-import { codeAnalysisService } from './services/codeAnalysis'; // Import the new service
 import { demandRoutingOrchestrator } from './routing/orchestrator';
 import { metricsCollector } from './routing/metrics-collector';
 import { repoService } from './services/repo-service';
@@ -149,31 +146,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New endpoint for lightweight repository analysis (disabled temporarily)
-  // app.get("/api/github/repos/:owner/:repo/analyze", async (req: Request, res: Response) => {
-  //   try {
-  //     const { owner, repo } = req.params;
-  //     console.log(`Starting repository analysis for ${owner}/${repo}`);
-  //
-  //     // Perform lightweight analysis
-  //     const analysis = await githubAnalyzer.analyzeRepository(owner, repo);
-  //
-  //     console.log(`Repository analysis completed for ${owner}/${repo}`);
-  //     res.json({
-  //       success: true,
-  //       analysis: analysis
-  //     });
-  //   } catch (error) {
-  //     console.error('Error in repository analysis endpoint:', error);
-  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  //     res.status(500).json({
-  //       success: false,
-  //       error: 'Failed to analyze repository',
-  //       details: errorMessage
-  //     });
-  //   }
-  // });
-
   // New endpoint to get repository information from backend
   app.get("/api/github/repos/:owner/:repo", async (req: Request, res: Response) => {
     try {
@@ -193,18 +165,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to get repository from backend" });
     }
   });
-
-  // New endpoint to get all repositories stored in backend
-  // COMMENTED OUT: This route conflicts with the GitHub repos route above
-  // Use /api/github/repos/backend instead if you need to list backend repos
-  // app.get("/api/github/repos", async (req: Request, res: Response) => {
-  //   try {
-  //     const repos = await repoService.getAllRepos();
-  //     res.json(repos);
-  //   } catch (error) {
-  //     res.status(500).json({ error: "Failed to get repositories from backend" });
-  //   }
-  // });
 
   // Get all demands
   app.get("/api/demands", async (req: Request, res: Response) => {
@@ -798,62 +758,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Remove a conexão quando o cliente se desconecta
       aiSquadService.removeSSEConnection(id);
     });
-  });
-
-  // Test PDF generation endpoint
-  app.get("/api/test-pdf", async (req: Request, res: Response) => {
-    try {
-      const testContent = `
-# PRD - Sistema de Geração de PDF Avançado
-
-## 📋 Visão Geral
-
-**Objetivo:** Implementar um sistema robusto de geração de documentos PDF para a plataforma AiChatFlow
-**Problema:** A plataforma atual não possui um sistema integrado de geração de documentos PDF que atenda aos requisitos de qualidade e padronização
-**Solução:** Desenvolver um módulo de geração de PDF que seja capaz de criar documentos profissionais com base em templates pré-definidos
-`;
-
-      const tasksContent = `
-# Test Tasks Document
-
-## 🔧 Backend Tasks
-
-- [ ] Implementar API principal
-- [ ] Criar testes unitários
-- [ ] Configurar banco de dados
-
-## 🎨 Frontend Tasks
-
-- [ ] Criar interface de usuário
-- [ ] Implementar validação de formulário
-- [ ] Adicionar animações
-`;
-
-      // Generate test PDFs
-      const prdPdf = await pdfGenerator.generatePRDDocument(testContent, 999);
-      const tasksPdf = await pdfGenerator.generateTasksDocument(tasksContent, 999);
-
-      // Save to documents directory
-      const documentsDir = path.join(process.cwd(), 'documents');
-      if (!fs.existsSync(documentsDir)) {
-        fs.mkdirSync(documentsDir, { recursive: true });
-      }
-
-      const prdPath = path.join(documentsDir, 'test_prd.pdf');
-      const tasksPath = path.join(documentsDir, 'test_tasks.pdf');
-
-      fs.writeFileSync(prdPath, prdPdf);
-      fs.writeFileSync(tasksPath, tasksPdf);
-
-      res.json({
-        message: "PDF generation test completed successfully!",
-        prdUrl: `/api/documents/test_prd.pdf`,
-        tasksUrl: `/api/documents/test_tasks.pdf`
-      });
-    } catch (error) {
-      console.error('Error during PDF generation test:', error);
-      res.status(500).json({ error: "Failed to generate test PDFs" });
-    }
   });
 
   // Route a demand with intelligent routing

@@ -59,7 +59,7 @@ Este documento apresenta um backlog **REVISADO** de **12 features realistas e im
 **Backend:**
 - Node.js + Express + TypeScript
 - SQLite + Drizzle ORM
-- Mistral AI (primary), OpenAI (secondary)
+- OpenAI (primary)
 - File system storage
 
 **Limitações Identificadas:**
@@ -85,7 +85,7 @@ Este documento apresenta um backlog **REVISADO** de **12 features realistas e im
 
 **Recomendação:**
 ```typescript
-// server/services/mistral-ai.ts
+// server/services/openai-ai.ts
 async callWithRetry(prompt: string, maxRetries = 3): Promise<string> {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -121,12 +121,12 @@ async callWithRetry(prompt: string, maxRetries = 3): Promise<string> {
 
 #### **FEATURE-02: Circuit Breaker para Providers de IA** ⭐ PRIORIDADE: IMPORTANTE
 
-**Análise:** Quando Mistral AI está down, todas as requisições falham. Não há fallback para OpenAI (já configurado no código).
+**Análise:** Quando OpenAI está down, todas as requisições falham. Não há fallback para OpenAI (já configurado no código).
 
 **Problema Identificado:** Sistema fica completamente indisponível quando provider principal falha.
 
 **Impacto:**
-- Downtime de ~2h/mês quando Mistral tem problemas
+- Risco operacional quando o provedor principal de IA tem instabilidade
 - 100% das demandas bloqueadas durante downtime
 
 **Recomendação:**

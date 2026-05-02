@@ -42,7 +42,7 @@ O AiChatFlow conta com uma equipe de agentes especializados, cada um com um perf
 
 -   **Backend**: Node.js, Express, TypeScript
 -   **Frontend**: React, Vite, Tailwind CSS
--   **Inteligência Artificial**: Mistral AI
+-   **Inteligência Artificial**: OpenAI
 -   **Banco de Dados**: SQLite (via Drizzle ORM)
 -   **Integrações**: GitHub API, PDF-lib
 
@@ -177,7 +177,7 @@ O AICHATflow inclui um **Framework Manager** com 6 frameworks especializados par
 -   Taxa de adoção
 -   Satisfação do usuário com sugestões
 
-**Integrações:** Mistral AI, bases de conhecimento
+**Integrações:** OpenAI, bases de conhecimento
 
 ### Seleção de Frameworks
 
@@ -215,11 +215,11 @@ Para mais detalhes, consulte a [documentação completa dos Frameworks](FRAMEWOR
 
 3.  **Configure as variáveis de ambiente:**
     - Crie um arquivo `.env` na raiz do projeto, utilizando o `.env.example` como modelo.
-    - Preencha as variáveis obrigatórias, como `MISTRAL_API_KEY`.
+    - Preencha as variáveis obrigatórias, como `OPENAI_API_KEY`.
 
     ```env
     # .env
-    MISTRAL_API_KEY="sua_chave_da_mistral_ai"
+    OPENAI_API_KEY="sua_chave_da_openai"
     PORT=5000
     # Outras variáveis...
     ```
@@ -229,7 +229,7 @@ Para mais detalhes, consulte a [documentação completa dos Frameworks](FRAMEWOR
     npm run dev
     ```
 
-    A aplicação estará disponível em `http://localhost:5000`.
+    Com `PORT=5000`, a aplicação estará disponível em `http://localhost:5000`. Se `PORT` não for definido, o servidor escolhe uma porta livre e imprime a URL no log.
 
 ## Como Usar
 
@@ -255,7 +255,7 @@ Contribuições são bem-vindas! Se você deseja melhorar o AiChatFlow, siga os 
 
 -   [ ] Implementar testes unitários e de integração abrangentes.
 -   [ ] Desenvolver um dashboard de métricas em tempo real.
--   [ ] Adicionar suporte a mais modelos de IA (OpenAI, Anthropic, etc.).
+-   [ ] Adicionar suporte a mais modelos de IA (Anthropic, Mistral, etc.).
 -   [ ] Criar um sistema de notificações para os usuários.
 -   [ ] Documentar a API pública para integrações externas.
 -   [ ] Integrar com outras ferramentas de gerenciamento de projetos (Jira, Asana).

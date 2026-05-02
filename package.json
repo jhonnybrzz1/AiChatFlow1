@@ -10,12 +10,11 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
-    "test:mistral": "tsx server/test-mistral.ts"
+    "test:openai": "tsx server/test-openai.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
-    "@mistralai/mistralai": "^1.0.0",
     "@neondatabase/serverless": "^0.10.4",
     "@octokit/rest": "^22.0.1",
     "@radix-ui/react-accordion": "^1.2.4",
