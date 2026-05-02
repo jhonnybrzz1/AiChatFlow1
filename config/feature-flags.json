@@ -3,5 +3,6 @@
   "enableNewProductFeatures": true,
   "enableEnhancedValidation": true,
   "enableAdvancedLogging": true,
-  "enableUserFeedbackSystem": true
+  "enableUserFeedbackSystem": true,
+  "enableImprovementParallelSubset": true
 }

@@ -5,6 +5,8 @@ import { demandTypeSchema, prioritySchema, type DemandPriority, type DemandType 
 
 // Tipos de refinamento disponíveis
 export type RefinementType = 'technical' | 'business' | null;
+export const demandDomainSchema = z.enum(['padrao', 'fintech', 'healthtech', 'ecommerce']);
+export type DemandDomain = z.infer<typeof demandDomainSchema>;
 
 export const demands = sqliteTable("demands", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -228,6 +230,7 @@ export const insertDemandSchema = createInsertSchema(demands).pick({
 }).extend({
   type: demandTypeSchema,
   priority: prioritySchema,
+  domain: demandDomainSchema.default('padrao').optional(),
 });
 
 // Schema interno completo (para uso no servidor)
@@ -269,6 +272,13 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Demand = typeof demands.$inferSelect & {
   frameworkExecution?: any;
+  domain?: DemandDomain;
+  executionId?: string | null;
+  executionConfig?: Record<string, unknown> | null;
+  qualityPassed?: boolean | null;
+  missingSections?: string[] | null;
+  fallbackUsed?: boolean;
+  fallbackReason?: string | null;
 };
 export type Repo = typeof repos.$inferSelect;
 export type RepoFile = typeof repoFiles.$inferSelect;

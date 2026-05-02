@@ -53,6 +53,13 @@ const refinementTypes = [
   },
 ];
 
+const demandDomains = [
+  { value: "padrao", label: "PADRAO" },
+  { value: "fintech", label: "FINTECH" },
+  { value: "healthtech", label: "HEALTHTECH" },
+  { value: "ecommerce", label: "E-COMMERCE" },
+];
+
 export function DemandForm() {
   const [selectedType, setSelectedType] = useState<DemandType>("nova_funcionalidade");
   const [selectedRefinementType, setSelectedRefinementType] = useState<"technical" | "business">("business");
@@ -69,6 +76,7 @@ export function DemandForm() {
       description: "",
       type: "nova_funcionalidade",
       priority: "media",
+      domain: "padrao",
     },
   });
 
@@ -112,6 +120,7 @@ export function DemandForm() {
       setSelectedRepo(null);
       setSelectedType("nova_funcionalidade");
       setSelectedRefinementType("business");
+      form.setValue("domain", "padrao");
       setIsCollapsed(true);
       queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
       setTimeout(() => {
@@ -357,6 +366,32 @@ export function DemandForm() {
                               className={cn("font-mono", priority.color)}
                             >
                               [{priority.value.toUpperCase()}] {priority.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Domain */}
+              <FormField
+                control={form.control}
+                name="domain"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label className="font-mono text-xs text-[var(--foreground-muted)]">DOMÍNIO</Label>
+                    <FormControl>
+                      <Select value={field.value || "padrao"} onValueChange={field.onChange}>
+                        <SelectTrigger className="terminal-input mt-2">
+                          <SelectValue placeholder="Selecione o domínio" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--background)] border-2 border-[var(--border)]">
+                          {demandDomains.map((domain) => (
+                            <SelectItem key={domain.value} value={domain.value} className="font-mono">
+                              {domain.label}
                             </SelectItem>
                           ))}
                         </SelectContent>

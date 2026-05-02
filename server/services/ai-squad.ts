@@ -19,6 +19,10 @@ import { contextBuilder } from './context-builder';
 import { RealityBasedRefinement } from '../cognitive-core/reality-based-refinement';
 import { typeContractValidator } from '../utils/typeContractValidator';
 import { getDemandTypeConfig } from '@shared/demand-types';
+import {
+  IMPROVEMENT_EXECUTION_CONFIG_VERSION,
+  improvementExecutionService
+} from './improvement-execution';
 
 // Adicionando interface para gerenciamento de SSE
 interface SSEConnection {
@@ -485,8 +489,49 @@ export class AISquadService {
       });
     }
 
+    const executionId = demand.type === 'melhoria'
+      ? improvementExecutionService.createExecutionId()
+      : undefined;
+    const domain = improvementExecutionService.normalizeDomain(demand.domain);
+    const parallelEnabled = demand.type === 'melhoria' && this.isImprovementParallelEnabled();
+    const improvementConfig = improvementExecutionService.getImprovementAgentConfigs(this.agentConfigs, {
+      ...demand,
+      domain
+    });
+
+    if (executionId) {
+      const fallbackReason = improvementConfig.fallbackReason || null;
+      await storage.updateDemand(demandId, {
+        executionId,
+        executionConfig: {
+          configVersion: IMPROVEMENT_EXECUTION_CONFIG_VERSION,
+          profile: parallelEnabled ? 'experimental_parallel_subset' : 'baseline_sequential',
+          domain,
+          template: 'improvement',
+          parallelAgents: parallelEnabled ? ['qa', 'ux', 'analista_de_dados'] : [],
+          maxConcurrency: parallelEnabled ? 3 : 1,
+        },
+        fallbackUsed: improvementConfig.fallbackUsed,
+        fallbackReason,
+      });
+      improvementExecutionService.recordEvent({
+        executionId,
+        demandId,
+        eventType: 'execution_started',
+        configVersion: IMPROVEMENT_EXECUTION_CONFIG_VERSION,
+        timestamp: new Date().toISOString(),
+        fallbackUsed: improvementConfig.fallbackUsed,
+        fallbackReason: fallbackReason || undefined,
+        metadata: {
+          domain,
+          demandType: demand.type,
+          profile: parallelEnabled ? 'experimental_parallel_subset' : 'baseline_sequential',
+        },
+      });
+    }
+
     // Perform multi-agent interaction for collaborative refinement
-    const agentConfigs = this.agentConfigs; // Use the loaded agent configurations
+    const agentConfigs = improvementConfig.configs; // Use loaded configs, specialized for improvement domains when applicable
     let messages: ChatMessage[] = []; // Initialize messages array
 
     // Progress: 10% after routing
@@ -520,7 +565,12 @@ export class AISquadService {
         demand,
         agentConfigs,
         internalContext, // Pass the assembled context
-        onProgress
+        onProgress,
+        {
+          executionId,
+          enableParallelSubset: parallelEnabled,
+          maxConcurrency: 3,
+        }
       );
 
       if (interactionResult) {
@@ -661,6 +711,23 @@ export class AISquadService {
     // Validate type adherence if refinement type is set
     const refinementType = demand.refinementType as RefinementType;
     const typeAdherence = typeContractValidator.validateTypeAdherence(prdContent, refinementType);
+    const qualityChecklist = demand.type === 'melhoria'
+      ? improvementExecutionService.validateImprovementPlan(prdContent)
+      : { qualityPassed: typeAdherence.isAdherent, missingSections: [] };
+
+    if (executionId) {
+      improvementExecutionService.recordEvent({
+        executionId,
+        demandId,
+        eventType: 'quality_gate',
+        configVersion: IMPROVEMENT_EXECUTION_CONFIG_VERSION,
+        timestamp: new Date().toISOString(),
+        qualityPassed: qualityChecklist.qualityPassed,
+        missingSections: qualityChecklist.missingSections,
+        fallbackUsed: improvementConfig.fallbackUsed,
+        fallbackReason: improvementConfig.fallbackReason,
+      });
+    }
 
     // Log type adherence result
     if (refinementType) {
@@ -677,7 +744,12 @@ export class AISquadService {
       progress: 100,
       prdUrl: prdPath,
       tasksUrl: tasksPath,
-      typeAdherence: typeAdherence
+      typeAdherence: typeAdherence,
+      qualityPassed: qualityChecklist.qualityPassed,
+      missingSections: qualityChecklist.missingSections,
+      validationNotes: demand.type === 'melhoria'
+        ? `quality_passed=${qualityChecklist.qualityPassed}; missing_sections=${qualityChecklist.missingSections.join(', ') || 'none'}`
+        : undefined
     });
 
     // Clean up evolving context after processing completes
@@ -793,6 +865,16 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
     return getDemandTypeConfig(type).intensity;
   }
 
+  private isImprovementParallelEnabled(): boolean {
+    try {
+      const flagsPath = path.join(process.cwd(), 'config', 'feature-flags.json');
+      const flags = JSON.parse(fs.readFileSync(flagsPath, 'utf8'));
+      return flags.enableImprovementParallelSubset === true;
+    } catch {
+      return false;
+    }
+  }
+
   private getDemandTypePrdGuidance(type: string): string {
     const config = getDemandTypeConfig(type);
     const requirements = config.typeRequirements.map(requirement => `- ${requirement}`).join('\n');
@@ -899,86 +981,95 @@ IMPORTANTE:
 3. Mantenha linguagem acessível para stakeholders não-técnicos
 4. Priorize clareza sobre completude
 
+--- MODO PRODUTO PESSOAL (OBRIGATÓRIO) ---
+1. Escreva para um builder solo decidindo o que fazer agora
+2. Troque linguagem corporativa por decisão prática
+3. Separe claramente: fazer agora, fazer depois e não fazer
+4. Não use TAM, ARR, MRR, enterprise sales, SSO ou compliance pesado
+5. O documento deve ajudar a executar, não impressionar stakeholders
+
 ${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
 Crie um PRD de NEGÓCIOS em Markdown seguindo EXATAMENTE este formato:
 
 # PRD - [Título]
 
-## 1. Resumo Executivo
-[1-2 parágrafos: O que é, por que é importante, qual o impacto esperado]
+## 1. Decisão De Produto
+[3-5 linhas: o que fazer, por que agora e qual menor resultado útil]
 
-## 2. Problema e Oportunidade
-### 2.1 Contexto do Problema
+## 2. Prontidão Da Demanda
+- **Status:** [Pronta / Precisa refinar / Bloqueada]
+- **Por que:** [Justificativa objetiva]
+- **Perguntas abertas:** [Somente perguntas que bloqueiam execução]
+
+## 3. Problema e Oportunidade
+### 3.1 Contexto do Problema
 [Qual dor do usuário/negócio estamos resolvendo?]
 
-### 2.2 Impacto Atual
-[Quanto custa não resolver? Quantos usuários afetados?]
+### 3.2 Impacto Atual
+[O que fica pior se não resolver agora?]
 
-### 2.3 Oportunidade
-[Qual o ganho potencial ao resolver?]
+### 3.3 Oportunidade
+[Qual ganho prático ao resolver?]
 
-## 3. Objetivo e Benefícios
-### 3.1 Objetivo Principal
+## 4. Objetivo e Benefícios
+### 4.1 Objetivo Principal
 [Uma frase clara: "Permitir que [usuário] consiga [ação] para [benefício]"]
 
-### 3.2 Benefícios Esperados
+### 4.2 Benefícios Esperados
 - **Para o Usuário:** [Como melhora a vida do usuário]
-- **Para o Negócio:** [Impacto em métricas de negócio]
+- **Para o Produto Pessoal:** [Como reduz tempo, melhora clareza ou acelera execução]
 - **Para a Operação:** [Redução de custo/suporte/tempo]
 
-## 4. Escopo da Entrega
-### 4.1 O que ESTÁ incluído
+## 5. Escopo da Entrega
+### 5.1 Fazer Agora
 - [Funcionalidade/entrega 1]
 - [Funcionalidade/entrega 2]
-- [Funcionalidade/entrega 3]
 
-### 4.2 O que NÃO está incluído (fora de escopo)
+### 5.2 Fazer Depois
+- [Melhoria futura 1]
+
+### 5.3 Não Fazer
 - [Item explicitamente excluído 1]
 - [Item explicitamente excluído 2]
 
-## 5. Experiência Esperada
-### 5.1 Jornada do Usuário
+## 6. Experiência Esperada
+### 6.1 Jornada do Usuário
 [Descreva passo a passo como o usuário vai interagir com a funcionalidade]
 
-### 5.2 Critérios de Sucesso do Usuário
+### 6.2 Critérios de Sucesso do Usuário
 - [O usuário consegue fazer X em Y cliques]
 - [O tempo para completar a tarefa é menor que Z]
 
-## 6. Regras de Negócio e Premissas
-### 6.1 Regras de Negócio
+## 7. Regras de Negócio e Premissas
+### 7.1 Regras de Negócio
 - [Regra 1: "Se X, então Y"]
 - [Regra 2: "Nunca permitir Z quando W"]
 
-### 6.2 Premissas
+### 7.2 Premissas
 - [Premissa 1: Assumimos que...]
 - [Premissa 2: Dependemos de...]
 
-## 7. Métricas de Sucesso
+## 8. Métricas de Sucesso
 | Métrica | Baseline Atual | Meta | Como Medir |
 |---------|----------------|------|------------|
-| [Métrica 1] | [Valor atual] | [Valor esperado] | [Ferramenta/método] |
-| [Métrica 2] | [Valor atual] | [Valor esperado] | [Ferramenta/método] |
+| Tempo economizado | [Valor atual] | [Valor esperado] | [Ferramenta/método] |
+| Reaproveitamento do plano | [Valor atual] | [Valor esperado] | [Ferramenta/método] |
 
-## 8. Prioridade e Justificativa
+## 9. Prioridade e Justificativa
 - **Prioridade:** [Alta/Média/Baixa]
 - **Justificativa:** [Por que essa prioridade? Impacto vs Esforço]
 - **Custo de Atraso:** [O que perdemos se não fizermos agora?]
 
-## 9. Riscos e Mitigações
+## 10. Riscos e Mitigações
 | Risco | Probabilidade | Impacto | Mitigação |
 |-------|---------------|---------|-----------|
 | [Risco 1] | Alta/Média/Baixa | Alto/Médio/Baixo | [Como evitar] |
 
-## 10. Stakeholders e Aprovações
-- **Sponsor:** [Nome/Papel]
-- **Aprovadores:** [Quem precisa aprovar]
-- **Consultados:** [Quem foi ouvido]
-
 IMPORTANTE:
-- Este é um documento de NEGÓCIOS para stakeholders
-- Evite jargão técnico - traduza para impacto de negócio
+- Este é um documento de produto pessoal para decisão e execução
+- Evite jargão técnico quando não ajudar a decidir
 - Mantenha seções de objetivo, valor, impacto e prioridade
-- O documento deve ser compreensível por qualquer pessoa da empresa`;
+- O documento deve ser compreensível em uma leitura`;
   }
 
   // ===== NOVOS MÉTODOS: Geração de PRD e Tasks com PM (FORA DO LOOP) =====
@@ -999,7 +1090,7 @@ IMPORTANTE:
 
     // Determinar tipo de refinamento - usa o valor da demanda
     const refinementType = demand.refinementType as RefinementType;
-    const isTechnical = refinementType === 'technical';
+    const isTechnical = refinementType === 'technical' && demand.type !== 'melhoria';
     const demandTypeGuidance = this.getDemandTypePrdGuidance(demand.type);
 
     // Sistema de prompts diferenciados por tipo
@@ -1021,10 +1112,10 @@ ${demandTypeGuidance}
 ${refinementSummary}
 
 === SUA TAREFA ===
-Com base em TODAS as análises acima, crie um documento ${isTechnical ? 'técnico' : 'de negócio'} completo em Markdown seguindo o formato especificado.
+Com base em TODAS as análises acima, crie um documento ${isTechnical ? 'técnico' : 'de negócio'} enxuto em Markdown seguindo o formato especificado.
 ${isTechnical
   ? 'O documento deve ser um artefato técnico que engenheiros e tech leads consigam usar para implementação.'
-  : 'O documento deve ser um documento de negócio que qualquer pessoa consiga ler uma vez e entender o problema, o valor e a decisão necessária.'}
+  : 'O documento deve ser um artefato de decisão que um builder solo consiga ler uma vez e executar.'}
 
 IMPORTANTE:
 - Use as informações do refinamento dos agentes para preencher os campos do PRD
@@ -1033,7 +1124,8 @@ ${isTechnical
   ? '- Mantenha detalhes técnicos como arquitetura, componentes, dependências e trade-offs'
   : '- Traduza sugestões técnicas dos agentes para impacto de negócio, experiência do usuário, risco, escopo ou métrica'}
 - Certifique-se de que o conteúdo do PRD reflita fielmente as discussões realizadas
-- Não escreva em formato RF/RNF e não detalhe implementação técnica`;
+- Não escreva em formato RF/RNF
+- Não use linguagem de startup enterprise; mantenha foco em produto pessoal e execução`;
 
     try {
       const response = await openAIService.generateChatCompletion(
@@ -1061,7 +1153,7 @@ ${isTechnical
     // Get insights from evolved context
     const insightsSummary = contextBuilder.getInsightsSummary(demand.id);
 
-    const systemPrompt = `Você é um Product Manager experiente.
+    const systemPrompt = `Você é um Product Manager experiente criando um checklist de execução para um produto pessoal.
 
 --- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
 1. NÃO sugira tecnologias fora do stack atual (TypeScript, React, Node.js, Vite, SQLite)
@@ -1069,50 +1161,55 @@ ${isTechnical
 3. TODAS as estimativas devem ser realistas (< 2 semanas para features, < 3 dias para bugs)
 4. As tasks devem ser INCREMENTAIS e PRÁTICAS
 5. Foque no que pode ser feito AGORA com a stack atual
+6. Não force Backend, Frontend, Database e DevOps se a demanda não precisar
 
 ${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
-Crie um documento de tasks técnicas detalhadas baseadas no PRD seguindo EXATAMENTE este formato:
+Crie um documento de tasks baseado no PRD seguindo EXATAMENTE este formato:
 
-# Tasks Document - [Título da Demanda]
+# Checklist De Execução - [Título da Demanda]
 
 **Versão:** 1.0.0
 **Prioridade:** [Alta/Média/Baixa]
-**Responsável:** @squad-dev
+**Responsável:** Produto pessoal
 **Status:** Não Iniciado
 
-## Tarefas
+## Agora
 
 - **T1:** [Descrição concisa da tarefa 1]
   Critérios de aceite: [Critérios específicos de aceite]
   **Dependências:** [Tarefas ou recursos necessários]
-  **Vinculado ao PRD:** Escopo da Entrega; Experiência Esperada
+  **Vinculado ao PRD:** [Seção relevante]
 
 - **T2:** [Descrição concisa da tarefa 2]
   Critérios de aceite: [Critérios específicos de aceite]
   **Dependências:** T1
-  **Vinculado ao PRD:** Métricas de Sucesso
+  **Vinculado ao PRD:** [Seção relevante]
 
 - **T3:** [Descrição concisa da tarefa 3]
   Critérios de aceite: [Critérios específicos de aceite]
   **Dependências:** Nenhuma
-  **Vinculado ao PRD:** Regras de Negócio e Premissas
+  **Vinculado ao PRD:** [Seção relevante]
 
-[Continue com mais tasks conforme necessário - mínimo 5 tasks]
+## Depois
+- [Melhoria futura que não deve bloquear a entrega atual]
+
+## Não Fazer
+- [Item fora de escopo para evitar overengineering]
 
 ## Métricas de Sucesso
-- [Métrica 1: Como medir o sucesso desta implementação]
-- [Métrica 2: KPI específico relacionado às tasks]
-- [Métrica 3: Indicador de qualidade]
+- [Tempo economizado ou fricção removida]
+- [Como saber que o plano foi reaproveitado na execução]
+- [Indicador simples de qualidade]
 
 ## Notas de Implementação
 [Observações técnicas importantes, boas práticas, ou considerações de arquitetura]
 
 IMPORTANTE:
 - Siga EXATAMENTE este formato
-- Gere NO MÍNIMO 5 tasks detalhadas
+- Gere entre 3 e 7 tasks; use menos tasks quando a demanda for simples
 - Cada task deve ter ID sequencial (T1, T2, T3, etc.)
 - Vincule cada task a uma seção, entrega ou métrica do PRD
-- As tasks devem cobrir: Backend, Frontend, Database, Testes e DevOps
+- Cubra somente as áreas realmente necessárias
 - Seja específico e técnico nas descrições
 
 Gere o documento em português brasileiro.`;
@@ -1121,13 +1218,14 @@ Gere o documento em português brasileiro.`;
 ${prdContent}
 
 === SUA TAREFA ===
-Com base no PRD acima, crie uma lista completa de tasks técnicas organizadas por categoria.
-As tasks devem cobrir todos os aspectos técnicos necessários para implementar a demanda.
+Com base no PRD acima, crie um checklist de execução pessoal.
+As tasks devem cobrir apenas os aspectos necessários para implementar a menor entrega útil.
 
 IMPORTANTE:
 - As tasks devem refletir diretamente o escopo, a experiência esperada, as regras de negócio e as métricas do PRD
 - Use informações técnicas e insights específicos mencionados durante o refinamento da squad
-- Crie tarefas que estejam claramente alinhadas com as sugestões dos agentes do refinamento`;
+- Crie tarefas que estejam claramente alinhadas com as sugestões dos agentes do refinamento
+- Separe com rigor o que fazer agora, o que fazer depois e o que não fazer`;
 
     try {
       const response = await openAIService.generateChatCompletion(

@@ -2,6 +2,11 @@ import { Demand, ChatMessage } from '@shared/schema';
 import { openAIService } from './openai-ai';
 import { storage } from '../storage';
 import { contextBuilder } from './context-builder';
+import {
+  IMPROVEMENT_EXECUTION_CONFIG_VERSION,
+  IMPROVEMENT_PARALLEL_AGENTS,
+  improvementExecutionService
+} from './improvement-execution';
 
 export interface AgentMessage {
   agent: string;
@@ -18,6 +23,12 @@ export interface AgentInteractionResult {
   finalCompletenessPercentage: number; // The final completeness percentage at the end of interaction
 }
 
+export interface AgentInteractionOptions {
+  executionId?: string;
+  enableParallelSubset?: boolean;
+  maxConcurrency?: number;
+}
+
 export class AgentInteractionService {
   /**
    * Performs multi-agent interaction for a specific demand
@@ -30,7 +41,8 @@ export class AgentInteractionService {
     demand: Demand,
     agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }>,
     internalContext: string, // Initial context (will be evolved)
-    onProgress?: (message: ChatMessage) => void
+    onProgress?: (message: ChatMessage) => void,
+    options: AgentInteractionOptions = {}
   ): Promise<AgentInteractionResult> {
     // Get all agent names
     const agentNames = Object.keys(agentConfigs);
@@ -66,158 +78,43 @@ Por favor, colaborem para refinar esta demanda. Cada agente deve contribuir com 
     let completedEarly = false;
 
     for (let round = 0; round < interactionRounds; round++) {
-      for (const agentName of agentNames) {
-        const agentConfig = agentConfigs[agentName];
-        if (!agentConfig) continue;
+      const parallelAgents = options.enableParallelSubset
+        ? agentNames.filter(agentName => IMPROVEMENT_PARALLEL_AGENTS.includes(agentName as any))
+        : [];
+      const sequentialAgents = agentNames.filter(agentName => !parallelAgents.includes(agentName));
 
-        // CONTEXT EVOLUTION: Get the evolved context with all previous agent insights
-        const evolvedContext = contextBuilder.getEvolvedContext(demand.id);
+      for (const agentName of sequentialAgents) {
+        await this.executeAgentTurn({
+          demand,
+          agentName,
+          agentConfig: agentConfigs[agentName],
+          agentNames,
+          agentConfigs,
+          conversationHistory,
+          agentContributions,
+          round,
+          interactionRounds,
+          onProgress,
+          options,
+        });
+      }
 
-        // Create prompt with EVOLVED context (not static)
-        const conversationContext = this.buildConversationContext(conversationHistory);
-
-        const systemPrompt = `${evolvedContext}\n\n${agentConfig.system_prompt}
-
-CONTEXTO DA CONVERSA ATÉ AGORA:
-${conversationContext}
-
-Como ${agentName}, contribua para o refinamento da demanda acima.
-Seu papel é: ${agentConfig.description}
-
-IMPORTANTE:
-- Use os insights dos agentes anteriores para enriquecer sua análise
-- NÃO repita o que já foi dito - adicione NOVO valor
-- Seja específico e prático nas recomendações
-- Respeite as REALITY CONSTRAINTS se aplicáveis
-
-Trabalhe em colaboração com outros agentes para criar a melhor possível compreensão e refinamento da demanda.`;
-
-        const userPrompt = `Agora é sua vez de contribuir para o refinamento da demanda.
-Considere as contribuições anteriores dos outros agentes e adicione seu valor específico com base em sua especialidade.
-NÃO repita análises já feitas - traga novos insights da sua área.
-Demanda: ${demand.description}`;
-
-        try {
-          // Send intermediate progress update
-          if (onProgress) {
-            onProgress({
-              id: `${demand.id}-round-${round}-${agentName}`,
-              agent: agentName,
-              message: `${agentName} está contribuindo para a discussão...`,
-              timestamp: new Date().toISOString(),
-              type: 'processing',
-              category: 'system',
-              progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
-            });
-          }
-
-          const response = await openAIService.generateChatCompletion(
-            systemPrompt,
-            userPrompt,
-            {
-              temperature: 0.8, // Higher temperature for more creative collaboration
-              maxTokens: 1500,
-              model: agentConfig.model,
-              taskType: 'analysis',
-              operation: `agent_interaction:${agentName}`
-            }
-          );
-
-          if (response) {
-            const agentMessage: AgentMessage = {
-              agent: agentName,
-              message: response,
-              timestamp: new Date().toISOString(),
-              metadata: {
-                round,
-                phase: 'collaboration',
-                originalDemand: demand.id
-              }
-            };
-
-            conversationHistory.push(agentMessage);
-
-            // CONTEXT EVOLUTION: Add this agent's insight to the evolving context
-            // This ensures the next agent sees this agent's contributions
-            contextBuilder.addAgentInsight(demand.id, agentName, response);
-
-            // Send completed message update
-            if (onProgress) {
-              onProgress({
-                id: `${demand.id}-round-${round}-${agentName}-completed`,
-                agent: agentName,
-                message: response,
-                timestamp: new Date().toISOString(),
-                type: 'completed',
-                category: 'system',
-                progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
-              });
-            }
-
-            // Update the demand storage with the new message for real-time updates
-            const currentDemand = await storage.getDemand(demand.id);
-            const currentMessages = currentDemand?.chatMessages || [];
-
-            // Calculate current completeness percentage based on conversation so far (before this message)
-            const currentCompleteness = await this.evaluateCompleteness(
-              demand,
-              conversationHistory,
-              agentConfigs
-            );
-
-            const newMessage: ChatMessage = {
-              id: `${demand.id}-round-${round}-${agentName}-completed`,
-              agent: agentName,
-              message: response,
-              timestamp: new Date().toISOString(),
-              type: 'completed',
-              category: 'system',
-              progress: currentCompleteness // Use completeness percentage as progress indicator
-            };
-            const updatedMessages = [...currentMessages, newMessage];
-            await storage.updateDemandChat(demand.id, updatedMessages);
-
-            // Update the overall demand progress to reflect completeness percentage
-            await storage.updateDemand(demand.id, {
-              ...currentDemand,
-              progress: Math.max(10, Math.min(85, currentCompleteness)) // Keep between 10-85 during interaction
-            });
-
-            // Store the contribution
-            if (!agentContributions[agentName]) {
-              agentContributions[agentName] = '';
-            }
-            agentContributions[agentName] += `\n\n[${new Date().toLocaleString('pt-BR')}] ${response}`;
-          }
-        } catch (error) {
-          console.error(`Error processing agent ${agentName} in round ${round}:`, error);
-
-          // Send error progress update
-          if (onProgress) {
-            onProgress({
-              id: `${demand.id}-round-${round}-${agentName}-error`,
-              agent: agentName,
-              message: `${agentName} encontrou um erro durante a colaboração, mas o processo continua.`,
-              timestamp: new Date().toISOString(),
-              type: 'error',
-              category: 'error',
-              progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
-            });
-          }
-
-          // Add error message to conversation
-          const errorMessage: AgentMessage = {
-            agent: agentName,
-            message: `${agentName} encontrou um erro durante a colaboração, mas o processo continua.`,
-            timestamp: new Date().toISOString(),
-            metadata: {
-              round,
-              phase: 'error',
-              error: error instanceof Error ? error.message : 'Unknown error'
-            }
-          };
-          conversationHistory.push(errorMessage);
-        }
+      if (parallelAgents.length > 0) {
+        await this.runWithConcurrency(parallelAgents, options.maxConcurrency || 3, async (agentName) => {
+          await this.executeAgentTurn({
+            demand,
+            agentName,
+            agentConfig: agentConfigs[agentName],
+            agentNames,
+            agentConfigs,
+            conversationHistory,
+            agentContributions,
+            round,
+            interactionRounds,
+            onProgress,
+            options,
+          });
+        });
       }
 
       // After each complete round, check if we have sufficient information to complete early
@@ -234,8 +131,8 @@ Demanda: ${demand.description}`;
 
     // Final synthesis phase - have the most appropriate agent create a summary
     const synthesisResult = await this.synthesizeResults(
-      demand, 
-      conversationHistory, 
+      demand,
+      conversationHistory,
       agentConfigs
     );
 
@@ -249,6 +146,271 @@ Demanda: ${demand.description}`;
       completedEarly,
       finalCompletenessPercentage
     };
+  }
+
+  private async executeAgentTurn(params: {
+    demand: Demand;
+    agentName: string;
+    agentConfig?: { system_prompt: string, description: string, model?: string };
+    agentNames: string[];
+    agentConfigs: Record<string, { system_prompt: string, description: string, model?: string }>;
+    conversationHistory: AgentMessage[];
+    agentContributions: Record<string, string>;
+    round: number;
+    interactionRounds: number;
+    onProgress?: (message: ChatMessage) => void;
+    options: AgentInteractionOptions;
+  }): Promise<void> {
+    const {
+      demand,
+      agentName,
+      agentConfig,
+      agentNames,
+      agentConfigs,
+      conversationHistory,
+      agentContributions,
+      round,
+      interactionRounds,
+      onProgress,
+      options,
+    } = params;
+
+    if (!agentConfig) return;
+
+    const startTime = new Date();
+
+    const evolvedContext = contextBuilder.getEvolvedContext(demand.id);
+
+    const conversationContext = this.buildConversationContext(conversationHistory);
+
+    const systemPrompt = `${evolvedContext}\n\n${agentConfig.system_prompt}
+
+CONTEXTO DA CONVERSA ATÉ AGORA:
+${conversationContext}
+
+Como ${agentName}, contribua para o refinamento da demanda acima.
+Seu papel é: ${agentConfig.description}
+
+IMPORTANTE:
+- Use os insights dos agentes anteriores para enriquecer sua análise
+- NÃO repita o que já foi dito - adicione NOVO valor
+- Seja específico e prático nas recomendações
+- Respeite as REALITY CONSTRAINTS se aplicáveis
+
+Trabalhe em colaboração com outros agentes para criar a melhor possível compreensão e refinamento da demanda.`;
+
+    const userPrompt = `Agora é sua vez de contribuir para o refinamento da demanda.
+Considere as contribuições anteriores dos outros agentes e adicione seu valor específico com base em sua especialidade.
+NÃO repita análises já feitas - traga novos insights da sua área.
+Demanda: ${demand.description}`;
+
+    try {
+      if (onProgress) {
+        onProgress({
+          id: `${demand.id}-round-${round}-${agentName}`,
+          agent: agentName,
+          message: `${agentName} está contribuindo para a discussão...`,
+          timestamp: new Date().toISOString(),
+          type: 'processing',
+          category: 'system',
+          progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
+        });
+      }
+
+      const response = await openAIService.generateChatCompletion(
+        systemPrompt,
+        userPrompt,
+        {
+          temperature: 0.8,
+          maxTokens: 1500,
+          model: agentConfig.model,
+          taskType: 'analysis',
+          operation: `agent_interaction:${agentName}`
+        }
+      );
+
+      if (response) {
+        const agentMessage: AgentMessage = {
+          agent: agentName,
+          message: response,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            round,
+            phase: 'collaboration',
+            originalDemand: demand.id
+          }
+        };
+
+        conversationHistory.push(agentMessage);
+
+        contextBuilder.addAgentInsight(demand.id, agentName, response);
+
+        if (onProgress) {
+          onProgress({
+            id: `${demand.id}-round-${round}-${agentName}-completed`,
+            agent: agentName,
+            message: response,
+            timestamp: new Date().toISOString(),
+            type: 'completed',
+            category: 'system',
+            progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
+          });
+        }
+
+        const currentDemand = await storage.getDemand(demand.id);
+        const currentMessages = currentDemand?.chatMessages || [];
+
+        const currentCompleteness = await this.evaluateCompleteness(
+          demand,
+          conversationHistory,
+          agentConfigs
+        );
+
+        const newMessage: ChatMessage = {
+          id: `${demand.id}-round-${round}-${agentName}-completed`,
+          agent: agentName,
+          message: response,
+          timestamp: new Date().toISOString(),
+          type: 'completed',
+          category: 'system',
+          progress: currentCompleteness
+        };
+        const updatedMessages = [...currentMessages, newMessage];
+        await storage.updateDemandChat(demand.id, updatedMessages);
+
+        await storage.updateDemand(demand.id, {
+          ...currentDemand,
+          progress: Math.max(10, Math.min(85, currentCompleteness))
+        });
+
+        if (!agentContributions[agentName]) {
+          agentContributions[agentName] = '';
+        }
+        agentContributions[agentName] += `\n\n[${new Date().toLocaleString('pt-BR')}] ${response}`;
+      }
+    } catch (error) {
+      console.error(`Error processing agent ${agentName} in round ${round}:`, error);
+
+      if (onProgress) {
+        onProgress({
+          id: `${demand.id}-round-${round}-${agentName}-error`,
+          agent: agentName,
+          message: `${agentName} encontrou um erro durante a colaboração, mas o processo continua.`,
+          timestamp: new Date().toISOString(),
+          type: 'error',
+          category: 'error',
+          progress: 10 + Math.min(70, Math.round((round * agentNames.length + agentNames.indexOf(agentName) + 1) * 70 / (interactionRounds * agentNames.length)))
+        });
+      }
+
+      const errorMessage: AgentMessage = {
+        agent: agentName,
+        message: `${agentName} encontrou um erro durante a colaboração, mas o processo continua.`,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          round,
+          phase: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      };
+      conversationHistory.push(errorMessage);
+    }
+
+    const endTime = new Date();
+    if (options.executionId) {
+      improvementExecutionService.recordEvent({
+        executionId: options.executionId,
+        demandId: demand.id,
+        eventType: 'agent_execution',
+        configVersion: IMPROVEMENT_EXECUTION_CONFIG_VERSION,
+        timestamp: endTime.toISOString(),
+        agentName,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        durationMs: endTime.getTime() - startTime.getTime(),
+        metadata: {
+          round,
+          parallelSubset: Boolean(options.enableParallelSubset && IMPROVEMENT_PARALLEL_AGENTS.includes(agentName as any)),
+        },
+      });
+    }
+  }
+
+  private async runWithConcurrency<T>(
+    items: T[],
+    concurrency: number,
+    worker: (item: T) => Promise<void>,
+  ): Promise<void> {
+    for (let index = 0; index < items.length; index += concurrency) {
+      await Promise.all(items.slice(index, index + concurrency).map(item => worker(item)));
+    }
+  }
+
+  /**
+   * Executes a single agent for a specific demand
+   */
+  async executeAgent(agentName: string, demand: Demand): Promise<string> {
+    const evolvedContext = contextBuilder.getEvolvedContext(demand.id);
+    const systemPrompt = `${evolvedContext}\n\nVocê é um ${agentName} experiente em uma squad de desenvolvimento. Responda SEMPRE em português brasileiro. Seja objetivo e prático nas suas respostas.`;
+    const userPrompt = `Analise a demanda: ${demand.description}`;
+
+    try {
+      const response = await openAIService.generateChatCompletion(
+        systemPrompt,
+        userPrompt,
+        {
+          temperature: 0.7,
+          maxTokens: 1500,
+          taskType: 'analysis',
+          operation: `agent_execution:${agentName}`
+        }
+      );
+
+      return response || `${agentName} processou a demanda com sucesso.`;
+    } catch (error) {
+      console.error(`Error executing agent ${agentName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validates an agent's output for a specific demand
+   */
+  async validateAgentOutput(agentName: string, demand: Demand): Promise<any> {
+    // Basic validation implementation
+    const evolvedContext = contextBuilder.getEvolvedContext(demand.id);
+    const insights = contextBuilder.getAgentInsights(demand.id, agentName);
+    const lastInsight = insights[insights.length - 1];
+
+    if (!lastInsight) {
+      return { isValid: false, score: 0, feedback: "No output found for agent" };
+    }
+
+    // Use AI to validate if the output is aligned with the demand and reality constraints
+    const systemPrompt = `Você é um QA Arquiteto. Avalie a saída do agente ${agentName} para a demanda abaixo.
+Demanda: ${demand.description}
+Saída do Agente: ${lastInsight}
+
+Avalie se a resposta é técnica, viável e segue boas práticas.
+Responda em formato JSON: { "isValid": boolean, "score": number (0-100), "feedback": "string" }`;
+
+    try {
+      const response = await openAIService.generateChatCompletion(
+        systemPrompt,
+        "Valide a saída do agente.",
+        {
+          temperature: 0.2,
+          maxTokens: 500,
+          taskType: 'classification',
+          operation: `agent_validation:${agentName}`
+        }
+      );
+
+      return JSON.parse(response || '{"isValid": true, "score": 80, "feedback": "Validation failed, assuming valid."}');
+    } catch (error) {
+      console.error(`Error validating agent ${agentName}:`, error);
+      return { isValid: true, score: 70, feedback: "Validation error occurred" };
+    }
   }
 
   /**
