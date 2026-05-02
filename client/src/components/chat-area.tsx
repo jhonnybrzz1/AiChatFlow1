@@ -41,6 +41,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isChatAreaHoveredRef = useRef(false);
   const lastScrollTopRef = useRef(0);
   const lastAgentRenderRef = useRef<{
     messageId: string;
@@ -103,6 +104,7 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   const chatMessages = selectedDemand?.chatMessages || [];
 
   useEffect(() => {
+    if (isChatAreaHoveredRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [chatMessages.length, selectedDemand?.id]);
 
@@ -336,6 +338,12 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
         <div
           className="p-4 max-h-[500px] overflow-y-auto bg-[var(--background)] chat-online-thread"
           data-chat-area
+          onMouseEnter={() => {
+            isChatAreaHoveredRef.current = true;
+          }}
+          onMouseLeave={() => {
+            isChatAreaHoveredRef.current = false;
+          }}
           onScroll={handleMessageScroll}
         >
           {chatMessages.length === 0 ? (

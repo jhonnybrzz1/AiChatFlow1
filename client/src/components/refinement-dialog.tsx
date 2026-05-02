@@ -46,6 +46,7 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const bodyEndRef = useRef<HTMLDivElement>(null);
+  const isDialogBodyHoveredRef = useRef(false);
 
   const agentClass = agentClassMap[agent] || 'agent-qa';
 
@@ -61,6 +62,7 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    if (isDialogBodyHoveredRef.current) return;
     bodyEndRef.current?.scrollIntoView({ block: 'end' });
   }, [isOpen, message]);
 
@@ -129,7 +131,16 @@ const RefinementDialog: React.FC<RefinementDialogProps> = ({
           className="body"
           id="refinement-dialog-description"
         >
-          <div className="dialog-chat-thread" tabIndex={0}>
+          <div
+            className="dialog-chat-thread"
+            tabIndex={0}
+            onMouseEnter={() => {
+              isDialogBodyHoveredRef.current = true;
+            }}
+            onMouseLeave={() => {
+              isDialogBodyHoveredRef.current = false;
+            }}
+          >
             <div className="dialog-chat-bubble agent">
               <RefinementAgentMessageContent content={message} />
             </div>

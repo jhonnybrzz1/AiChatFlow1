@@ -11,6 +11,8 @@ O AiChatFlow é uma plataforma inteligente de orquestração de fluxos de trabal
 - **Arquitetura Baseada em Plugins**: Um design extensível que permite adicionar novas funcionalidades e lógicas de negócio de forma modular.
 - **Integração Contínua**: Conecta-se a ferramentas como GitHub para importar demandas e sincronizar o trabalho.
 - **Monitoramento e Métricas**: Coleta dados sobre o desempenho do sistema, dos agentes e das demandas para aprendizado e otimização contínuos.
+- **Contrato de Contexto Multi-Agente**: Registra metadados por mensagem sobre contexto anterior, histórico de conversa e marcadores do prompt final para auditoria.
+- **Chat de Refinamento Legível**: Renderiza listas de agentes sem asterisco literal, usa bolhas de conversa e pausa a rolagem automática quando o usuário está lendo a caixa de diálogo.
 
 ## Como Funciona
 
@@ -22,6 +24,7 @@ O fluxo de trabalho do AiChatFlow segue um processo estruturado:
     *   Analisar a demanda sob múltiplas perspectivas (negócio, técnico, UX).
     *   Identificar gaps de informação e solicitar esclarecimentos.
     *   Propor soluções e alternativas.
+    *   Usar contexto anterior observável para evitar repetição e acrescentar valor por persona.
 4.  **Geração de Documentos**: Com base no refinamento, o Product Manager Agent gera a documentação técnica (PRD, Tasks Document).
 5.  **Finalização e Entrega**: A demanda refinada e a documentação são disponibilizadas para a equipe de desenvolvimento.
 
@@ -38,6 +41,8 @@ O AiChatFlow conta com uma equipe de agentes especializados, cada um com um perf
 -   **Scrum Master**: O facilitador. Remove impedimentos, otimiza o fluxo de trabalho e garante a aplicação dos princípios ágeis.
 -   **Refinador**: O catalisador de ideias. Explora abordagens criativas e inspira soluções inovadoras.
 
+Os agentes são carregados a partir de `agents/*.yaml` e normalizados para chaves canônicas como `refinador`, `scrum_master`, `qa`, `ux`, `analista_de_dados` e `tech_lead`. Essa normalização garante que o template fixo de melhoria selecione a squad esperada.
+
 ## Tecnologias Utilizadas
 
 -   **Backend**: Node.js, Express, TypeScript
@@ -45,6 +50,24 @@ O AiChatFlow conta com uma equipe de agentes especializados, cada um com um perf
 -   **Inteligência Artificial**: OpenAI
 -   **Banco de Dados**: SQLite (via Drizzle ORM)
 -   **Integrações**: GitHub API, PDF-lib
+
+## Auditoria Multi-Agente
+
+O repositório inclui uma auditoria técnica para separar problemas de prompt, persona e encadeamento de contexto.
+
+Artefatos principais:
+
+- `analysis_report.md`: relatório com fontes de dados, abordagem, PIP-Audit, CVP, métricas e recomendações.
+- `scripts/agent-audit-sample.ts`: gera uma amostra local controlada sem chamada externa de IA.
+- `reports/agent-audit-sample.json`: saída da última amostra com seleção real da squad e métricas DDI/DCA/PTA/REDT/MEC.
+
+Comando:
+
+```bash
+npm run audit:agents
+```
+
+O script valida a seleção dos agentes de melhoria, registra presença/tamanho de contexto anterior e calcula métricas textuais simples sem ML.
 
 ## Núcleo Cognitivo do AICHATflow
 
@@ -210,7 +233,7 @@ Para mais detalhes, consulte a [documentação completa dos Frameworks](FRAMEWOR
 
 2.  **Instale as dependências:**
     ```bash
-    npm install
+    npm ci
     ```
 
 3.  **Configure as variáveis de ambiente:**
@@ -239,6 +262,35 @@ A plataforma foi desenhada para ser intuitiva. Após a configuração, você pod
 2.  **Importar do GitHub**: Utilize a funcionalidade de importação para trazer issues de um repositório diretamente para o fluxo de trabalho do AiChatFlow.
 3.  **Acompanhar o Refinamento**: Observe o debate entre os agentes de IA na área de chat, vendo a demanda ser analisada e detalhada em tempo real.
 4.  **Acessar os Documentos**: Uma vez que o refinamento é concluído, baixe os documentos gerados (PRD, Tasks) para iniciar o desenvolvimento.
+
+## Scripts Úteis
+
+| Comando | Uso |
+|---|---|
+| `npm run dev` | Inicia o servidor de desenvolvimento. |
+| `npm run check` | Executa typecheck TypeScript. |
+| `npm test` | Executa a suíte Vitest. |
+| `npm run build` | Gera build de frontend e backend. |
+| `npm run audit:agents` | Gera amostra e métricas da auditoria multi-agente. |
+| `npm run test:openai` | Testa integração OpenAI localmente. |
+
+## Qualidade e Auditoria
+
+Antes de enviar mudanças, rode:
+
+```bash
+npm run check
+npm test
+npm run build
+```
+
+Para mudanças em prompts, encadeamento de agentes ou seleção de squad, rode também:
+
+```bash
+npm run audit:agents
+```
+
+O build pode emitir aviso de chunk grande do Vite; esse aviso não bloqueia a geração do bundle.
 
 ## Contribuição
 
