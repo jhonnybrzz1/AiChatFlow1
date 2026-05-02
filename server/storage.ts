@@ -4,13 +4,13 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   createDemand(demand: InsertDemand): Promise<Demand>;
   getDemand(id: number): Promise<Demand | undefined>;
   getAllDemands(): Promise<Demand[]>;
   updateDemand(id: number, updates: Partial<Demand>): Promise<Demand | undefined>;
   updateDemandChat(id: number, messages: ChatMessage[]): Promise<void>;
-  
+
   createFile(file: InsertFile): Promise<File>;
   getFilesByDemandId(demandId: number): Promise<File[]>;
   getFile(id: number): Promise<File | undefined>;
@@ -58,10 +58,29 @@ export class MemStorage implements IStorage {
       ...insertDemand,
       id,
       status: 'processing',
-      progress: 0, // Initial progress
+      progress: 0,
       chatMessages: [],
       prdUrl: null,
       tasksUrl: null,
+      refinementType: insertDemand.refinementType ?? null,
+      classification: null,
+      orchestration: null,
+      currentAgent: null,
+      errorMessage: null,
+      validationNotes: null,
+      typeAdherence: null,
+      completedAt: null,
+
+      // Governance fields
+      requiresApproval: insertDemand.requiresApproval ?? false,
+      documentState: "DRAFT",
+      reviewSnapshotId: null,
+      approvedSnapshotId: null,
+      approvedSnapshotHash: null,
+      finalSnapshotId: null,
+      finalizedFromHash: null,
+      approvalSessionId: null,
+
       createdAt: now,
       updatedAt: now,
     };
@@ -74,7 +93,7 @@ export class MemStorage implements IStorage {
   }
 
   async getAllDemands(): Promise<Demand[]> {
-    return Array.from(this.demands.values()).sort((a, b) => 
+    return Array.from(this.demands.values()).sort((a, b) =>
       new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
     );
   }
@@ -82,7 +101,7 @@ export class MemStorage implements IStorage {
   async updateDemand(id: number, updates: Partial<Demand>): Promise<Demand | undefined> {
     const demand = this.demands.get(id);
     if (!demand) return undefined;
-    
+
     const updated = { ...demand, ...updates, updatedAt: new Date() };
     this.demands.set(id, updated);
     return updated;

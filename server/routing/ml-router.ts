@@ -2,6 +2,7 @@ import { HistoricalDemandData } from './data-collector';
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
+import { getDemandTypeConfig } from '@shared/demand-types';
 
 export interface RoutingPrediction {
   team: string;
@@ -29,7 +30,7 @@ export class MLRouter {
     // In a real scenario, this would train a machine learning model
     // For this implementation, we'll use statistical analysis of the data
     this.modelData = data;
-    
+
     // Calculate statistics for different demand types and teams
     const statsByTypeAndTeam: Record<string, Record<string, {
       count: number;
@@ -40,11 +41,11 @@ export class MLRouter {
     for (const record of data) {
       const type = record.type;
       const team = record.team;
-      
+
       if (!statsByTypeAndTeam[type]) {
         statsByTypeAndTeam[type] = {};
       }
-      
+
       if (!statsByTypeAndTeam[type][team]) {
         statsByTypeAndTeam[type][team] = {
           count: 0,
@@ -52,7 +53,7 @@ export class MLRouter {
           avg_resolution_time: 0
         };
       }
-      
+
       statsByTypeAndTeam[type][team].count++;
       statsByTypeAndTeam[type][team].avg_success_rate += record.success_rate;
       statsByTypeAndTeam[type][team].avg_resolution_time += record.resolution_time;
@@ -177,20 +178,7 @@ export class MLRouter {
    * @returns Default team name
    */
   private getDefaultTeam(demandType: string): string {
-    switch (demandType) {
-      case 'nova_funcionalidade':
-        return 'backend-frontend';
-      case 'melhoria':
-        return 'fullstack';
-      case 'bug':
-        return 'support';
-      case 'discovery':
-        return 'research';
-      case 'analise_exploratoria':
-        return 'analytics';
-      default:
-        return 'general';
-    }
+    return getDemandTypeConfig(demandType).defaultTeam;
   }
 
   /**
@@ -199,20 +187,7 @@ export class MLRouter {
    * @returns Default resolution time in minutes
    */
   private getDefaultResolutionTime(demandType: string): number {
-    switch (demandType) {
-      case 'nova_funcionalidade':
-        return 480; // 8 hours
-      case 'melhoria':
-        return 240; // 4 hours
-      case 'bug':
-        return 120; // 2 hours
-      case 'discovery':
-        return 360; // 6 hours
-      case 'analise_exploratoria':
-        return 720; // 12 hours
-      default:
-        return 240; // 4 hours
-    }
+    return getDemandTypeConfig(demandType).defaultResolutionMinutes;
   }
 
   /**
@@ -224,26 +199,9 @@ export class MLRouter {
    */
   private calculateFeatureScore(description: string, type: string, priority: string): number {
     let score = 50; // Base score
-    
-    // Type-based adjustment
-    switch (type) {
-      case 'nova_funcionalidade':
-        score += 20;
-        break;
-      case 'melhoria':
-        score += 10;
-        break;
-      case 'bug':
-        score -= 5;
-        break;
-      case 'discovery':
-        score += 15;
-        break;
-      case 'analise_exploratoria':
-        score += 25;
-        break;
-    }
-    
+
+    score += getDemandTypeConfig(type).complexityAdjustment;
+
     // Priority-based adjustment
     switch (priority) {
       case 'critica':
@@ -256,12 +214,12 @@ export class MLRouter {
         score += 5;
         break;
     }
-    
+
     // Description length as complexity indicator
     if (description.length > 500) score += 15;
     else if (description.length > 250) score += 10;
     else if (description.length > 100) score += 5;
-    
+
     // Keywords that indicate complexity
     const complexityKeywords = ['database', 'integration', 'security', 'authentication', 'scalability', 'performance'];
     for (const keyword of complexityKeywords) {
@@ -269,7 +227,7 @@ export class MLRouter {
         score += 10;
       }
     }
-    
+
     return Math.max(10, Math.min(100, score));
   }
 
@@ -282,14 +240,14 @@ export class MLRouter {
   private findBestTeamForType(demandType: string, complexity: number): string {
     // For this mock implementation, find the team with highest average success rate for this type
     const filteredData = this.modelData.filter(record => record.type === demandType);
-    
+
     if (filteredData.length === 0) {
       return this.getDefaultTeam(demandType);
     }
-    
+
     // Group by team and calculate average success rates
     const teamStats: Record<string, { totalSuccess: number; count: number }> = {};
-    
+
     for (const record of filteredData) {
       if (!teamStats[record.team]) {
         teamStats[record.team] = { totalSuccess: 0, count: 0 };
@@ -297,11 +255,11 @@ export class MLRouter {
       teamStats[record.team].totalSuccess += record.success_rate;
       teamStats[record.team].count++;
     }
-    
+
     // Find the team with the highest average success rate
     let bestTeam = '';
     let bestAverage = 0;
-    
+
     for (const team in teamStats) {
       const avgSuccess = teamStats[team].totalSuccess / teamStats[team].count;
       if (avgSuccess > bestAverage) {
@@ -309,7 +267,7 @@ export class MLRouter {
         bestTeam = team;
       }
     }
-    
+
     return bestTeam || this.getDefaultTeam(demandType);
   }
 
@@ -324,11 +282,11 @@ export class MLRouter {
     const similarDemands = this.modelData.filter(
       record => record.type === demandType && record.team === team
     );
-    
+
     // Confidence increases with more historical examples
     const baseConfidence = 60;
     const confidenceIncrease = Math.min(40, similarDemands.length * 2); // Max 40 points from historical data
-    
+
     return baseConfidence + confidenceIncrease;
   }
 
@@ -340,27 +298,8 @@ export class MLRouter {
    * @returns Estimated resolution time in minutes
    */
   private estimateResolutionTime(type: string, priority: string, complexity: number): number {
-    // Base time by type
-    let baseTime = 240; // 4 hours
-    
-    switch (type) {
-      case 'nova_funcionalidade':
-        baseTime = 480; // 8 hours
-        break;
-      case 'melhoria':
-        baseTime = 240; // 4 hours
-        break;
-      case 'bug':
-        baseTime = 120; // 2 hours
-        break;
-      case 'discovery':
-        baseTime = 360; // 6 hours
-        break;
-      case 'analise_exploratoria':
-        baseTime = 720; // 12 hours
-        break;
-    }
-    
+    const baseTime = getDemandTypeConfig(type).defaultResolutionMinutes;
+
     // Adjust by priority
     let priorityMultiplier = 1.0;
     switch (priority) {
@@ -374,10 +313,10 @@ export class MLRouter {
         priorityMultiplier = 1.2; // Low priority might take longer due to scheduling
         break;
     }
-    
+
     // Adjust by complexity (higher complexity takes more time)
     const complexityMultiplier = complexity / 50; // Normalize complexity score
-    
+
     return baseTime * priorityMultiplier * complexityMultiplier;
   }
 
@@ -389,28 +328,8 @@ export class MLRouter {
    * @returns Estimated success rate (0-100)
    */
   private estimateSuccessRate(type: string, priority: string, complexity: number): number {
-    // Base success rate
-    let baseRate = 75;
-    
-    // Adjust by type
-    switch (type) {
-      case 'nova_funcionalidade':
-        baseRate = 70; // New features can have unexpected issues
-        break;
-      case 'melhoria':
-        baseRate = 80; // Improvements often build on existing functionality
-        break;
-      case 'bug':
-        baseRate = 85; // Bugs usually have clearer solutions
-        break;
-      case 'discovery':
-        baseRate = 65; // Discoveries have more unknowns
-        break;
-      case 'analise_exploratoria':
-        baseRate = 60; // Analysis often has uncertain outcomes
-        break;
-    }
-    
+    let baseRate = getDemandTypeConfig(type).baseSuccessRate;
+
     // Adjust by priority (high priority might lead to rushed work, low priority might be forgotten)
     switch (priority) {
       case 'critica':
@@ -420,7 +339,7 @@ export class MLRouter {
         baseRate -= 10; // Low priority items might have less attention
         break;
     }
-    
+
     // Adjust by complexity (more complex = lower success rate)
     // Higher complexity slightly decreases success rate
     const complexityAdjustment = (50 - complexity) * 0.3;

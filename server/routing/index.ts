@@ -10,6 +10,7 @@ export { BasePlugin, type PluginResult, type PluginConfig, type DemandContext } 
 export { DiscoveryPlugin } from '../plugins/discovery-plugin';
 export { BugPlugin } from '../plugins/bug-plugin';
 export { ImprovementPlugin } from '../plugins/improvement-plugin';
+export { FeaturePlugin } from '../plugins/feature-plugin';
 
 // Metrics
 export { metricsCollector, type DemandMetrics, type SystemMetrics } from './metrics-collector';

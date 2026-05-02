@@ -7,6 +7,7 @@
 import { Demand, ChatMessage } from '@shared/schema';
 import { openAIService } from './openai-ai';
 import { pdfGenerator } from './pdf-generator';
+import { getDemandTypeConfig } from '@shared/demand-types';
 import fs from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger';
@@ -27,7 +28,7 @@ export interface GeneratedDocument {
 
 export abstract class DocumentGenerator {
   protected abstract getDocumentType(): string;
-  protected abstract getSystemPrompt(): string;
+  protected abstract getSystemPrompt(demand: Demand): string;
   protected abstract getUserPrompt(demand: Demand, refinementMessages: ChatMessage[]): string;
   protected abstract getFilePrefix(): string;
 
@@ -38,7 +39,7 @@ export abstract class DocumentGenerator {
    * Gera o conteúdo do documento usando IA com validação anti-overengineering
    */
   protected async generateContent(demand: Demand, refinementMessages: ChatMessage[]): Promise<string> {
-    const systemPrompt = this.getSystemPrompt();
+    const systemPrompt = this.getSystemPrompt(demand);
     const userPrompt = this.getUserPrompt(demand, refinementMessages);
 
     // Get insights summary from context builder for richer documents
@@ -286,7 +287,7 @@ Error generating ${this.getDocumentType()}. Refinement captured but document not
       };
     } catch (error) {
       logger.warn(`PDF generation failed for ${this.getDocumentType()}, using markdown`, {
-        context: { 
+        context: {
           demandId,
           error: error instanceof Error ? error.message : 'Unknown error'
         }
@@ -309,7 +310,7 @@ Error generating ${this.getDocumentType()}. Refinement captured but document not
     const document = await this.saveDocument(demand.id, content);
 
     logger.info(`${this.getDocumentType()} generated successfully`, {
-      context: { 
+      context: {
         demandId: demand.id,
         fileType: document.fileType,
         fileName: document.fileName
@@ -332,26 +333,76 @@ export class PRDGenerator extends DocumentGenerator {
     return 'PRD';
   }
 
-  protected getSystemPrompt(): string {
-    return `Você é um Product Manager experiente e orientado a negócios.
-Sua responsabilidade é criar um PRD executivo em Markdown, claro para diretoria, produto, operação, comercial e tecnologia.
+  protected getSystemPrompt(demand: Demand): string {
+    const config = getDemandTypeConfig(demand.type);
+    const templateType = config.prdTemplate;
 
-Use esta estrutura:
+    let specificGuidelines = "";
+
+    switch (templateType) {
+      case 'bug':
+        specificGuidelines = `
+Foque em:
+- Descrição clara do Bug e Causa Raiz
+- Impacto nos usuários e sistemas
+- Plano de correção e validação
+- Testes de regressão necessários`;
+        break;
+      case 'improvement':
+        specificGuidelines = `
+Foque em:
+- Baseline atual vs. Melhoria esperada
+- Ganhos de performance ou usabilidade
+- Métricas de comparação (Antes/Depois)
+- Compatibilidade com recursos existentes`;
+        break;
+      case 'discovery':
+        specificGuidelines = `
+Foque em:
+- Hipóteses e perguntas de pesquisa
+- Metodologia de investigação
+- Aprendizados desejados e critérios de decisão
+- Próximos passos baseados nos resultados`;
+        break;
+      case 'analysis':
+        specificGuidelines = `
+Foque em:
+- Fontes de dados analisadas
+- Metodologia de análise
+- Insights extraídos e tendências identificadas
+- Recomendações acionáveis baseadas em dados`;
+        break;
+      default:
+        specificGuidelines = `
+Foque em:
+- Objetivos de negócio e valor para o usuário
+- Requisitos e critérios de aceite
+- Plano de entrega incremental
+- Riscos e métricas de sucesso`;
+    }
+
+    return `Você é um Product Manager experiente e orientado a negócios.
+Sua responsabilidade é criar um PRD executivo em Markdown para uma demanda do tipo ${config.label}.
+O documento deve ser claro para diretoria, produto, operação, comercial e tecnologia.
+
+ESTRUTURA SUGERIDA:
 # PRD - [Título da Demanda]
 ## Resumo Executivo
 ## Contexto e Problema
 ## Público Impactado
-## Objetivos de Negócio
+## Objetivos e Valor
 ## Escopo da Entrega
 ### Faremos
 ### Não Faremos Agora
-## Experiência Esperada
+## Requisitos e Critérios de Aceite
 ## Regras de Negócio e Premissas
 ## Métricas de Sucesso
 ## Riscos e Cuidados
 ## Plano de Entrega
 ## Pontos em Aberto
-## Aprovações Necessárias
+
+DIRETRIZES ESPECÍFICAS PARA ${config.label}:
+${specificGuidelines}
 
 Evite RF/RNF, endpoint, API, banco de dados, deploy, sprint e jargão técnico. Traduza sugestões técnicas para impacto de negócio, experiência, risco, escopo ou métrica.`;
   }
@@ -394,9 +445,29 @@ export class TasksGenerator extends DocumentGenerator {
     return 'Tasks';
   }
 
-  protected getSystemPrompt(): string {
-    return `Você é um Product Manager experiente.
-Crie um documento de tasks técnicas detalhadas baseadas no PRD seguindo EXATAMENTE este formato:`;
+  protected getSystemPrompt(demand: Demand): string {
+    const config = getDemandTypeConfig(demand.type);
+
+    return `Você é um Tech Lead/Product Manager experiente.
+Sua tarefa é criar uma lista de tarefas técnicas detalhadas para implementar uma demanda do tipo ${config.label}.
+
+As tarefas devem ser organizadas por categorias lógicas (Ex: Backend, Frontend, Infra, Testes, Dados).
+Cada tarefa deve ser clara, acionável e técnica o suficiente para um desenvolvedor executar.
+
+FORMATO:
+# Tasks - [Título da Demanda]
+
+## 🔧 [Categoria 1]
+- [ ] [Tarefa 1]
+- [ ] [Tarefa 2]
+
+## 🎨 [Categoria 2]
+- [ ] [Tarefa 3]
+
+DIRETRIZES:
+- Se for BUG: Inclua tarefas de reprodução e testes de regressão.
+- Se for FEATURE: Inclua tarefas de arquitetura e UI/UX.
+- Se for ANÁLISE: Foque em queries, scripts e geração de relatórios.`;
   }
 
   protected getUserPrompt(demand: Demand, refinementMessages: ChatMessage[]): string {

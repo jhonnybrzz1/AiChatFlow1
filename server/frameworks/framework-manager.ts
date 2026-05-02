@@ -2,6 +2,7 @@
 import { Demand } from '@shared/schema';
 import { storage } from '../storage';
 import { openAIService } from '../services/openai-ai';
+import { getDemandTypeConfig } from '@shared/demand-types';
 import {
   FrameworkType,
   AnyFramework,
@@ -13,7 +14,9 @@ import {
   SeverityPriorityFramework,
   DoubleDiamondFramework,
   CRISPDMFramework,
-  AIFrameworkSuggestion
+  AIFrameworkSuggestion,
+  FrameworkMetrics,
+  FrameworkIntegration
 } from './types';
 
 /**
@@ -22,27 +25,27 @@ import {
 export class FrameworkManager {
   private frameworks: Map<string, AnyFramework>;
   private executionHistory: Map<string, FrameworkExecutionResult[]>;
-  
+
   constructor() {
     this.frameworks = new Map();
     this.executionHistory = new Map();
   }
-  
+
   /**
    * Initialize the framework manager with default frameworks
    */
   async initialize(): Promise<void> {
     console.log('🔧 Initializing Framework Manager...');
-    
+
     // Load any existing frameworks from storage
     await this.loadFrameworksFromStorage();
-    
+
     // Create default framework templates
     await this.createDefaultFrameworks();
-    
+
     console.log(`✅ Framework Manager initialized with ${this.frameworks.size} frameworks`);
   }
-  
+
   /**
    * Load frameworks from storage
    */
@@ -55,7 +58,7 @@ export class FrameworkManager {
       console.error('Error loading frameworks from storage:', error);
     }
   }
-  
+
   /**
    * Create default framework templates
    */
@@ -87,7 +90,7 @@ export class FrameworkManager {
         surveyTools: ['SurveyMonkey', 'Typeform', 'Google Forms']
       }
     };
-    
+
     // HEART Framework Template
     const heartFramework: HEARTFramework = {
       id: 'heart-default',
@@ -117,7 +120,7 @@ export class FrameworkManager {
         heatmapTools: ['Hotjar', 'Crazy Egg']
       }
     };
-    
+
     // Severity x Priority Matrix Template
     const severityPriorityFramework: SeverityPriorityFramework = {
       id: 'severity-priority-default',
@@ -174,7 +177,7 @@ export class FrameworkManager {
         alertingSystems: ['PagerDuty', 'Opsgenie']
       }
     };
-    
+
     // Double Diamond Framework Template
     const doubleDiamondFramework: DoubleDiamondFramework = {
       id: 'double-diamond-default',
@@ -221,7 +224,7 @@ export class FrameworkManager {
         userTestingPlatforms: ['UserTesting', 'Lookback']
       }
     };
-    
+
     // CRISP-DM Framework Template
     const crispDmFramework: CRISPDMFramework = {
       id: 'crisp-dm-default',
@@ -276,7 +279,7 @@ export class FrameworkManager {
         visualizationTools: ['Tableau', 'Power BI', 'Looker']
       }
     };
-    
+
     // Add templates to the framework map
     this.frameworks.set(jtbdFramework.id, jtbdFramework);
     this.frameworks.set(heartFramework.id, heartFramework);
@@ -284,28 +287,28 @@ export class FrameworkManager {
     this.frameworks.set(doubleDiamondFramework.id, doubleDiamondFramework);
     this.frameworks.set(crispDmFramework.id, crispDmFramework);
   }
-  
+
   /**
    * Get all available frameworks
    */
   getAllFrameworks(): AnyFramework[] {
     return Array.from(this.frameworks.values());
   }
-  
+
   /**
    * Get framework by ID
    */
   getFrameworkById(id: string): AnyFramework | undefined {
     return this.frameworks.get(id);
   }
-  
+
   /**
    * Get frameworks by type
    */
   getFrameworksByType(type: FrameworkType): AnyFramework[] {
     return Array.from(this.frameworks.values()).filter(f => f.type === type);
   }
-  
+
   /**
    * Create a new framework instance from a template
    */
@@ -317,7 +320,7 @@ export class FrameworkManager {
     if (!template) {
       throw new Error(`Template ${templateId} not found`);
     }
-    
+
     const newFramework = {
       ...template,
       id: `${template.type}-${Date.now()}`,
@@ -325,12 +328,12 @@ export class FrameworkManager {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...customData
-    };
-    
+    } as AnyFramework;
+
     this.frameworks.set(newFramework.id, newFramework);
     return newFramework;
   }
-  
+
   /**
    * Update a framework
    */
@@ -339,110 +342,62 @@ export class FrameworkManager {
     if (!framework) {
       throw new Error(`Framework ${id} not found`);
     }
-    
+
     const updatedFramework = {
       ...framework,
       ...updates,
       updatedAt: new Date().toISOString()
-    };
-    
+    } as AnyFramework;
+
     this.frameworks.set(id, updatedFramework);
     return updatedFramework;
   }
-  
+
   /**
    * Delete a framework
    */
   async deleteFramework(id: string): Promise<boolean> {
     return this.frameworks.delete(id);
   }
-  
+
   /**
    * Recommend framework based on demand analysis
    */
   async recommendFramework(demand: Demand): Promise<FrameworkRecommendation> {
     // Analyze the demand to determine selection criteria
     const criteria = this.analyzeDemandForFrameworkSelection(demand);
-    
+
     // Use AI to suggest the best framework
     const aiSuggestion = await this.getAIFrameworkSuggestion(demand, criteria);
-    
+
     // Generate recommendation
     const recommendation = this.generateFrameworkRecommendation(aiSuggestion, criteria);
-    
+
     return recommendation;
   }
-  
+
   /**
    * Analyze demand for framework selection
    */
   private analyzeDemandForFrameworkSelection(demand: Demand): FrameworkSelectionCriteria {
-    // Default criteria
+    const config = getDemandTypeConfig(demand.type);
+
+    // Default criteria based on central config
     const criteria: FrameworkSelectionCriteria = {
       demandType: demand.type,
-      complexity: 'medium',
-      impact: 'medium',
-      urgency: 'medium',
+      complexity: config.refinementLevel >= 4 ? 'high' : config.refinementLevel >= 3 ? 'medium' : 'low',
+      impact: config.intensity === 'alta' ? 'high' : config.intensity === 'media' ? 'medium' : 'low',
+      urgency: demand.priority === 'critica' ? 'immediate' : demand.priority === 'alta' ? 'urgent' : 'medium',
       teamSize: 'medium',
       budget: 'moderate',
-      timeline: 'medium',
+      timeline: config.maxEffortDays > 10 ? 'long' : config.maxEffortDays > 5 ? 'medium' : 'short',
       industry: 'technology',
       stakeholders: []
     };
-    
-    // Adjust criteria based on demand properties
-    switch (demand.type) {
-      case 'nova_funcionalidade':
-        criteria.complexity = 'high';
-        criteria.impact = 'high';
-        criteria.timeline = 'long';
-        break;
-      case 'melhoria':
-        criteria.complexity = 'medium';
-        criteria.impact = 'medium';
-        criteria.timeline = 'medium';
-        break;
-      case 'bug':
-        criteria.complexity = 'low';
-        criteria.impact = demand.priority === 'critica' ? 'critical' : 'high';
-        criteria.urgency = demand.priority === 'critica' ? 'immediate' : 'urgent';
-        criteria.timeline = 'short';
-        break;
-      case 'discovery':
-        criteria.complexity = 'medium';
-        criteria.impact = 'high';
-        criteria.timeline = 'medium';
-        break;
-      case 'analise_exploratoria':
-        criteria.complexity = 'high';
-        criteria.impact = 'medium';
-        criteria.timeline = 'long';
-        break;
-    }
-    
-    // Adjust based on priority
-    switch (demand.priority) {
-      case 'critica':
-        criteria.urgency = 'immediate';
-        criteria.impact = 'critical';
-        break;
-      case 'alta':
-        criteria.urgency = 'urgent';
-        criteria.impact = 'high';
-        break;
-      case 'media':
-        criteria.urgency = 'medium';
-        criteria.impact = 'medium';
-        break;
-      case 'baixa':
-        criteria.urgency = 'low';
-        criteria.impact = 'low';
-        break;
-    }
-    
+
     return criteria;
   }
-  
+
   /**
    * Get AI suggestion for framework
    */
@@ -452,13 +407,13 @@ export class FrameworkManager {
   ): Promise<AIFrameworkSuggestion> {
     // Use OpenAI to analyze and suggest framework
     const prompt = this.buildFrameworkSuggestionPrompt(demand, criteria);
-    
+
     try {
       const aiResponse = await openAIService.generateResponse(prompt, {
         taskType: 'simple',
         operation: 'framework:suggestion'
       });
-      
+
       // Parse AI response (in a real implementation, this would be more sophisticated)
       const suggestion: AIFrameworkSuggestion = {
         id: `ai-suggestion-${Date.now()}`,
@@ -486,11 +441,11 @@ export class FrameworkManager {
           decisionEngines: ['Rule-Based', 'ML-Based']
         }
       };
-      
+
       return suggestion;
     } catch (error) {
       console.error('Error getting AI framework suggestion:', error);
-      
+
       // Fallback to rule-based suggestion
       return {
         id: `ai-suggestion-fallback-${Date.now()}`,
@@ -520,7 +475,7 @@ export class FrameworkManager {
       };
     }
   }
-  
+
   /**
    * Build prompt for AI framework suggestion
    */
@@ -566,47 +521,21 @@ Format your response as JSON with the following structure:
   ]
 }`;
   }
-  
+
   /**
    * Determine primary framework based on demand type
    */
   private determinePrimaryFramework(demandType: string): FrameworkType {
-    switch (demandType) {
-      case 'nova_funcionalidade':
-        return 'jtbd';
-      case 'melhoria':
-        return 'heart';
-      case 'bug':
-        return 'severity-priority';
-      case 'discovery':
-        return 'double-diamond';
-      case 'analise_exploratoria':
-        return 'crisp-dm';
-      default:
-        return 'jtbd';
-    }
+    return getDemandTypeConfig(demandType).primaryFramework as FrameworkType;
   }
-  
+
   /**
    * Determine secondary frameworks based on demand type
    */
   private determineSecondaryFrameworks(demandType: string): FrameworkType[] {
-    switch (demandType) {
-      case 'nova_funcionalidade':
-        return ['double-diamond', 'heart'];
-      case 'melhoria':
-        return ['jtbd', 'crisp-dm'];
-      case 'bug':
-        return ['jtbd', 'heart'];
-      case 'discovery':
-        return ['jtbd', 'heart'];
-      case 'analise_exploratoria':
-        return ['double-diamond', 'jtbd'];
-      default:
-        return ['heart', 'double-diamond'];
-    }
+    return [...getDemandTypeConfig(demandType).secondaryFrameworks] as FrameworkType[];
   }
-  
+
   /**
    * Generate alternative framework options
    */
@@ -614,19 +543,19 @@ Format your response as JSON with the following structure:
     const allFrameworks: FrameworkType[] = ['jtbd', 'heart', 'severity-priority', 'double-diamond', 'crisp-dm'];
     const primary = this.determinePrimaryFramework(demandType);
     const secondary = this.determineSecondaryFrameworks(demandType);
-    
+
     // Get frameworks not in primary or secondary
-    const otherFrameworks = allFrameworks.filter(f => 
+    const otherFrameworks = allFrameworks.filter(f =>
       f !== primary && !secondary.includes(f)
     );
-    
+
     return otherFrameworks.map((framework, index) => ({
       framework,
       score: 60 - (index * 10), // Decreasing scores
       rationale: this.getAlternativeRationale(framework, demandType)
     }));
   }
-  
+
   /**
    * Get rationale for alternative framework
    */
@@ -651,12 +580,15 @@ Format your response as JSON with the following structure:
       'crisp-dm': {
         default: 'Ideal for data-driven analysis and decision making',
         'nova_funcionalidade': 'Useful for data analysis to support feature decisions'
+      },
+      'auto-suggest': {
+        default: 'Uses AI to recommend the most suitable framework for the demand'
       }
     };
-    
+
     return rationales[framework][demandType] || rationales[framework].default;
   }
-  
+
   /**
    * Generate framework recommendation
    */
@@ -699,11 +631,18 @@ Format your response as JSON with the following structure:
         stakeholderSatisfaction: 75,
         costEfficiency: 75,
         qualityScore: 85
+      },
+      'auto-suggest': {
+        successRate: 90,
+        completionTime: 30,
+        stakeholderSatisfaction: 85,
+        costEfficiency: 95,
+        qualityScore: 90
       }
     };
-    
+
     const primaryFramework = suggestion.suggestedFrameworks.primary;
-    
+
     return {
       recommendedFramework: primaryFramework,
       confidence: suggestion.confidenceScore,
@@ -714,7 +653,7 @@ Format your response as JSON with the following structure:
       integrationRequirements: this.getIntegrationRequirements(primaryFramework)
     };
   }
-  
+
   /**
    * Get implementation steps for framework
    */
@@ -770,12 +709,20 @@ Format your response as JSON with the following structure:
         'Evaluation: Determine business impact',
         'Deployment: Plan deployment',
         'Deployment: Monitor and maintain'
+      ],
+      'auto-suggest': [
+        'Analyze demand characteristics',
+        'Evaluate framework selection criteria',
+        'Generate AI recommendations',
+        'Calculate confidence scores',
+        'Provide recommendation rationale',
+        'Finalize suggested frameworks'
       ]
     };
-    
+
     return steps[frameworkType];
   }
-  
+
   /**
    * Get expected outcomes for framework
    */
@@ -820,12 +767,19 @@ Format your response as JSON with the following structure:
         'Well-performing models',
         'Actionable business insights',
         'Successful deployment and monitoring'
+      ],
+      'auto-suggest': [
+        'Optimized framework selection',
+        'Reduced decision time',
+        'Higher quality project documentation',
+        'Better alignment between demand and process',
+        'Improved team productivity'
       ]
     };
-    
+
     return outcomes[frameworkType];
   }
-  
+
   /**
    * Get integration requirements for framework
    */
@@ -860,12 +814,18 @@ Format your response as JSON with the following structure:
         externalTools: ['Python', 'R', 'Tableau'],
         apiEndpoints: ['/api/data/analysis', '/api/models/evaluation'],
         dataSources: ['Business data', 'External datasets', 'Model outputs']
+      },
+      'auto-suggest': {
+        aiEnabled: true,
+        externalTools: ['OpenAI', 'Mistral AI'],
+        apiEndpoints: ['/api/ai/suggest'],
+        dataSources: ['Knowledge base', 'Historical data']
       }
     };
-    
+
     return requirements[frameworkType];
   }
-  
+
   /**
    * Execute a framework for a demand
    */
@@ -878,12 +838,12 @@ Format your response as JSON with the following structure:
     if (!demand) {
       throw new Error(`Demand ${demandId} not found`);
     }
-    
+
     const framework = this.frameworks.get(frameworkId);
     if (!framework) {
       throw new Error(`Framework ${frameworkId} not found`);
     }
-    
+
     // Initialize execution result
     const executionResult: FrameworkExecutionResult = {
       frameworkId: framework.id,
@@ -904,13 +864,13 @@ Format your response as JSON with the following structure:
       teamMembers: [],
       resourcesUsed: []
     };
-    
+
     // Update demand with framework execution info
     await storage.updateDemand(demandId, {
       ...demand,
       frameworkExecution: executionResult
     });
-    
+
     try {
       // Execute framework-specific logic
       switch (framework.type) {
@@ -933,30 +893,30 @@ Format your response as JSON with the following structure:
           await this.executeAutoSuggestFramework(demand, framework as AIFrameworkSuggestion, executionResult, onProgress);
           break;
       }
-      
+
       // Update execution history
       this.addToExecutionHistory(demandId, executionResult);
-      
+
       return executionResult;
     } catch (error) {
       console.error(`Error executing framework ${frameworkId} for demand ${demandId}:`, error);
-      
+
       executionResult.status = 'failed';
       executionResult.progress = 0;
       if (error instanceof Error) {
         executionResult.outputs = { error: error.message };
       }
-      
+
       await storage.updateDemand(demandId, {
         ...demand,
         frameworkExecution: executionResult,
         status: 'error'
       });
-      
+
       throw error;
     }
   }
-  
+
   /**
    * Execute JTBD Framework
    */
@@ -976,26 +936,26 @@ Format your response as JSON with the following structure:
       { name: 'Validating with customers', duration: 25 },
       { name: 'Finalizing implementation', duration: 15 }
     ];
-    
+
     let totalProgress = 0;
-    
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       totalProgress += step.duration;
       const progress = Math.round((totalProgress / steps.reduce((sum, s) => sum + s.duration, 0)) * 100);
-      
+
       if (onProgress) {
         onProgress(progress, `JTBD: ${step.name}`);
       }
-      
+
       // Simulate step execution
       await new Promise(resolve => setTimeout(resolve, 100)); // Simulate work
-      
+
       // Update execution result
       executionResult.progress = progress;
       executionResult.outputs[`step${i+1}`] = `${step.name} completed`;
     }
-    
+
     // Finalize execution
     executionResult.status = 'completed';
     executionResult.progress = 100;
@@ -1008,12 +968,12 @@ Format your response as JSON with the following structure:
       costEfficiency: 80,
       qualityScore: 85
     };
-    
+
     if (onProgress) {
       onProgress(100, 'JTBD Framework execution completed successfully');
     }
   }
-  
+
   /**
    * Execute HEART Framework
    */
@@ -1033,23 +993,23 @@ Format your response as JSON with the following structure:
       { name: 'Gathering feedback', duration: 20 },
       { name: 'Final analysis', duration: 10 }
     ];
-    
+
     let totalProgress = 0;
-    
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       totalProgress += step.duration;
       const progress = Math.round((totalProgress / steps.reduce((sum, s) => sum + s.duration, 0)) * 100);
-      
+
       if (onProgress) {
         onProgress(progress, `HEART: ${step.name}`);
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
       executionResult.progress = progress;
       executionResult.outputs[`step${i+1}`] = `${step.name} completed`;
     }
-    
+
     executionResult.status = 'completed';
     executionResult.progress = 100;
     executionResult.timeline.completedAt = new Date().toISOString();
@@ -1061,12 +1021,12 @@ Format your response as JSON with the following structure:
       costEfficiency: 75,
       qualityScore: 80
     };
-    
+
     if (onProgress) {
       onProgress(100, 'HEART Framework execution completed successfully');
     }
   }
-  
+
   /**
    * Execute Severity Priority Framework
    */
@@ -1085,23 +1045,23 @@ Format your response as JSON with the following structure:
       { name: 'Monitoring progress', duration: 20 },
       { name: 'Final review', duration: 10 }
     ];
-    
+
     let totalProgress = 0;
-    
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       totalProgress += step.duration;
       const progress = Math.round((totalProgress / steps.reduce((sum, s) => sum + s.duration, 0)) * 100);
-      
+
       if (onProgress) {
         onProgress(progress, `Severity-Priority: ${step.name}`);
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
       executionResult.progress = progress;
       executionResult.outputs[`step${i+1}`] = `${step.name} completed`;
     }
-    
+
     executionResult.status = 'completed';
     executionResult.progress = 100;
     executionResult.timeline.completedAt = new Date().toISOString();
@@ -1113,12 +1073,12 @@ Format your response as JSON with the following structure:
       costEfficiency: 90,
       qualityScore: 85
     };
-    
+
     if (onProgress) {
       onProgress(100, 'Severity-Priority Framework execution completed successfully');
     }
   }
-  
+
   /**
    * Execute Double Diamond Framework
    */
@@ -1138,23 +1098,23 @@ Format your response as JSON with the following structure:
       { name: 'Implementation', duration: 20 },
       { name: 'Final review', duration: 15 }
     ];
-    
+
     let totalProgress = 0;
-    
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       totalProgress += step.duration;
       const progress = Math.round((totalProgress / steps.reduce((sum, s) => sum + s.duration, 0)) * 100);
-      
+
       if (onProgress) {
         onProgress(progress, `Double Diamond: ${step.name}`);
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
       executionResult.progress = progress;
       executionResult.outputs[`step${i+1}`] = `${step.name} completed`;
     }
-    
+
     executionResult.status = 'completed';
     executionResult.progress = 100;
     executionResult.timeline.completedAt = new Date().toISOString();
@@ -1166,12 +1126,12 @@ Format your response as JSON with the following structure:
       costEfficiency: 70,
       qualityScore: 80
     };
-    
+
     if (onProgress) {
       onProgress(100, 'Double Diamond Framework execution completed successfully');
     }
   }
-  
+
   /**
    * Execute CRISP-DM Framework
    */
@@ -1190,23 +1150,23 @@ Format your response as JSON with the following structure:
       { name: 'Deployment planning', duration: 20 },
       { name: 'Final review', duration: 15 }
     ];
-    
+
     let totalProgress = 0;
-    
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       totalProgress += step.duration;
       const progress = Math.round((totalProgress / steps.reduce((sum, s) => sum + s.duration, 0)) * 100);
-      
+
       if (onProgress) {
         onProgress(progress, `CRISP-DM: ${step.name}`);
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
       executionResult.progress = progress;
       executionResult.outputs[`step${i+1}`] = `${step.name} completed`;
     }
-    
+
     executionResult.status = 'completed';
     executionResult.progress = 100;
     executionResult.timeline.completedAt = new Date().toISOString();
@@ -1218,12 +1178,12 @@ Format your response as JSON with the following structure:
       costEfficiency: 75,
       qualityScore: 85
     };
-    
+
     if (onProgress) {
       onProgress(100, 'CRISP-DM Framework execution completed successfully');
     }
   }
-  
+
   /**
    * Execute Auto-Suggest Framework
    */
@@ -1241,23 +1201,23 @@ Format your response as JSON with the following structure:
       { name: 'Providing rationale', duration: 15 },
       { name: 'Finalizing recommendation', duration: 10 }
     ];
-    
+
     let totalProgress = 0;
-    
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       totalProgress += step.duration;
       const progress = Math.round((totalProgress / steps.reduce((sum, s) => sum + s.duration, 0)) * 100);
-      
+
       if (onProgress) {
         onProgress(progress, `Auto-Suggest: ${step.name}`);
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
       executionResult.progress = progress;
       executionResult.outputs[`step${i+1}`] = `${step.name} completed`;
     }
-    
+
     executionResult.status = 'completed';
     executionResult.progress = 100;
     executionResult.timeline.completedAt = new Date().toISOString();
@@ -1269,32 +1229,33 @@ Format your response as JSON with the following structure:
       costEfficiency: 85,
       qualityScore: 80
     };
-    
+
     if (onProgress) {
       onProgress(100, 'Auto-Suggest Framework execution completed successfully');
     }
   }
-  
+
   /**
    * Add to execution history
    */
-  private addToExecutionHistory(demandId: string, executionResult: FrameworkExecutionResult): void {
-    if (!this.executionHistory.has(demandId)) {
-      this.executionHistory.set(demandId, []);
+  private addToExecutionHistory(demandId: string | number, executionResult: FrameworkExecutionResult): void {
+    const id = demandId.toString();
+    if (!this.executionHistory.has(id)) {
+      this.executionHistory.set(id, []);
     }
-    
-    const history = this.executionHistory.get(demandId)!;
+
+    const history = this.executionHistory.get(id)!;
     history.push(executionResult);
-    this.executionHistory.set(demandId, history);
+    this.executionHistory.set(id, history);
   }
-  
+
   /**
    * Get execution history for a demand
    */
-  getExecutionHistory(demandId: string): FrameworkExecutionResult[] {
-    return this.executionHistory.get(demandId) || [];
+  getExecutionHistory(demandId: string | number): FrameworkExecutionResult[] {
+    return this.executionHistory.get(demandId.toString()) || [];
   }
-  
+
   /**
    * Get framework metrics summary
    */
@@ -1304,9 +1265,10 @@ Format your response as JSON with the following structure:
       heart: { successRate: 80, completionTime: 90, stakeholderSatisfaction: 85, costEfficiency: 75, qualityScore: 80 },
       'severity-priority': { successRate: 90, completionTime: 60, stakeholderSatisfaction: 80, costEfficiency: 90, qualityScore: 85 },
       'double-diamond': { successRate: 75, completionTime: 180, stakeholderSatisfaction: 85, costEfficiency: 70, qualityScore: 80 },
-      'crisp-dm': { successRate: 80, completionTime: 240, stakeholderSatisfaction: 75, costEfficiency: 75, qualityScore: 85 }
+      'crisp-dm': { successRate: 80, completionTime: 240, stakeholderSatisfaction: 75, costEfficiency: 75, qualityScore: 85 },
+      'auto-suggest': { successRate: 90, completionTime: 30, stakeholderSatisfaction: 85, costEfficiency: 95, qualityScore: 90 }
     };
-    
+
     return summary;
   }
 }

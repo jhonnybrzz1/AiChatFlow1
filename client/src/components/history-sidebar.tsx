@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { History, RefreshCw, Download, CheckCircle, Clock, XCircle, StopCircle, Menu, Search, Filter } from "lucide-react";
+import { History, RefreshCw, Download, CheckCircle, Clock, XCircle, StopCircle, Menu, Search } from "lucide-react";
 import { type Demand } from "@shared/schema";
-import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { TypeAdherenceBadgeCompact } from "./type-adherence-badge";
 
 interface HistorySidebarProps {
   demands: Demand[];
@@ -18,7 +18,6 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
 
   const handleDownload = (url: string | null, type: 'PRD' | 'Tasks') => {
     if (!url) {
@@ -29,37 +28,21 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
       });
       return;
     }
-
     window.open(url, '_blank');
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="text-green-600" size={16} />;
+        return { icon: CheckCircle, color: 'var(--success)', label: 'COMPLETO' };
       case 'processing':
-        return <Clock className="text-yellow-600" size={16} />;
+        return { icon: Clock, color: 'var(--accent-cyan)', label: 'PROCESSANDO' };
       case 'stopped':
-        return <StopCircle className="text-orange-600" size={16} />;
+        return { icon: StopCircle, color: 'var(--warning)', label: 'INTERROMPIDO' };
       case 'error':
-        return <XCircle className="text-red-600" size={16} />;
+        return { icon: XCircle, color: 'var(--destructive)', label: 'ERRO' };
       default:
-        return <Clock className="text-gray-500" size={16} />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Concluído';
-      case 'processing':
-        return 'Em processamento';
-      case 'stopped':
-        return 'Interrompido';
-      case 'error':
-        return 'Erro no processamento';
-      default:
-        return 'Desconhecido';
+        return { icon: Clock, color: 'var(--foreground-muted)', label: 'PENDENTE' };
     }
   };
 
@@ -70,254 +53,226 @@ export function HistorySidebar({ demands, selectedDemand, onSelectDemand }: Hist
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInDays > 0) {
-      return `há ${diffInDays} dia${diffInDays > 1 ? 's' : ''}`;
-    } else if (diffInHours > 0) {
-      return `há ${diffInHours} hora${diffInHours > 1 ? 's' : ''}`;
-    } else {
-      return 'agora';
-    }
+    if (diffInDays > 0) return `${diffInDays}d`;
+    if (diffInHours > 0) return `${diffInHours}h`;
+    return 'agora';
   };
 
-  // Filter and search demands
   const filteredDemands = useMemo(() => {
     return demands.filter(demand => {
       const matchesSearch = searchTerm === '' ||
         demand.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         demand.description.toLowerCase().includes(searchTerm.toLowerCase());
-
       const matchesStatus = filterStatus === 'all' || demand.status === filterStatus;
-      const matchesPriority = filterPriority === 'all' || demand.priority === filterPriority;
-
-      return matchesSearch && matchesStatus && matchesPriority;
+      return matchesSearch && matchesStatus;
     });
-  }, [demands, searchTerm, filterStatus, filterPriority]);
+  }, [demands, searchTerm, filterStatus]);
 
-  const statusOptions = ['all', 'completed', 'processing', 'stopped', 'error'];
-  const priorityOptions = ['all', 'baixa', 'media', 'alta', 'critica'];
+  const statusOptions = [
+    { value: 'all', label: 'TODOS' },
+    { value: 'completed', label: 'COMPLETOS' },
+    { value: 'processing', label: 'ATIVOS' },
+    { value: 'stopped', label: 'PARADOS' },
+  ];
 
-  const sidebarContent = (
-    <>
-      <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-t-xl p-5">
-        <div className="flex flex-col space-y-4">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center space-x-2">
-              <div className="bg-blue-500 dark:bg-blue-600 p-2 rounded-lg">
-                <History className="text-white" size={20} />
-              </div>
-              <span className="font-semibold text-gray-800 dark:text-white">Histórico de Demandas</span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.location.reload()}
-              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label="Atualizar histórico"
-            >
-              <RefreshCw size={16} />
-            </Button>
-          </CardTitle>
-
-          {/* Search and filters */}
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Buscar demandas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                aria-label="Buscar demandas"
-              />
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="p-4 border-b-2 border-[var(--border)] bg-[var(--muted)]">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[var(--accent-orange)] flex items-center justify-center">
+              <History className="w-4 h-4 text-[var(--background)]" />
             </div>
-
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="flex-1 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                aria-label="Filtrar por status"
-              >
-                <option value="all">Todos os Status</option>
-                {statusOptions.filter(opt => opt !== 'all').map(status => (
-                  <option key={status} value={status}>{getStatusText(status)}</option>
-                ))}
-              </select>
-
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-                className="flex-1 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                aria-label="Filtrar por prioridade"
-              >
-                <option value="all">Todas as Prioridades</option>
-                {priorityOptions.filter(opt => opt !== 'all').map(priority => (
-                  <option key={priority} value={priority}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</option>
-                ))}
-              </select>
-            </div>
+            <span className="font-mono text-sm font-bold">HISTÓRICO</span>
           </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-8 h-8 flex items-center justify-center border border-[var(--border)] hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan)] transition-colors"
+            title="Atualizar"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="max-h-96 overflow-y-auto bg-white dark:bg-gray-800">
-          {filteredDemands.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="mx-auto bg-gray-100 dark:bg-gray-700 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                <History className="text-gray-500 dark:text-gray-400" size={32} />
-              </div>
-              <p className="text-gray-600 font-medium dark:text-gray-300">
-                {demands.length === 0
-                  ? 'Nenhuma demanda processada ainda'
-                  : 'Nenhuma demanda encontrada com os filtros aplicados'}
-              </p>
-              {demands.length > 0 && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Tente ajustar sua busca ou filtros
-                </p>
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground-muted)]" />
+          <input
+            type="text"
+            placeholder="Buscar demandas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="terminal-input w-full pl-10 py-2 text-sm"
+          />
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="brutal-tabs">
+          {statusOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setFilterStatus(option.value)}
+              className={cn(
+                "brutal-tab text-[9px] py-2",
+                filterStatus === option.value && "active"
               )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Demands List */}
+      <div className="flex-1 overflow-y-auto">
+        {filteredDemands.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+            <div className="w-12 h-12 border-2 border-[var(--border)] flex items-center justify-center mb-3">
+              <History className="w-6 h-6 text-[var(--foreground-muted)]" />
             </div>
-          ) : (
-            filteredDemands.map((demand) => (
-              <div
-                key={demand.id}
-                className={`p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${selectedDemand?.id === demand.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500 dark:border-l-blue-500' : ''}`}
-                onClick={() => {
-                  onSelectDemand?.(demand);
-                  setIsOpen(false); // Fechar drawer ao selecionar
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+            <p className="font-mono text-xs text-[var(--foreground-muted)]">
+              {demands.length === 0 ? 'NENHUMA DEMANDA' : 'NENHUM RESULTADO'}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[var(--border)]">
+            {filteredDemands.map((demand) => {
+              const status = getStatusConfig(demand.status);
+              const StatusIcon = status.icon;
+              const isSelected = selectedDemand?.id === demand.id;
+
+              return (
+                <div
+                  key={demand.id}
+                  onClick={() => {
                     onSelectDemand?.(demand);
                     setIsOpen(false);
-                  }
-                }}
-                aria-label={`Demanda: ${demand.title}, Status: ${getStatusText(demand.status)}`}
-              >
-                <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-                    {getStatusIcon(demand.status)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-800 dark:text-white truncate">
-                      {demand.title}
-                    </h4>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
-                        {getStatusText(demand.status)}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {getTimeAgo(demand.updatedAt!)}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">
-                        {demand.type.replace('_', ' ')}
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-300 capitalize">
-                        {demand.priority}
-                      </span>
+                  }}
+                  className={cn(
+                    "w-full text-left p-4 transition-colors hover:bg-[var(--muted)] cursor-pointer",
+                    isSelected && "bg-[var(--muted)] border-l-4"
+                  )}
+                  style={{
+                    borderLeftColor: isSelected ? status.color : 'transparent'
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Status Icon */}
+                    <div
+                      className="w-8 h-8 flex items-center justify-center border flex-shrink-0"
+                      style={{ borderColor: status.color }}
+                    >
+                      <StatusIcon
+                        className={cn(
+                          "w-4 h-4",
+                          demand.status === 'processing' && "animate-spin"
+                        )}
+                        style={{ color: status.color }}
+                      />
                     </div>
 
-                    {demand.status === 'processing' && (
-                      <div className="mt-2">
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                          <div
-                            className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                            style={{
-                              width: `${((demand.chatMessages?.filter(m => m.type === 'completed').length || 0) / 7) * 100}%`
-                            }}
-                          />
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-mono text-sm font-bold truncate">
+                        {demand.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span
+                          className="brutal-badge text-[9px] px-1.5 py-0.5"
+                          style={{ color: status.color, borderColor: status.color }}
+                        >
+                          {status.label}
+                        </span>
+                        <TypeAdherenceBadgeCompact
+                          refinementType={demand.refinementType as 'technical' | 'business' | null}
+                          typeAdherence={demand.typeAdherence as any}
+                        />
+                        <span className="font-mono text-[10px] text-[var(--foreground-muted)]">
+                          {getTimeAgo(demand.updatedAt!)}
+                        </span>
+                      </div>
+
+                      {/* Progress for processing */}
+                      {demand.status === 'processing' && (
+                        <div className="mt-2">
+                          <div className="progress-brutal h-1">
+                            <div
+                              className="progress-brutal-fill"
+                              style={{
+                                width: `${((demand.chatMessages?.filter(m => m.type === 'completed').length || 0) / 7) * 100}%`
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {demand.status === 'completed' && (
-                      <div className="flex items-center space-x-2 mt-2 pt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownload(demand.prdUrl, 'PRD');
-                          }}
-                        >
-                          <Download size={12} className="mr-1" />
-                          <span>PRD</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownload(demand.tasksUrl, 'Tasks');
-                          }}
-                        >
-                          <Download size={12} className="mr-1" />
-                          <span>Tasks</span>
-                        </Button>
-                      </div>
-                    )}
-
-                    {demand.status === 'error' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-red-700 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 mt-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <RefreshCw size={12} className="mr-1" />
-                        <span>Tentar novamente</span>
-                      </Button>
-                    )}
+                      {/* Download buttons for completed */}
+                      {demand.status === 'completed' && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(demand.prdUrl, 'PRD');
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 border border-[var(--accent-cyan)] text-[var(--accent-cyan)] font-mono text-[9px] hover:bg-[var(--accent-cyan)] hover:text-[var(--background)] transition-colors"
+                          >
+                            <Download className="w-3 h-3" />
+                            PRD
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(demand.tasksUrl, 'Tasks');
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 border border-[var(--accent-lime)] text-[var(--accent-lime)] font-mono text-[9px] hover:bg-[var(--accent-lime)] hover:text-[var(--background)] transition-colors"
+                          >
+                            <Download className="w-3 h-3" />
+                            TASKS
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Footer Stats */}
+      <div className="p-3 border-t-2 border-[var(--border)] bg-[var(--muted)]">
+        <div className="flex items-center justify-between font-mono text-[10px] text-[var(--foreground-muted)]">
+          <span>TOTAL: {demands.length}</span>
+          <span>FILTRADO: {filteredDemands.length}</span>
         </div>
-      </CardContent>
-    </>
+      </div>
+    </div>
   );
 
   return (
     <>
-      {/* Mobile: Drawer (Sheet) */}
-      <div className="md:hidden">
+      {/* Mobile: Sheet Trigger */}
+      <div className="lg:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full mb-4 bg-white shadow-sm">
-              <Menu size={16} className="mr-2" />
-              Histórico ({demands.length})
-            </Button>
+            <button className="cmd-button w-full flex items-center justify-center gap-2">
+              <Menu className="w-4 h-4" />
+              <span>HISTÓRICO ({demands.length})</span>
+            </button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
-            <div className="h-full flex flex-col">
-              <SheetHeader className="p-5 border-b border-gray-200">
-                <div className="bg-blue-500 p-2 rounded-lg w-10 h-10 flex items-center justify-center">
-                  <History className="text-white" size={20} />
-                </div>
-                <SheetTitle className="text-left">Histórico de Demandas</SheetTitle>
-              </SheetHeader>
-              <div className="flex-1 overflow-y-auto">
-                {sidebarContent}
-              </div>
-            </div>
+          <SheetContent side="left" className="w-[320px] p-0 bg-[var(--background)] border-r-2 border-[var(--border)]">
+            <SidebarContent />
           </SheetContent>
         </Sheet>
       </div>
 
       {/* Desktop: Card */}
-      <div className="hidden md:block">
-        <Card className="shadow-lg rounded-xl border-0 bg-white">
-          {sidebarContent}
-        </Card>
+      <div className="hidden lg:block">
+        <div className="neo-card overflow-hidden">
+          <SidebarContent />
+        </div>
       </div>
     </>
   );

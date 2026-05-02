@@ -2,8 +2,12 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertDemandSchema, insertFileSchema } from "@shared/schema";
+import { insertDemandSchema, insertFileSchema, type RefinementType } from "@shared/schema";
 import { aiSquadService } from "./services/ai-squad";
+import { demandClassifier } from "./cognitive-core/demand-classifier";
+import { agentOrchestrator } from "./cognitive-core/agent-orchestrator";
+import { frameworkManager } from "./frameworks/framework-manager";
+import { z } from "zod";
 import { pdfGenerator } from "./services/pdf-generator";
 import { gitHubService } from './services/github';
 // import { githubAnalyzer } from './services/github-analyzer';
@@ -17,13 +21,35 @@ import { contextBuilder } from './services/context-builder';
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import governanceRoutes from './routes/governance-routes';
+
+// Validador de refinementType
+const refinementTypeSchema = z.enum(['technical', 'business']).nullable().optional();
 
 const upload = multer({
   dest: 'uploads/',
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+function sendValidationError(res: Response, error: unknown): void {
+  if (error instanceof z.ZodError) {
+    res.status(400).json({
+      error: "Invalid demand data",
+      issues: error.errors.map(issue => ({
+        path: issue.path.join('.'),
+        message: issue.message
+      }))
+    });
+    return;
+  }
+
+  res.status(400).json({ error: "Invalid demand data" });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // Register governance routes
+  app.use('/api/governance', governanceRoutes);
 
   app.get("/api/ai/usage", (_req: Request, res: Response) => {
     res.json({
@@ -215,6 +241,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if repository information is included in the request
       const { githubRepoOwner, githubRepoName, githubRepoDescription } = req.body;
+
+      // Validar refinementType com Zod (evita valores inválidos)
+      const refinementTypeRaw = req.body.refinementType;
+      const refinementType = refinementTypeSchema.parse(refinementTypeRaw) as RefinementType;
       let updatedDescription = demandData.description;
 
       // If GitHub repository information is provided, incorporate it into the description
@@ -235,10 +265,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create demand with potentially updated description
+      // Create demand with potentially updated description and refinement type
       const demand = await storage.createDemand({
         ...demandData,
-        description: updatedDescription
+        description: updatedDescription,
+        refinementType: refinementType || null
       });
 
       // Handle uploaded files
@@ -271,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(demand);
     } catch (error) {
-      res.status(400).json({ error: "Invalid demand data" });
+      sendValidationError(res, error);
     }
   });
 
@@ -282,6 +313,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if repository information is included in the request
       const { githubRepoOwner, githubRepoName, githubRepoDescription } = req.body;
+
+      // Validar refinementType com Zod (evita valores inválidos)
+      const refinementTypeRaw = req.body.refinementType;
+      const refinementType = refinementTypeSchema.parse(refinementTypeRaw) as RefinementType;
+
       let updatedDescription = demandData.description;
 
       // If GitHub repository information is provided, incorporate it into the description
@@ -302,10 +338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create demand with potentially updated description
+      // Create demand with potentially updated description and refinement type
       const demand = await storage.createDemand({
         ...demandData,
-        description: updatedDescription
+        description: updatedDescription,
+        refinementType: refinementType || null
       });
 
       // Handle uploaded files
@@ -338,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(demand);
     } catch (error) {
-      res.status(400).json({ error: "Invalid demand data" });
+      sendValidationError(res, error);
     }
   });
 
@@ -452,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       const history = frameworkManager.getExecutionHistory(id);
-      
+
       res.json({
         demandId: id,
         executionCount: history.length,
@@ -468,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/frameworks/metrics", async (req: Request, res: Response) => {
     try {
       const metrics = frameworkManager.getFrameworkMetricsSummary();
-      
+
       res.json({
         success: true,
         metrics: metrics

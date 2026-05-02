@@ -1,7 +1,7 @@
 // Framework Types and Interfaces
 // Base types for all demand management frameworks
 
-export type FrameworkType = 
+export type FrameworkType =
   | 'jtbd'          // Jobs-to-be-Done
   | 'heart'         // HEART Framework
   | 'severity-priority' // Severity x Priority Matrix
@@ -218,15 +218,7 @@ export interface CRISPDMFramework extends BaseFramework {
 // AI Framework Suggestion
 export interface AIFrameworkSuggestion extends BaseFramework {
   type: 'auto-suggest';
-  analysisCriteria: {
-    demandType: string;
-    complexity: number;
-    impact: number;
-    urgency: number;
-    teamSize: number;
-    budget: number;
-    timeline: number;
-  };
+  analysisCriteria: FrameworkSelectionCriteria;
   suggestedFrameworks: {
     primary: FrameworkType;
     secondary: FrameworkType[];
@@ -259,16 +251,16 @@ export interface FrameworkSelectionCriteria {
   demandType: string;
   complexity: 'low' | 'medium' | 'high' | 'very-high';
   impact: 'low' | 'medium' | 'high' | 'critical';
-  urgency: 'low' | 'medium' | 'high' | 'immediate';
+  urgency: 'low' | 'medium' | 'high' | 'immediate' | 'urgent';
   teamSize: 'small' | 'medium' | 'large' | 'enterprise';
   budget: 'limited' | 'moderate' | 'high' | 'unlimited';
   timeline: 'short' | 'medium' | 'long' | 'ongoing';
   industry: string;
   stakeholders: string[];
-}
+  }
 
-// Framework recommendation result
-export interface FrameworkRecommendation {
+  // Framework recommendation result
+  export interface FrameworkRecommendation {
   recommendedFramework: FrameworkType;
   confidence: number; // 0-100
   rationale: string;
@@ -276,10 +268,10 @@ export interface FrameworkRecommendation {
   expectedOutcomes: string[];
   successMetrics: FrameworkMetrics;
   integrationRequirements: FrameworkIntegration;
-}
+  }
 
-// Framework execution result
-export interface FrameworkExecutionResult {
+  // Framework execution result
+  export interface FrameworkExecutionResult {
   frameworkId: string;
   frameworkType: FrameworkType;
   status: 'pending' | 'in-progress' | 'completed' | 'failed';
@@ -293,22 +285,4 @@ export interface FrameworkExecutionResult {
   };
   teamMembers: string[];
   resourcesUsed: string[];
-}
-
-// Export all types for use in other modules
-export {
-  FrameworkType,
-  BaseFramework,
-  FrameworkMetrics,
-  FrameworkIntegration,
-  JTBDFramework,
-  HEARTFramework,
-  SeverityPriorityFramework,
-  DoubleDiamondFramework,
-  CRISPDMFramework,
-  AIFrameworkSuggestion,
-  AnyFramework,
-  FrameworkSelectionCriteria,
-  FrameworkRecommendation,
-  FrameworkExecutionResult
-};
+  }

@@ -1,4 +1,4 @@
-import { type Demand, type ChatMessage } from "@shared/schema";
+import { type Demand, type ChatMessage, type RefinementType } from "@shared/schema";
 import { storage } from "../storage";
 import fs from "fs";
 import path from "path";
@@ -9,6 +9,7 @@ import { demandRoutingOrchestrator } from "../routing/orchestrator";
 import { DiscoveryPlugin } from "../plugins/discovery-plugin";
 import { BugPlugin } from "../plugins/bug-plugin";
 import { ImprovementPlugin } from "../plugins/improvement-plugin";
+import { FeaturePlugin } from "../plugins/feature-plugin";
 import { agentInteractionService } from "./agent-interaction";
 import { agentOrchestrator } from "../cognitive-core/agent-orchestrator";
 import { frameworkManager } from "../frameworks/framework-manager";
@@ -16,6 +17,8 @@ import { gitHubService } from './github';
 import { repoService } from './repo-service';
 import { contextBuilder } from './context-builder';
 import { RealityBasedRefinement } from '../cognitive-core/reality-based-refinement';
+import { typeContractValidator } from '../utils/typeContractValidator';
+import { getDemandTypeConfig } from '@shared/demand-types';
 
 // Adicionando interface para gerenciamento de SSE
 interface SSEConnection {
@@ -63,6 +66,7 @@ export class AISquadService {
       await demandRoutingOrchestrator.initialize();
 
       // Register plugins
+      demandRoutingOrchestrator.registerPlugin(new FeaturePlugin());
       demandRoutingOrchestrator.registerPlugin(new DiscoveryPlugin());
       demandRoutingOrchestrator.registerPlugin(new BugPlugin());
       demandRoutingOrchestrator.registerPlugin(new ImprovementPlugin());
@@ -230,10 +234,14 @@ export class AISquadService {
         const realityConstraints = await this.realityBasedRefinement.getConstraintsForDemandType(demand.type);
         contextBuilder.setRealityConstraints(demandId, {
           maturityLevel: realityConstraints.maturityLevel || 'MVP',
+          demandType: realityConstraints.demandType || demand.type,
+          canonicalDemandType: realityConstraints.canonicalDemandType,
           allowedTechnologies: realityConstraints.allowedTechnologies || ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
           forbiddenTechnologies: realityConstraints.forbiddenTechnologies || ['kubernetes', 'microservices', 'blockchain'],
           maxEffortDays: realityConstraints.maxEffortDays || 14,
-          minROI: realityConstraints.minROI || '3:1'
+          minROI: realityConstraints.minROI || '3:1',
+          outputType: realityConstraints.outputType,
+          typeRequirements: realityConstraints.typeRequirements || []
         });
 
         if (onProgress) {
@@ -253,7 +261,10 @@ export class AISquadService {
           allowedTechnologies: ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
           forbiddenTechnologies: ['kubernetes', 'microservices', 'blockchain'],
           maxEffortDays: 14,
-          minROI: '3:1'
+          minROI: '3:1',
+          demandType: demand.type,
+          outputType: 'standard refinement',
+          typeRequirements: []
         });
       }
 
@@ -326,16 +337,26 @@ export class AISquadService {
       // Generate Tasks with PM (validated)
       const tasksContent = await this.generateTasksWithPM(demand, prdContent);
 
+      // Validate type adherence if refinement type is set
+      const refinementType = demand.refinementType as RefinementType;
+      const typeAdherence = typeContractValidator.validateTypeAdherence(prdContent, refinementType);
+
+      // Log type adherence result
+      if (refinementType) {
+        console.log(`📋 Type adherence for demand ${demandId} (${refinementType}): ${typeAdherence.isAdherent ? '✅ Passed' : '⚠️ Failed'} - Score: ${typeAdherence.score}%`);
+      }
+
       // Save documents
       const prdPath = await this.saveDocument(demandId, 'PRD', prdContent);
       const tasksPath = await this.saveDocument(demandId, 'Tasks', tasksContent);
 
-      // Update demand with document paths and final progress
+      // Update demand with document paths, type adherence, and final progress
       await storage.updateDemand(demandId, {
         status: 'completed',
         progress: 100,
         prdUrl: prdPath,
-        tasksUrl: tasksPath
+        tasksUrl: tasksPath,
+        typeAdherence: typeAdherence
       });
 
       // UNIFIED: Clean up evolving context
@@ -396,10 +417,14 @@ export class AISquadService {
       // Set reality constraints in the context builder
       contextBuilder.setRealityConstraints(demandId, {
         maturityLevel: realityConstraints.maturityLevel || 'MVP',
+        demandType: realityConstraints.demandType || demand.type,
+        canonicalDemandType: realityConstraints.canonicalDemandType,
         allowedTechnologies: realityConstraints.allowedTechnologies || ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
         forbiddenTechnologies: realityConstraints.forbiddenTechnologies || ['kubernetes', 'microservices', 'blockchain'],
         maxEffortDays: realityConstraints.maxEffortDays || 14,
-        minROI: realityConstraints.minROI || '3:1'
+        minROI: realityConstraints.minROI || '3:1',
+        outputType: realityConstraints.outputType,
+        typeRequirements: realityConstraints.typeRequirements || []
       });
 
       console.log(`✅ Reality constraints applied: ${realityConstraints.maturityLevel}`);
@@ -419,10 +444,13 @@ export class AISquadService {
       // Apply default constraints if reality check fails
       contextBuilder.setRealityConstraints(demandId, {
         maturityLevel: 'MVP',
+        demandType: demand.type,
         allowedTechnologies: ['TypeScript', 'React', 'Node.js', 'Vite', 'SQLite'],
         forbiddenTechnologies: ['kubernetes', 'microservices', 'blockchain', 'kafka', 'elasticsearch'],
         maxEffortDays: 14,
-        minROI: '3:1'
+        minROI: '3:1',
+        outputType: 'standard refinement',
+        typeRequirements: []
       });
     }
 
@@ -489,7 +517,7 @@ export class AISquadService {
       }
 
       interactionResult = await agentInteractionService.conductMultiAgentInteraction(
-        demand, 
+        demand,
         agentConfigs,
         internalContext, // Pass the assembled context
         onProgress
@@ -576,7 +604,7 @@ export class AISquadService {
         // Process with agent for actual agent response
         const response = await this.processWithAgent(
           agent.name,
-          demand, 
+          demand,
           refinementLevels,
           internalContext // Pass the assembled context here as well
         );
@@ -624,22 +652,32 @@ export class AISquadService {
     // GERAR TASKS COM PM
     const tasksContent = await this.generateTasksWithPM(demand, prdContent);
 
-    // Progresso 97%: Salvando documentos
+    // Progresso 97%: Validando aderência ao tipo e salvando documentos
     await storage.updateDemand(demandId, {
       status: 'processing',
       progress: 97
     });
 
+    // Validate type adherence if refinement type is set
+    const refinementType = demand.refinementType as RefinementType;
+    const typeAdherence = typeContractValidator.validateTypeAdherence(prdContent, refinementType);
+
+    // Log type adherence result
+    if (refinementType) {
+      console.log(`📋 Type adherence for demand ${demandId} (${refinementType}): ${typeAdherence.isAdherent ? '✅ Passed' : '⚠️ Failed'} - Score: ${typeAdherence.score}%`);
+    }
+
     // Save documents
     const prdPath = await this.saveDocument(demandId, 'PRD', prdContent);
     const tasksPath = await this.saveDocument(demandId, 'Tasks', tasksContent);
 
-    // Update demand with document paths and final progress
+    // Update demand with document paths, type adherence, and final progress
     await storage.updateDemand(demandId, {
       status: 'completed',
       progress: 100,
       prdUrl: prdPath,
-      tasksUrl: tasksPath
+      tasksUrl: tasksPath,
+      typeAdherence: typeAdherence
     });
 
     // Clean up evolving context after processing completes
@@ -665,12 +703,7 @@ export class AISquadService {
   }
 
   private getRefinementLevels(type: string): number {
-    switch (type) {
-      case 'nova_funcionalidade': return 4; // Alto esforço
-      case 'melhoria': return 3; // Médio esforço
-      case 'bug': return 2; // Baixo esforço
-      default: return 3;
-    }
+    return getDemandTypeConfig(type).refinementLevel;
   }
 
   private async processWithAgent(
@@ -713,16 +746,16 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
       );
 
       const finalResponse = response || `${agentName} processou a demanda com sucesso.`;
-      
+
       // Validate response against anti-overengineering rules
       const validation = contextBuilder.validateResponse(finalResponse);
-      
+
       if (!validation.isValid) {
         console.warn(`Agent ${agentName} response validation failed (score: ${validation.score}):`, validation.issues);
         // Return structured response even if validation fails
         return this.createStructuredResponse(agentName, finalResponse, validation);
       }
-      
+
       return finalResponse;
     } catch (error) {
       console.error(`Error processing with ${agentName}:`, error);
@@ -757,16 +790,200 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
     return structuredResponse;
   }
   private getIntensityByType(type: string): 'baixa' | 'media' | 'alta' {
-    switch (type) {
-      case 'bug': return 'baixa';
-      case 'melhoria': return 'media';
-      case 'nova_funcionalidade': return 'alta';
-      default: return 'media';
-    }
+    return getDemandTypeConfig(type).intensity;
+  }
+
+  private getDemandTypePrdGuidance(type: string): string {
+    const config = getDemandTypeConfig(type);
+    const requirements = config.typeRequirements.map(requirement => `- ${requirement}`).join('\n');
+
+    return `Tipo de Demanda: ${config.label}
+Template Esperado: ${config.prdTemplate}
+Saída Esperada: ${config.outputType}
+Esforço Máximo: ${config.maxEffortDays} dias
+Requisitos Obrigatórios por Tipo:
+${requirements}`;
+  }
+
+  // ===== PROMPTS DIFERENCIADOS POR TIPO DE REFINAMENTO =====
+
+  /**
+   * Prompt para PRD técnico - foco em arquitetura, componentes, dependências e trade-offs
+   */
+  private getTechnicalPRDPrompt(insightsSummary: string): string {
+    return `Você é um Tech Lead/Arquiteto de Software experiente criando um documento técnico de requisitos.
+
+--- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
+1. NÃO sugira tecnologias fora do stack atual (TypeScript, React, Node.js, Vite, SQLite)
+2. NÃO proponha refatoração arquitetural ou troca de frameworks
+3. TODAS as estimativas devem ser realistas (< 2 semanas para features, < 3 dias para bugs)
+4. Foque em soluções SIMPLES e INCREMENTAIS
+5. Priorize código existente sobre novas abstrações
+
+${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
+Crie um PRD TÉCNICO em Markdown seguindo EXATAMENTE este formato:
+
+# PRD Técnico - [Título]
+
+## 1. Visão Geral Técnica
+[Descrição do problema do ponto de vista de engenharia - O que precisa ser resolvido tecnicamente?]
+
+## 2. Arquitetura Proposta
+### 2.1 Componentes Afetados
+- [Lista de arquivos/módulos que serão modificados]
+- [Novos componentes se necessário - mínimo possível]
+
+### 2.2 Diagrama de Fluxo
+[Descrição textual do fluxo de dados - entrada → processamento → saída]
+
+### 2.3 Integrações
+- [APIs internas/externas necessárias]
+- [Dependências entre módulos]
+
+## 3. Especificações Técnicas
+### 3.1 Modelo de Dados
+[Alterações em schemas, tabelas, tipos TypeScript]
+
+### 3.2 Endpoints/Interfaces
+[Novas rotas, parâmetros, retornos esperados]
+
+### 3.3 Regras de Validação
+[Validações de entrada, regras de negócio técnicas]
+
+## 4. Dependências e Requisitos
+### 4.1 Dependências de Código
+- [Bibliotecas existentes a utilizar]
+- [Novas dependências - APENAS se estritamente necessário]
+
+### 4.2 Pré-requisitos
+- [O que precisa estar pronto antes de começar]
+
+## 5. Trade-offs e Decisões
+| Decisão | Alternativa Descartada | Justificativa |
+|---------|------------------------|---------------|
+| [Escolha feita] | [Opção não escolhida] | [Por que essa escolha] |
+
+## 6. Riscos Técnicos
+- **Risco:** [Descrição] | **Mitigação:** [Como evitar/resolver]
+
+## 7. Critérios de Aceite Técnicos
+- [ ] [Critério técnico verificável 1]
+- [ ] [Critério técnico verificável 2]
+- [ ] [Testes passando]
+- [ ] [Performance dentro do esperado]
+
+## 8. Estimativa de Esforço
+| Fase | Esforço |
+|------|---------|
+| Desenvolvimento | [X dias] |
+| Testes | [X dias] |
+| Code Review | [X dias] |
+| **Total** | **[X dias]** |
+
+IMPORTANTE:
+- Este é um documento TÉCNICO para engenheiros
+- Inclua detalhes de implementação específicos
+- Mantenha seções de arquitetura, componentes e trade-offs
+- Estimativas devem ser conservadoras e realistas`;
+  }
+
+  /**
+   * Prompt para PRD de negócios - foco em objetivo, valor, impacto e prioridade
+   */
+  private getBusinessPRDPrompt(insightsSummary: string): string {
+    return `Você é um Product Manager experiente criando um documento de requisitos de negócio.
+
+--- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
+1. NÃO entre em detalhes técnicos de implementação
+2. Foque no VALOR para o usuário e para o negócio
+3. Mantenha linguagem acessível para stakeholders não-técnicos
+4. Priorize clareza sobre completude
+
+${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
+Crie um PRD de NEGÓCIOS em Markdown seguindo EXATAMENTE este formato:
+
+# PRD - [Título]
+
+## 1. Resumo Executivo
+[1-2 parágrafos: O que é, por que é importante, qual o impacto esperado]
+
+## 2. Problema e Oportunidade
+### 2.1 Contexto do Problema
+[Qual dor do usuário/negócio estamos resolvendo?]
+
+### 2.2 Impacto Atual
+[Quanto custa não resolver? Quantos usuários afetados?]
+
+### 2.3 Oportunidade
+[Qual o ganho potencial ao resolver?]
+
+## 3. Objetivo e Benefícios
+### 3.1 Objetivo Principal
+[Uma frase clara: "Permitir que [usuário] consiga [ação] para [benefício]"]
+
+### 3.2 Benefícios Esperados
+- **Para o Usuário:** [Como melhora a vida do usuário]
+- **Para o Negócio:** [Impacto em métricas de negócio]
+- **Para a Operação:** [Redução de custo/suporte/tempo]
+
+## 4. Escopo da Entrega
+### 4.1 O que ESTÁ incluído
+- [Funcionalidade/entrega 1]
+- [Funcionalidade/entrega 2]
+- [Funcionalidade/entrega 3]
+
+### 4.2 O que NÃO está incluído (fora de escopo)
+- [Item explicitamente excluído 1]
+- [Item explicitamente excluído 2]
+
+## 5. Experiência Esperada
+### 5.1 Jornada do Usuário
+[Descreva passo a passo como o usuário vai interagir com a funcionalidade]
+
+### 5.2 Critérios de Sucesso do Usuário
+- [O usuário consegue fazer X em Y cliques]
+- [O tempo para completar a tarefa é menor que Z]
+
+## 6. Regras de Negócio e Premissas
+### 6.1 Regras de Negócio
+- [Regra 1: "Se X, então Y"]
+- [Regra 2: "Nunca permitir Z quando W"]
+
+### 6.2 Premissas
+- [Premissa 1: Assumimos que...]
+- [Premissa 2: Dependemos de...]
+
+## 7. Métricas de Sucesso
+| Métrica | Baseline Atual | Meta | Como Medir |
+|---------|----------------|------|------------|
+| [Métrica 1] | [Valor atual] | [Valor esperado] | [Ferramenta/método] |
+| [Métrica 2] | [Valor atual] | [Valor esperado] | [Ferramenta/método] |
+
+## 8. Prioridade e Justificativa
+- **Prioridade:** [Alta/Média/Baixa]
+- **Justificativa:** [Por que essa prioridade? Impacto vs Esforço]
+- **Custo de Atraso:** [O que perdemos se não fizermos agora?]
+
+## 9. Riscos e Mitigações
+| Risco | Probabilidade | Impacto | Mitigação |
+|-------|---------------|---------|-----------|
+| [Risco 1] | Alta/Média/Baixa | Alto/Médio/Baixo | [Como evitar] |
+
+## 10. Stakeholders e Aprovações
+- **Sponsor:** [Nome/Papel]
+- **Aprovadores:** [Quem precisa aprovar]
+- **Consultados:** [Quem foi ouvido]
+
+IMPORTANTE:
+- Este é um documento de NEGÓCIOS para stakeholders
+- Evite jargão técnico - traduza para impacto de negócio
+- Mantenha seções de objetivo, valor, impacto e prioridade
+- O documento deve ser compreensível por qualquer pessoa da empresa`;
   }
 
   // ===== NOVOS MÉTODOS: Geração de PRD e Tasks com PM (FORA DO LOOP) =====
   // Agora com validação anti-overengineering integrada
+  // ATUALIZADO: Suporta diferentes templates baseados no refinementType
 
   private async generatePRDWithPM(
     demand: Demand,
@@ -780,124 +997,41 @@ Contexto adicional: Tipo de demanda: ${demand.type}. Nível de refinamento: ${re
     // Get insights from evolved context for richer PRD
     const insightsSummary = contextBuilder.getInsightsSummary(demand.id);
 
-    const systemPrompt = `Você é um Product Manager experiente e orientado a negócios.
+    // Determinar tipo de refinamento - usa o valor da demanda
+    const refinementType = demand.refinementType as RefinementType;
+    const isTechnical = refinementType === 'technical';
+    const demandTypeGuidance = this.getDemandTypePrdGuidance(demand.type);
 
---- ANTI-OVERENGINEERING CONSTRAINTS (OBRIGATÓRIO) ---
-1. NÃO sugira tecnologias fora do stack atual (TypeScript, React, Node.js, Vite, SQLite)
-2. NÃO proponha refatoração arquitetural ou troca de frameworks
-3. NÃO sugira microserviços, kubernetes, blockchain ou tecnologias enterprise
-4. TODAS as estimativas devem ser realistas e incrementais
-5. Foque em soluções PRÁTICAS e INCREMENTAIS
-6. Referencie dados CONCRETOS do projeto quando disponíveis
+    // Sistema de prompts diferenciados por tipo
+    const systemPrompt = isTechnical
+      ? this.getTechnicalPRDPrompt(insightsSummary)
+      : this.getBusinessPRDPrompt(insightsSummary);
 
-${insightsSummary ? `--- INSIGHTS DA SQUAD ---\n${insightsSummary}\n\n` : ''}
-Sua responsabilidade é criar um PRD executivo, claro e voltado a decisão de negócio.
-O documento deve ser compreensível por diretoria, produto, operação, comercial e tecnologia.
-
-# PRD - [Título da Demanda]
-
-**Versão:** 1.0.0
-**Data:** [Data atual]
-**Autor:** Product Manager
-
-## Resumo Executivo
-
-**O que será feito:** [Explique em linguagem simples]
-**Por que isso importa:** [Benefício de negócio]
-**Decisão esperada:** [O que precisa ser aprovado ou priorizado]
-
-## Contexto e Problema
-
-[Descreva a situação atual, quem sofre com o problema e o impacto prático no negócio.]
-
-## Público Impactado
-
-- **Usuários ou áreas afetadas:** [Quem usa ou depende disso]
-- **Momento de uso:** [Quando o problema aparece]
-- **Dor principal:** [O que atrapalha hoje]
-
-## Objetivos de Negócio
-
-- [Objetivo 1 com resultado esperado]
-- [Objetivo 2 com resultado esperado]
-- [Objetivo 3 com resultado esperado]
-
-## Escopo da Entrega
-
-### Faremos
-- [Entrega ou mudança em linguagem de negócio]
-- [Entrega ou mudança em linguagem de negócio]
-
-### Não Faremos Agora
-- [Limite do escopo e motivo]
-- [Limite do escopo e motivo]
-
-## Experiência Esperada
-
-Descreva como a pessoa usuária deve perceber a solução pronta:
-- [Passo ou resultado esperado 1]
-- [Passo ou resultado esperado 2]
-- [Passo ou resultado esperado 3]
-
-## Regras de Negócio e Premissas
-
-- [Regra, política, restrição ou premissa relevante]
-- [Regra, política, restrição ou premissa relevante]
-
-## Métricas de Sucesso
-
-- [Métrica principal com meta ou sinal de melhora]
-- [Métrica operacional com meta ou sinal de melhora]
-- [Métrica de qualidade/percepção com meta ou sinal de melhora]
-
-## Riscos e Cuidados
-
-- **Risco:** [O que pode dar errado]
-  **Impacto no negócio:** [Consequência prática]
-  **Como reduzir:** [Ação preventiva]
-
-## Plano de Entrega
-
-1. [Primeiro passo de entrega] - [Prazo/ordem sugerida]
-2. [Segundo passo de entrega] - [Prazo/ordem sugerida]
-3. [Terceiro passo de entrega] - [Prazo/ordem sugerida]
-
-## Pontos em Aberto
-
-- [Pergunta ou decisão pendente]
-- [Pergunta ou decisão pendente]
-
-## Aprovações Necessárias
-
-- [ ] Produto
-- [ ] Negócio/Operação
-- [ ] Tecnologia
-
-REGRAS DE ESCRITA:
-- Escreva em português brasileiro, com frases curtas e objetivas
-- Priorize problema, impacto, valor, escopo, métricas, riscos e decisão
-- Não use RF, RNF, endpoint, API, banco de dados, deploy, sprint ou jargões técnicos no PRD
-- Se algum detalhe técnico for indispensável, coloque no máximo 5 bullets em "Regras de Negócio e Premissas" e explique o impacto para o negócio
-- Não transforme sugestões técnicas dos agentes em arquitetura; traduza para consequência prática para o usuário ou para a operação
-- Não inclua placeholders entre colchetes na resposta final
-
-Gere um PRD completo, profissional e bem estruturado em português brasileiro.`;
-
+    const typeLabel = isTechnical ? 'TÉCNICO' : 'NEGÓCIOS';
     const userPrompt = `Demanda Original: ${demand.title}
 Descrição: ${demand.description}
 Tipo: ${demand.type}
 Prioridade: ${demand.priority}
+Tipo de Refinamento: ${typeLabel}
+
+=== CONTRATO DO TIPO DE DEMANDA ===
+${demandTypeGuidance}
 
 === REFINAMENTO DA SQUAD ===
 ${refinementSummary}
 
 === SUA TAREFA ===
-Com base em TODAS as análises acima, crie um PRD completo em Markdown seguindo o formato especificado.
-O PRD deve ser um documento de negócio que qualquer pessoa consiga ler uma vez e entender o problema, o valor e a decisão necessária.
+Com base em TODAS as análises acima, crie um documento ${isTechnical ? 'técnico' : 'de negócio'} completo em Markdown seguindo o formato especificado.
+${isTechnical
+  ? 'O documento deve ser um artefato técnico que engenheiros e tech leads consigam usar para implementação.'
+  : 'O documento deve ser um documento de negócio que qualquer pessoa consiga ler uma vez e entender o problema, o valor e a decisão necessária.'}
 
 IMPORTANTE:
 - Use as informações do refinamento dos agentes para preencher os campos do PRD
-- Traduza sugestões técnicas dos agentes para impacto de negócio, experiência do usuário, risco, escopo ou métrica
+- Respeite o contrato do tipo de demanda e inclua as seções/requisitos obrigatórios quando aplicável
+${isTechnical
+  ? '- Mantenha detalhes técnicos como arquitetura, componentes, dependências e trade-offs'
+  : '- Traduza sugestões técnicas dos agentes para impacto de negócio, experiência do usuário, risco, escopo ou métrica'}
 - Certifique-se de que o conteúdo do PRD reflita fielmente as discussões realizadas
 - Não escreva em formato RF/RNF e não detalhe implementação técnica`;
 

@@ -1,54 +1,68 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import CustomDisclaimer from "@/components/ui/custom-disclaimer";
-import { Plus, TrendingUp, Bug, Compass, BarChart, CloudUpload, Send, Github, ChevronDown, ChevronUp, X, CheckCircle } from "lucide-react";
+import { Plus, TrendingUp, Bug, Compass, BarChart, Upload, Send, X, CheckCircle, ChevronDown, ChevronUp, AlertCircle, Loader2, Code, Briefcase } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertDemandSchema } from "@shared/schema";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { insertDemandSchema, type InsertDemand } from "@shared/schema";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { GitHubImportModal } from "./github-import-modal";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import LoadingSpinner from "./ui/loading-spinner";
+import { DEMAND_TYPES, type DemandType } from "@shared/demand-types";
 
-const demandTypes = [
-  { value: "nova_funcionalidade", label: "Nova Funcionalidade", icon: Plus },
-  { value: "melhoria", label: "Melhoria", icon: TrendingUp },
-  { value: "bug", label: "Bug", icon: Bug },
-  { value: "discovery", label: "Discovery", icon: Compass },
-  { value: "analise_exploratoria", label: "Análise Exploratória", icon: BarChart },
-];
+const demandTypeIconMap = {
+  Plus,
+  TrendingUp,
+  Bug,
+  Compass,
+  BarChart,
+};
+
+const demandTypes = Object.entries(DEMAND_TYPES).map(([value, config]) => ({
+  value: value as DemandType,
+  ...config,
+  icon: demandTypeIconMap[config.icon],
+}));
 
 const priorities = [
-  { value: "baixa", label: "Baixa" },
-  { value: "media", label: "Média" },
-  { value: "alta", label: "Alta" },
-  { value: "critica", label: "Crítica" },
+  { value: "baixa", label: "BAIXA", color: "text-[var(--foreground-muted)]" },
+  { value: "media", label: "MÉDIA", color: "text-[var(--accent-lime)]" },
+  { value: "alta", label: "ALTA", color: "text-[var(--accent-orange)]" },
+  { value: "critica", label: "CRÍTICA", color: "text-[var(--destructive)]" },
+];
+
+const refinementTypes = [
+  {
+    value: "technical",
+    label: "TÉCNICO",
+    icon: Code,
+    color: "cyan",
+    description: "Arquitetura, componentes, dependências, trade-offs"
+  },
+  {
+    value: "business",
+    label: "NEGÓCIOS",
+    icon: Briefcase,
+    color: "lime",
+    description: "Objetivo, valor, impacto, prioridade"
+  },
 ];
 
 export function DemandForm() {
-  const [selectedType, setSelectedType] = useState("nova_funcionalidade");
+  const [selectedType, setSelectedType] = useState<DemandType>("nova_funcionalidade");
+  const [selectedRefinementType, setSelectedRefinementType] = useState<"technical" | "business">("business");
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-  const [selectedRepo, setSelectedRepo] = useState<string | null>(null); // New unified state
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isFocused, setIsFocused] = useState({
-    title: false,
-    description: false,
-    type: false,
-    priority: false,
-  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm({
+  const form = useForm<InsertDemand>({
     resolver: zodResolver(insertDemandSchema),
     defaultValues: {
       title: "",
@@ -59,20 +73,26 @@ export function DemandForm() {
   });
 
   const createDemandMutation = useMutation({
-    mutationFn: ({ demand, files, githubRepoOwner, githubRepoName }: {
-      demand: typeof insertDemandSchema._type,
+    mutationFn: ({ demand, files, githubRepoOwner, githubRepoName, refinementType }: {
+      demand: InsertDemand,
       files?: FileList,
       githubRepoOwner?: string,
-      githubRepoName?: string
+      githubRepoName?: string,
+      refinementType?: "technical" | "business"
     }) => {
       const formData = new FormData();
       Object.entries(demand).forEach(([key, value]) => {
-        formData.append(key, value as string);
+        if (value !== undefined && value !== null) {
+          formData.append(key, value as string);
+        }
       });
+      // Usar set() para garantir que refinementType nunca seja duplicado
+      if (refinementType) {
+        formData.set('refinementType', refinementType);
+      }
       if (githubRepoOwner && githubRepoName) {
         formData.append('githubRepoOwner', githubRepoOwner);
         formData.append('githubRepoName', githubRepoName);
-        // Also add to description for the backend to parse
         formData.set('description', `${demand.description}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`);
       }
       if (files) {
@@ -84,12 +104,14 @@ export function DemandForm() {
     },
     onSuccess: () => {
       toast({
-        title: "Demanda criada com sucesso",
-        description: "A squad está processando sua solicitação.",
+        title: "Demanda enviada para a Squad",
+        description: `Os agentes de IA estão processando sua solicitação no modo ${selectedRefinementType === 'technical' ? 'Técnico' : 'Negócios'}.`,
       });
       form.reset();
       setSelectedFiles(null);
-      setSelectedRepo(null); // Reset selected repo
+      setSelectedRepo(null);
+      setSelectedType("nova_funcionalidade");
+      setSelectedRefinementType("business");
       setIsCollapsed(true);
       queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
       setTimeout(() => {
@@ -108,13 +130,19 @@ export function DemandForm() {
     },
   });
 
-  const onSubmit = (data: typeof insertDemandSchema._type) => {
+  const onSubmit = (data: InsertDemand) => {
     let githubRepoOwner: string | undefined;
     let githubRepoName: string | undefined;
     if (selectedRepo) {
       [githubRepoOwner, githubRepoName] = selectedRepo.split('/');
     }
-    createDemandMutation.mutate({ demand: data, files: selectedFiles || undefined, githubRepoOwner, githubRepoName });
+    createDemandMutation.mutate({
+      demand: data,
+      files: selectedFiles || undefined,
+      githubRepoOwner,
+      githubRepoName,
+      refinementType: selectedRefinementType
+    });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,8 +153,8 @@ export function DemandForm() {
     if (repoName) {
       setSelectedRepo(repoName);
       toast({
-        title: "Repositório selecionado!",
-        description: `O repositório ${repoName} será usado como contexto.`,
+        title: "Repositório vinculado",
+        description: `${repoName} será usado como contexto.`,
       });
     }
   };
@@ -143,70 +171,74 @@ export function DemandForm() {
     }
   };
 
+  const getTypeColor = (color: string) => {
+    switch (color) {
+      case "cyan": return "var(--accent-cyan)";
+      case "lime": return "var(--accent-lime)";
+      case "magenta": return "var(--accent-magenta)";
+      case "violet": return "var(--accent-violet)";
+      case "orange": return "var(--accent-orange)";
+      default: return "var(--accent-cyan)";
+    }
+  };
+
   return (
-    <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50">
-      <CardHeader
-        className="cursor-pointer p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-t-xl border-b border-gray-200 dark:border-gray-700"
+    <div className="neo-card">
+      {/* Header */}
+      <button
+        className="w-full flex items-center justify-between p-4 border-b-2 border-[var(--border)] bg-[var(--muted)] hover:bg-[var(--background)] transition-colors"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            setIsCollapsed(!isCollapsed);
-          }
-        }}
         aria-expanded={!isCollapsed}
         aria-controls="demand-form-content"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="bg-blue-500 dark:bg-blue-600 p-2 rounded-lg">
-              <Plus className="w-5 h-5 text-white" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-gray-800 dark:text-white">Nova Demanda</CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[var(--accent-cyan)] flex items-center justify-center">
+            <Plus className="w-4 h-4 text-[var(--background)]" />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            type="button"
-            className="h-8 w-8 p-0 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50"
-            aria-label={isCollapsed ? "Expandir formulário" : "Recolher formulário"}
-          >
-            {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-          </Button>
+          <span className="font-mono text-sm font-bold tracking-wide">NOVA DEMANDA</span>
         </div>
-      </CardHeader>
+        <div className="w-8 h-8 flex items-center justify-center border border-[var(--border)]">
+          {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+        </div>
+      </button>
+
+      {/* Form Content */}
       {!isCollapsed && (
-        <CardContent id="demand-form-content" className="p-6">
+        <div id="demand-form-content" className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-              <CustomDisclaimer title="Dicas para criar uma boa demanda" variant="info">
-                <ul className="list-disc pl-5 space-y-1 text-sm">
-                  <li>Descreva detalhadamente o problema ou necessidade</li>
-                  <li>Explique o contexto e os objetivos esperados</li>
-                  <li>Adicione informações técnicas relevantes</li>
-                  <li>Priorize conforme impacto no negócio</li>
-                </ul>
-              </CustomDisclaimer>
-              
+              {/* Tips Banner */}
+              <div className="border-l-4 border-[var(--accent-cyan)] bg-[var(--muted)] p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-[var(--accent-cyan)] flex-shrink-0 mt-0.5" />
+                  <div className="font-mono text-xs space-y-1">
+                    <p className="font-bold text-[var(--foreground)]">DICAS PARA UMA BOA DEMANDA:</p>
+                    <ul className="text-[var(--foreground-muted)] space-y-0.5">
+                      <li>→ Descreva detalhadamente o problema ou necessidade</li>
+                      <li>→ Inclua contexto técnico e objetivos esperados</li>
+                      <li>→ Anexe documentos relevantes se disponível</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* GitHub Context */}
               <div className="space-y-2">
-                <Label>Contexto do Projeto (Opcional)</Label>
+                <Label className="font-mono text-xs text-[var(--foreground-muted)]">CONTEXTO DO PROJETO (OPCIONAL)</Label>
                 {selectedRepo ? (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
-                    <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
-                      <CheckCircle size={16} />
-                      <span className="font-medium">{selectedRepo}</span>
+                  <div className="flex items-center justify-between p-3 border-2 border-[var(--success)] bg-[var(--success)]/5">
+                    <div className="flex items-center gap-2 font-mono text-sm">
+                      <CheckCircle className="w-4 h-4 text-[var(--success)]" />
+                      <span className="text-[var(--success)]">{selectedRepo}</span>
                     </div>
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
                       onClick={() => setSelectedRepo(null)}
-                      className="h-6 w-6 p-0 rounded-full text-green-600 hover:bg-green-200 dark:text-green-400 dark:hover:bg-green-800"
+                      className="w-6 h-6 flex items-center justify-center hover:bg-[var(--destructive)]/10 transition-colors"
                     >
-                      <X size={14} />
-                    </Button>
+                      <X className="w-4 h-4 text-[var(--destructive)]" />
+                    </button>
                   </div>
                 ) : (
                   <GitHubImportModal
@@ -216,187 +248,265 @@ export function DemandForm() {
                 )}
               </div>
 
+              {/* Demand Type Tabs */}
               <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.type ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      Tipo de Demanda
-                    </FormLabel>
+                    <Label className="font-mono text-xs text-[var(--foreground-muted)]">TIPO DE DEMANDA</Label>
                     <FormControl>
-                      <Tabs
-                        value={selectedType}
-                        onValueChange={(value) => {
-                          setSelectedType(value);
-                          field.onChange(value);
-                        }}
-                        className="w-full"
-                      >
-                        <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg border-0">
-                          {demandTypes.map((type) => {
-                            const Icon = type.icon;
-                            return (
-                              <TabsTrigger
-                                key={type.value}
-                                value={type.value}
-                                className={cn(
-                                  "h-14 flex flex-col items-center gap-1 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-blue-400",
-                                  selectedType === type.value ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
-                                )}
-                                aria-selected={selectedType === type.value}
-                              >
-                                <Icon size={16} />
-                                <span className="text-xs hidden sm:inline">{type.label}</span>
-                              </TabsTrigger>
-                            );
-                          })}
-                        </TabsList>
-                      </Tabs>
+                      <div className="brutal-tabs mt-2">
+                        {demandTypes.map((type) => {
+                          const Icon = type.icon;
+                          const isActive = selectedType === type.value;
+                          return (
+	                            <button
+	                              key={type.value}
+	                              type="button"
+	                              onClick={() => {
+	                                setSelectedType(type.value);
+	                                field.onChange(type.value);
+
+	                                // Só atualiza a prioridade se ela não tiver sido alterada manualmente
+	                                if (!form.getFieldState('priority').isDirty) {
+	                                  form.setValue('priority', type.suggestedPriority, {
+	                                    shouldDirty: false, // Mantém como não dirty se for sugestão
+	                                    shouldValidate: true,
+	                                  });
+	                                }
+	                              }}
+                              className={cn(
+                                "brutal-tab flex flex-col items-center gap-1 py-3",
+                                isActive && "active"
+                              )}
+                              style={{
+                                borderBottomColor: isActive ? getTypeColor(type.color) : undefined,
+                                borderBottomWidth: isActive ? '3px' : undefined,
+                              }}
+                            >
+                              <Icon className="w-4 h-4" style={{ color: isActive ? undefined : getTypeColor(type.color) }} />
+                              <span className="hidden sm:inline text-[10px]">{type.label}</span>
+                              <span className="sm:hidden text-[10px]">{type.shortLabel}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </FormControl>
-                    <FormMessage className="mt-2" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Title */}
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.title ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      Título da Demanda
-                    </FormLabel>
+                    <Label className="font-mono text-xs text-[var(--foreground-muted)]">TÍTULO DA DEMANDA</Label>
                     <FormControl>
                       <Input
                         placeholder="Ex: Sistema de autenticação por biometria"
-                        className={cn("transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600", form.formState.errors.title ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : "")}
+                        className="terminal-input mt-2"
                         {...field}
-                        aria-invalid={!!form.formState.errors.title}
                       />
                     </FormControl>
-                    <FormMessage className="mt-2" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Description */}
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.description ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      Descrição Detalhada
-                    </FormLabel>
+                    <Label className="font-mono text-xs text-[var(--foreground-muted)]">DESCRIÇÃO DETALHADA</Label>
                     <FormControl>
                       <Textarea
                         placeholder="Descreva sua demanda em detalhes. Inclua contexto, objetivos e qualquer informação relevante..."
                         rows={5}
-                        className={cn("resize-none transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600", form.formState.errors.description ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : "")}
+                        className="terminal-input mt-2 resize-none"
                         {...field}
-                        aria-invalid={!!form.formState.errors.description}
                       />
                     </FormControl>
-                    <FormMessage className="mt-2" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Priority */}
               <FormField
                 control={form.control}
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`block text-sm font-medium mb-2 ${isFocused.priority ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      Prioridade
-                    </FormLabel>
+                    <Label className="font-mono text-xs text-[var(--foreground-muted)]">PRIORIDADE</Label>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger
-                          className={cn("w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600", form.formState.errors.priority ? "border-red-500 ring-red-500 dark:border-red-500 dark:ring-red-500" : "")}
-                          aria-invalid={!!form.formState.errors.priority}
-                        >
+                        <SelectTrigger className="terminal-input mt-2">
                           <SelectValue placeholder="Selecione a prioridade" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                        <SelectContent className="bg-[var(--background)] border-2 border-[var(--border)]">
                           {priorities.map((priority) => (
                             <SelectItem
                               key={priority.value}
                               value={priority.value}
-                              className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                              className={cn("font-mono", priority.color)}
                             >
-                              {priority.label}
+                              [{priority.value.toUpperCase()}] {priority.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </FormControl>
-                    <FormMessage className="mt-2" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Refinement Type */}
               <div className="space-y-2">
-                <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anexar Documentos (Opcional)</Label>
-                <div
-                  className={cn("border-2 border-dashed rounded-xl p-6 text-center transition-colors", selectedFiles ? "border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-900/20" : "border-gray-300 hover:border-blue-500 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50 dark:hover:border-blue-500")}
-                >
-                  <CloudUpload className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={24} />
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Arraste arquivos aqui ou{" "}
-                    <label className="text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-800 dark:hover:text-blue-300 font-medium">
-                      clique para selecionar
-                      <input type="file" className="hidden" accept=".txt,.pdf,.docx" multiple onChange={handleFileChange} aria-label="Selecionar arquivos para anexar" />
-                    </label>
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Formatos suportados: .txt, .pdf, .docx
-                  </p>
-                  {selectedFiles && (
-                    <div className="mt-3 space-y-2">
-                      {Array.from(selectedFiles).map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
-                          <div className="flex items-center truncate">
-                            <span className="text-gray-900 dark:text-gray-100 truncate" title={file.name}>
-                              {file.name}
-                            </span>
-                            <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">
-                              ({Math.round(file.size / 1024)}KB)
-                            </span>
-                          </div>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveFile(index)} className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full" aria-label={`Remover arquivo ${file.name}`}>
-                            <X size={14} className="text-red-500 dark:text-red-400" />
-                          </Button>
+                <Label className="font-mono text-xs text-[var(--foreground-muted)]">TIPO DE REFINAMENTO</Label>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  {refinementTypes.map((refType) => {
+                    const Icon = refType.icon;
+                    const isActive = selectedRefinementType === refType.value;
+                    return (
+                      <button
+                        key={refType.value}
+                        type="button"
+                        onClick={() => setSelectedRefinementType(refType.value as "technical" | "business")}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 border-2 transition-all",
+                          isActive
+                            ? "border-[var(--accent-" + refType.color + ")] bg-[var(--accent-" + refType.color + ")]/10"
+                            : "border-[var(--border)] hover:border-[var(--foreground-muted)]"
+                        )}
+                        style={{
+                          borderColor: isActive ? `var(--accent-${refType.color})` : undefined,
+                          backgroundColor: isActive ? `var(--accent-${refType.color})10` : undefined,
+                        }}
+                      >
+                        <div
+                          className={cn(
+                            "w-10 h-10 flex items-center justify-center",
+                            isActive ? "bg-[var(--accent-" + refType.color + ")]" : "bg-[var(--muted)]"
+                          )}
+                          style={{
+                            backgroundColor: isActive ? `var(--accent-${refType.color})` : undefined,
+                          }}
+                        >
+                          <Icon
+                            className="w-5 h-5"
+                            style={{
+                              color: isActive ? 'var(--background)' : `var(--accent-${refType.color})`
+                            }}
+                          />
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <span className={cn(
+                          "font-mono text-sm font-bold",
+                          isActive && "text-[var(--foreground)]"
+                        )}>
+                          {refType.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-[var(--foreground-muted)] text-center">
+                          {refType.description}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+                <p className="font-mono text-[10px] text-[var(--foreground-muted)] mt-1">
+                  O tipo define a estrutura esperada do refinamento gerado.
+                </p>
               </div>
 
-              <div className="flex justify-end pt-4">
-                <Button
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label className="font-mono text-xs text-[var(--foreground-muted)]">ANEXAR DOCUMENTOS (OPCIONAL)</Label>
+                <div
+                  className={cn(
+                    "upload-zone mt-2",
+                    selectedFiles && "has-files"
+                  )}
+                >
+                  <label className="cursor-pointer block">
+                    <Upload className="w-8 h-8 mx-auto mb-3 text-[var(--foreground-muted)]" />
+                    <p className="font-mono text-sm">
+                      Arraste arquivos ou{" "}
+                      <span className="text-[var(--accent-cyan)] underline">clique para selecionar</span>
+                    </p>
+                    <p className="font-mono text-xs text-[var(--foreground-muted)] mt-1">
+                      Formatos: .txt, .pdf, .docx
+                    </p>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".txt,.pdf,.docx"
+                      multiple
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </div>
+
+                {/* File List */}
+                {selectedFiles && (
+                  <div className="space-y-2 mt-3">
+                    {Array.from(selectedFiles).map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 border border-[var(--border)] bg-[var(--muted)]"
+                      >
+                        <div className="flex items-center gap-2 font-mono text-xs truncate">
+                          <span className="text-[var(--success)]">✓</span>
+                          <span className="truncate">{file.name}</span>
+                          <span className="text-[var(--foreground-muted)]">
+                            ({Math.round(file.size / 1024)}KB)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(index)}
+                          className="w-6 h-6 flex items-center justify-center hover:bg-[var(--destructive)]/10"
+                        >
+                          <X className="w-3 h-3 text-[var(--destructive)]" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-4">
+                <button
                   type="submit"
                   disabled={createDemandMutation.isPending}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors dark:bg-blue-700 dark:hover:bg-blue-800"
+                  className={cn(
+                    "cmd-button primary w-full flex items-center justify-center gap-2",
+                    createDemandMutation.isPending && "opacity-50 cursor-not-allowed"
+                  )}
                 >
                   {createDemandMutation.isPending ? (
                     <>
-                      <LoadingSpinner size="sm" />
-                      <span>Enviando...</span>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>ENVIANDO...</span>
                     </>
                   ) : (
                     <>
-                      <Send size={16} />
-                      <span>Enviar para Squad</span>
+                      <Send className="w-4 h-4" />
+                      <span>ENVIAR PARA SQUAD</span>
                     </>
                   )}
-                </Button>
+                </button>
               </div>
             </form>
           </Form>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }

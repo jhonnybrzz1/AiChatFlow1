@@ -1,5 +1,6 @@
 import { storage } from '../storage';
 import { Demand } from '@shared/schema';
+import { getDemandTypeConfig } from '@shared/demand-types';
 import fs from 'fs';
 import path from 'path';
 
@@ -28,7 +29,7 @@ export class DataCollector {
     try {
       // Get all demands from storage
       const demands: Demand[] = await storage.getAllDemands();
-      
+
       // Calculate complexity score based on various factors
       const historicalData: HistoricalDemandData[] = demands.map(demand => ({
         demand_id: demand.id!,
@@ -43,7 +44,7 @@ export class DataCollector {
         created_at: demand.createdAt!.toISOString(),
         updated_at: demand.updatedAt!.toISOString()
       }));
-      
+
       return historicalData;
     } catch (error) {
       console.error('Error collecting historical data:', error);
@@ -58,26 +59,9 @@ export class DataCollector {
    */
   private calculateComplexityScore(demand: Demand): number {
     let score = 50; // Base score
-    
-    // Type-based complexity
-    switch (demand.type) {
-      case 'nova_funcionalidade':
-        score += 20; // New features are more complex
-        break;
-      case 'melhoria':
-        score += 10; // Improvements have medium complexity
-        break;
-      case 'bug':
-        score -= 10; // Bugs might be simpler to fix
-        break;
-      case 'discovery':
-        score += 15; // Discovery involves investigation
-        break;
-      case 'analise_exploratoria':
-        score += 25; // Analysis is highly complex
-        break;
-    }
-    
+
+    score += getDemandTypeConfig(demand.type).complexityAdjustment;
+
     // Priority-based adjustment
     switch (demand.priority) {
       case 'critica':
@@ -87,13 +71,13 @@ export class DataCollector {
         score += 5; // High priority might indicate complexity
         break;
     }
-    
+
     // Description length as complexity indicator
     const descriptionLength = demand.description.length;
     if (descriptionLength > 500) score += 15;
     else if (descriptionLength > 250) score += 10;
     else if (descriptionLength > 100) score += 5;
-    
+
     // Cap the score between 0 and 100
     return Math.max(0, Math.min(100, score));
   }
@@ -107,30 +91,13 @@ export class DataCollector {
     // For now, this is an estimation since we don't have actual resolution times
     // In a real scenario, this would come from actual data
     let time = 120; // Base time in minutes
-    
+
     // Adjust based on complexity score
     const complexity = this.calculateComplexityScore(demand);
     time = time * (complexity / 50); // Scale with complexity
-    
-    // Adjust based on type
-    switch (demand.type) {
-      case 'nova_funcionalidade':
-        time *= 2.5;
-        break;
-      case 'melhoria':
-        time *= 1.8;
-        break;
-      case 'bug':
-        time *= 0.8;
-        break;
-      case 'discovery':
-        time *= 1.5;
-        break;
-      case 'analise_exploratoria':
-        time *= 3.0;
-        break;
-    }
-    
+
+    time *= getDemandTypeConfig(demand.type).resolutionMultiplier;
+
     return Math.round(time);
   }
 
@@ -140,20 +107,7 @@ export class DataCollector {
    * @returns Estimated team name
    */
   private estimateTeamBasedOnType(type: string): string {
-    switch (type) {
-      case 'nova_funcionalidade':
-        return 'backend-frontend';
-      case 'melhoria':
-        return 'fullstack';
-      case 'bug':
-        return 'support';
-      case 'discovery':
-        return 'research';
-      case 'analise_exploratoria':
-        return 'analytics';
-      default:
-        return 'general';
-    }
+    return getDemandTypeConfig(type).defaultTeam;
   }
 
   /**
@@ -193,7 +147,7 @@ export class DataCollector {
       };
       return Object.values(escapedRow).join(',');
     }).join('\n');
-    
+
     // Ensure data directory exists
     const dataDir = path.dirname(DataCollector.DATASET_PATH);
     if (!fs.existsSync(dataDir)) {
@@ -217,25 +171,25 @@ export class DataCollector {
     const fileContent = fs.readFileSync(DataCollector.DATASET_PATH, 'utf-8');
     const lines = fileContent.split('\n');
     const headers = lines[0].split(',');
-    
+
     const data: HistoricalDemandData[] = [];
     for (let i = 1; i < lines.length; i++) {
       if (lines[i].trim() === '') continue;
-      
+
       const values = lines[i].replace(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g, '\t').split('\t');
       const row: any = {};
-      
+
       for (let j = 0; j < headers.length; j++) {
         let value = values[j]?.trim();
-        
+
         // Remove quotes from quoted strings
         if (value && value.startsWith('"') && value.endsWith('"')) {
           value = value.substring(1, value.length - 1).replace(/""/g, '"');
         }
-        
+
         row[headers[j]] = value;
       }
-      
+
       data.push({
         demand_id: parseInt(row['demand_id']),
         title: row['title'],
@@ -250,10 +204,10 @@ export class DataCollector {
         updated_at: row['updated_at']
       });
     }
-    
+
     return data;
   }
-  
+
   /**
    * Gets or creates dataset, collecting fresh data if it doesn't exist
    * @returns Historical demand data

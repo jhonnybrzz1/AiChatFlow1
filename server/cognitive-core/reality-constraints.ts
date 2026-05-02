@@ -1,4 +1,5 @@
 import { ProjectReality } from './project-reality-reader';
+import { getDemandTypeConfig } from '@shared/demand-types';
 
 interface DemandTypeConstraints {
     bug: {
@@ -28,6 +29,8 @@ interface DemandTypeConstraints {
     };
 }
 
+type CanonicalDemandType = keyof DemandTypeConstraints;
+
 export class RealityConstraints {
     private projectReality: ProjectReality;
 
@@ -35,14 +38,19 @@ export class RealityConstraints {
         this.projectReality = projectReality;
     }
 
-    public getConstraintsForDemandType(demandType: keyof DemandTypeConstraints): any {
+    public getConstraintsForDemandType(demandType: string): any {
         const baseConstraints = this.getBaseConstraints();
-        const specificConstraints = this.getSpecificConstraints(demandType);
-        
+        const config = getDemandTypeConfig(demandType);
+        const canonicalDemandType = config.canonicalDemandType as CanonicalDemandType;
+        const specificConstraints = this.getSpecificConstraints(canonicalDemandType);
+        const executionConstraints = this.getExecutionConstraints(demandType);
+
         return {
             ...baseConstraints,
             ...specificConstraints,
-            demandType
+            ...executionConstraints,
+            demandType,
+            canonicalDemandType
         };
     }
 
@@ -74,7 +82,7 @@ export class RealityConstraints {
 
     private getForbiddenTechnologies(): string[] {
         const forbidden: string[] = [];
-        
+
         // Based on maturity level
         switch (this.projectReality.maturityLevel) {
             case 'MVP':
@@ -87,7 +95,7 @@ export class RealityConstraints {
                     'Serverless Architecture'
                 );
                 break;
-            
+
             case 'Initial Product':
                 forbidden.push(
                     'Edge Computing',
@@ -96,7 +104,7 @@ export class RealityConstraints {
                     'Kubernetes'
                 );
                 break;
-            
+
             case 'Scaling Product':
                 forbidden.push(
                     'Edge Computing',
@@ -121,7 +129,7 @@ export class RealityConstraints {
         return forbidden;
     }
 
-    private getSpecificConstraints(demandType: keyof DemandTypeConstraints): any {
+    private getSpecificConstraints(demandType: CanonicalDemandType): any {
         switch (demandType) {
             case 'bug':
                 return this.getBugConstraints();
@@ -136,6 +144,16 @@ export class RealityConstraints {
             default:
                 return {};
         }
+    }
+
+    private getExecutionConstraints(demandType: string): any {
+        const config = getDemandTypeConfig(demandType);
+        return {
+            maxEffortDays: config.maxEffortDays,
+            minROI: config.minROI,
+            outputType: config.outputType,
+            typeRequirements: config.typeRequirements
+        };
     }
 
     private getBugConstraints(): DemandTypeConstraints['bug'] {
@@ -283,27 +301,29 @@ export class RealityConstraints {
         }
     }
 
-    public checkAdherence(demandAnalysis: any, demandType: keyof DemandTypeConstraints): {
+    public checkAdherence(demandAnalysis: any, demandType: string): {
         isAdherent: boolean;
         issues: string[];
         adherenceScore: number;
     } {
+        const config = getDemandTypeConfig(demandType);
+        const canonicalDemandType = config.canonicalDemandType as CanonicalDemandType;
         const constraints = this.getConstraintsForDemandType(demandType);
         const issues: string[] = [];
-        
+
         // Check for forbidden technologies
         if (demandAnalysis.technologies) {
-            const forbiddenTechUsed = demandAnalysis.technologies.filter((tech: string) => 
+            const forbiddenTechUsed = demandAnalysis.technologies.filter((tech: string) =>
                 constraints.forbiddenTechnologies.includes(tech)
             );
-            
+
             if (forbiddenTechUsed.length > 0) {
                 issues.push(`Forbidden technologies used: ${forbiddenTechUsed.join(', ')}`);
             }
         }
 
         // Check specific constraints based on demand type
-        switch (demandType) {
+        switch (canonicalDemandType) {
             case 'bug':
                 if (demandAnalysis.technicalDepth > constraints.maxTechnicalDepth) {
                     issues.push(`Technical depth ${demandAnalysis.technicalDepth} exceeds maximum of ${constraints.maxTechnicalDepth}`);
@@ -312,7 +332,7 @@ export class RealityConstraints {
                     issues.push(`Architecture changes ${demandAnalysis.architectureChanges} exceeds maximum of ${constraints.maxArchitectureChanges}`);
                 }
                 break;
-                
+
             case 'newFeature':
                 if (demandAnalysis.newDependencies > constraints.maxNewDependencies) {
                     issues.push(`New dependencies ${demandAnalysis.newDependencies} exceeds maximum of ${constraints.maxNewDependencies}`);
@@ -321,7 +341,7 @@ export class RealityConstraints {
         }
 
         const adherenceScore = Math.max(0, 100 - (issues.length * 20));
-        
+
         return {
             isAdherent: issues.length === 0,
             issues,

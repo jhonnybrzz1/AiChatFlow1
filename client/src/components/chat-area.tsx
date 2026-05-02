@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle, FileJson, FileText, Copy, FileText as FileTextIcon } from "lucide-react";
+import { MessageCircle, Bot, Loader2, StopCircle, Download, CheckCircle, XCircle, FileJson, FileText, Copy, Terminal, Cpu } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { type Demand, type ChatMessage } from "@shared/schema";
@@ -11,27 +9,16 @@ import { useToast } from "@/hooks/use-toast";
 import RefinementDialog from "./refinement-dialog";
 import { MessageCategoryBadge, categoryConfig } from "./message-category";
 import { cn } from "@/lib/utils";
-import CustomDisclaimer from "@/components/ui/custom-disclaimer";
 import { DocumentViewer } from "./document-viewer";
 
-const agentIcons: Record<string, string> = {
-  refinador: "🧠",
-  scrum_master: "🧝",
-  qa: "✅",
-  ux: "🎨",
-  analista_de_dados: "📈",
-  tech_lead: "💧",
-  pm: "📋",
-};
-
-const agentNames: Record<string, string> = {
-  refinador: "Refinador",
-  scrum_master: "Scrum Master",
-  qa: "QA",
-  ux: "UX Designer",
-  analista_de_dados: "Analista de Dados",
-  tech_lead: "Tech Lead",
-  pm: "Product Manager",
+const agentConfig: Record<string, { icon: string; color: string; name: string }> = {
+  refinador: { icon: "🧠", color: "var(--accent-violet)", name: "Refinador" },
+  scrum_master: { icon: "🧝", color: "var(--accent-lime)", name: "Scrum Master" },
+  qa: { icon: "✅", color: "var(--success)", name: "QA" },
+  ux: { icon: "🎨", color: "var(--accent-magenta)", name: "UX Designer" },
+  analista_de_dados: { icon: "📈", color: "var(--accent-orange)", name: "Analista de Dados" },
+  tech_lead: { icon: "💧", color: "var(--accent-cyan)", name: "Tech Lead" },
+  pm: { icon: "📋", color: "var(--accent-gold)", name: "Product Manager" },
 };
 
 interface ChatAreaProps {
@@ -57,10 +44,8 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
     refetchInterval: 2000,
   });
 
-  // Get the most recent processing demand or use the selected one
   const processingDemand = demands.find(d => d.status === 'processing') || null;
 
-  // Stop processing mutation
   const stopProcessingMutation = useMutation({
     mutationFn: async (demandId: number) => {
       return await apiRequest('POST', `/api/demands/${demandId}/stop`);
@@ -82,29 +67,21 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   });
 
   useEffect(() => {
-    // If there's a processing demand, prioritize it
     if (processingDemand) {
       setSelectedDemand(processingDemand);
-
-      // Calculate progress based on messages
       const totalAgents = 7;
       const completedMessages = processingDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
       setProgress((completedMessages / totalAgents) * 100);
 
-      // Subscribe to real-time updates
       const unsubscribe = api.demands.subscribeToUpdates(processingDemand.id, (updatedDemand) => {
         setSelectedDemand(updatedDemand);
         const newCompletedMessages = updatedDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
         setProgress((newCompletedMessages / totalAgents) * 100);
-
-        // Trigger a refresh of the component to update the displayed documents
-        setProgress(prev => prev + 0.001); // Small increment to trigger re-render when documents are updated
+        setProgress(prev => prev + 0.001);
       });
 
       return unsubscribe;
-    }
-    // Otherwise use the selected demand from props
-    else if (propSelectedDemand) {
+    } else if (propSelectedDemand) {
       setSelectedDemand(propSelectedDemand);
       const totalAgents = 7;
       const completedMessages = propSelectedDemand.chatMessages?.filter(m => m.type === 'completed').length || 0;
@@ -121,73 +98,46 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   const handleExportJSON = () => {
     if (!selectedDemand) return;
     window.open(`/api/demands/${selectedDemand.id}/export/json`, '_blank');
-    toast({
-      title: "Exportando diálogo",
-      description: "O arquivo JSON está sendo baixado.",
-    });
   };
 
   const handleExportTXT = () => {
     if (!selectedDemand) return;
     window.open(`/api/demands/${selectedDemand.id}/export/txt`, '_blank');
-    toast({
-      title: "Exportando diálogo",
-      description: "O arquivo TXT está sendo baixado.",
-    });
   };
 
   const handleCopyChat = async () => {
     if (!selectedDemand || chatMessages.length === 0) return;
 
-    // Formatar o conteúdo do chat
     let chatContent = `HISTÓRICO DE DIÁLOGO - DEMANDA #${selectedDemand.id}\n`;
-    chatContent += `${'='.repeat(60)}\n\n`;
+    chatContent += `${'═'.repeat(60)}\n\n`;
     chatContent += `Título: ${selectedDemand.title}\n`;
     chatContent += `Tipo: ${selectedDemand.type}\n`;
-    chatContent += `Prioridade: ${selectedDemand.priority}\n`;
-    chatContent += `Status: ${selectedDemand.status}\n`;
-    chatContent += `Criado em: ${selectedDemand.createdAt}\n`;
-    chatContent += `\nDescrição:\n${selectedDemand.description}\n\n`;
-    chatContent += `${'='.repeat(60)}\n`;
-    chatContent += `MENSAGENS DO CHAT\n`;
-    chatContent += `${'='.repeat(60)}\n\n`;
+    chatContent += `Status: ${selectedDemand.status}\n\n`;
+    chatContent += `${'─'.repeat(60)}\n`;
+    chatContent += `MENSAGENS\n`;
+    chatContent += `${'─'.repeat(60)}\n\n`;
 
     chatMessages.forEach((message, index) => {
-      const agentName = agentNames[message.agent] || message.agent;
-      const timestamp = new Date(message.timestamp).toLocaleString('pt-BR');
-      const status = message.type === 'completed' ? '✓' : message.type === 'processing' ? '⏳' : '✗';
-
-      chatContent += `[${index + 1}] ${agentName} ${status}\n`;
-      chatContent += `Data/Hora: ${timestamp}\n`;
-      chatContent += `${'-'.repeat(60)}\n`;
+      const config = agentConfig[message.agent] || { name: message.agent };
+      const timestamp = new Date(message.timestamp).toLocaleTimeString('pt-BR');
+      chatContent += `[${index + 1}] ${config.name} @ ${timestamp}\n`;
       chatContent += `${message.message}\n\n`;
     });
 
-    chatContent += `${'='.repeat(60)}\n`;
-    chatContent += `FIM DO HISTÓRICO\n`;
-    chatContent += `Copiado em: ${new Date().toLocaleString('pt-BR')}\n`;
-
     try {
       await navigator.clipboard.writeText(chatContent);
-      toast({
-        title: "Diálogo copiado",
-        description: "O conteúdo do chat foi copiado para a área de transferência.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar o conteúdo do chat.",
-        variant: "destructive",
-      });
+      toast({ title: "Copiado", description: "Diálogo copiado para a área de transferência." });
+    } catch {
+      toast({ title: "Erro", description: "Não foi possível copiar.", variant: "destructive" });
     }
   };
 
   const openRefinementDialog = (agent: string, message: string) => {
-    const agentDisplayName = agentNames[agent] || agent;
+    const config = agentConfig[agent] || { name: agent };
     setRefinementDialog({
       isOpen: true,
       agent,
-      header: `Refinamento de ${agentDisplayName}`,
+      header: `Refinamento de ${config.name}`,
       message
     });
   };
@@ -197,250 +147,255 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
   };
 
   const handleApplyRefinement = () => {
-    toast({
-      title: "Refinamento aplicado",
-      description: `O refinamento do ${agentNames[refinementDialog.agent] || refinementDialog.agent} foi aplicado com sucesso.`,
-    });
+    const config = agentConfig[refinementDialog.agent] || { name: refinementDialog.agent };
+    toast({ title: "Refinamento aplicado", description: `Refinamento do ${config.name} aplicado.` });
     closeRefinementDialog();
   };
 
   const handleReviewLater = () => {
-    toast({
-      title: "Revisão adiada",
-      description: `Você pode revisar o refinamento do ${agentNames[refinementDialog.agent] || refinementDialog.agent} mais tarde.`,
-    });
     closeRefinementDialog();
   };
 
+  const getStatusConfig = () => {
+    switch (selectedDemand?.status) {
+      case 'processing':
+        return { label: 'PROCESSANDO', color: 'var(--accent-cyan)', icon: Loader2 };
+      case 'completed':
+        return { label: 'COMPLETO', color: 'var(--success)', icon: CheckCircle };
+      case 'stopped':
+        return { label: 'INTERROMPIDO', color: 'var(--warning)', icon: StopCircle };
+      case 'error':
+        return { label: 'ERRO', color: 'var(--destructive)', icon: XCircle };
+      default:
+        return { label: 'AGUARDANDO', color: 'var(--foreground-muted)', icon: Terminal };
+    }
+  };
+
+  const statusConfig = getStatusConfig();
+  const StatusIcon = statusConfig.icon;
+
   return (
     <>
-      {/* Chat Messages Area */}
-      <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-t-xl p-5">
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-blue-500 dark:bg-blue-600 p-2 rounded-lg">
-                <MessageCircle className="text-white" size={20} />
-              </div>
-              <span className="text-lg font-semibold text-gray-800 dark:text-white">
-                {selectedDemand?.status === 'processing' ? 'Refinamento em Andamento' :
-                  selectedDemand?.status === 'completed' ? 'Refinamento Concluído' :
-                    selectedDemand?.status === 'stopped' ? 'Refinamento Interrompido' :
-                      'Squad de Refinamento'}
-              </span>
+      {/* Chat Messages Card */}
+      <div className="neo-card">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b-2 border-[var(--border)] bg-[var(--muted)]">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 flex items-center justify-center"
+              style={{ backgroundColor: statusConfig.color }}
+            >
+              <MessageCircle className="w-4 h-4 text-[var(--background)]" />
             </div>
-            <div className="flex items-center gap-2">
-              {selectedDemand && chatMessages.length > 0 && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportJSON}
-                    title="Exportar diálogo em JSON"
-                    className="text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <FileJson className="w-4 h-4 mr-1" />
-                    JSON
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportTXT}
-                    title="Exportar diálogo em TXT"
-                    className="text-gray-700 border-gray-300 hover:bg-gray-100"
-                  >
-                    <FileText className="w-4 h-4 mr-1" />
-                    TXT
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyChat}
-                    title="Copiar diálogo para área de transferência"
-                    className="text-gray-700 border-gray-300 hover:bg-gray-100"
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    Copiar
-                  </Button>
-                </>
-              )}
-              {selectedDemand?.status === 'processing' && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => stopProcessingMutation.mutate(selectedDemand.id)}
-                  disabled={stopProcessingMutation.isPending}
-                  className="bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 dark:bg-red-900/30 dark:hover:bg-red-800/40 dark:text-red-300 dark:border-red-700"
+            <div>
+              <h2 className="font-mono text-sm font-bold">SQUAD DE REFINAMENTO</h2>
+              <div className="flex items-center gap-2 font-mono text-xs text-[var(--foreground-muted)]">
+                <StatusIcon
+                  className={cn("w-3 h-3", selectedDemand?.status === 'processing' && "animate-spin")}
+                  style={{ color: statusConfig.color }}
+                />
+                <span style={{ color: statusConfig.color }}>{statusConfig.label}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {selectedDemand && chatMessages.length > 0 && (
+              <>
+                <button
+                  onClick={handleExportJSON}
+                  className="flex items-center gap-1 px-2 py-1 border border-[var(--border)] font-mono text-xs hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan)] transition-colors"
+                  title="Exportar JSON"
                 >
-                  {stopProcessingMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <StopCircle className="w-4 h-4 mr-2" />
-                  )}
-                  Parar
-                </Button>
-              )}
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6" data-chat-area>
+                  <FileJson className="w-3 h-3" />
+                  <span className="hidden sm:inline">JSON</span>
+                </button>
+                <button
+                  onClick={handleExportTXT}
+                  className="flex items-center gap-1 px-2 py-1 border border-[var(--border)] font-mono text-xs hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan)] transition-colors"
+                  title="Exportar TXT"
+                >
+                  <FileText className="w-3 h-3" />
+                  <span className="hidden sm:inline">TXT</span>
+                </button>
+                <button
+                  onClick={handleCopyChat}
+                  className="flex items-center gap-1 px-2 py-1 border border-[var(--border)] font-mono text-xs hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan)] transition-colors"
+                  title="Copiar"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </>
+            )}
+            {selectedDemand?.status === 'processing' && (
+              <button
+                onClick={() => stopProcessingMutation.mutate(selectedDemand.id)}
+                disabled={stopProcessingMutation.isPending}
+                className="flex items-center gap-1 px-3 py-1 border-2 border-[var(--destructive)] text-[var(--destructive)] font-mono text-xs font-bold hover:bg-[var(--destructive)] hover:text-[var(--background)] transition-colors"
+              >
+                {stopProcessingMutation.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <StopCircle className="w-3 h-3" />
+                )}
+                <span>PARAR</span>
+              </button>
+            )}
+          </div>
+        </div>
 
-          {/* Disclaimer para o fluxo de refinamento */}
-          <CustomDisclaimer
-            title="Como funciona o refinamento"
-            variant="info"
-            className="mb-6"
-          >
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>Os agentes especializados colaboram para refinar sua demanda</li>
-              <li>Cada agente contribui com sua expertise específica</li>
-              <li>O refinamento é baseado em completude (0-100%) de informações</li>
-              <li>Documentos finais (PRD/Tasks) são gerados após conclusão</li>
-            </ul>
-          </CustomDisclaimer>
-
-          <div
-            className="space-y-4 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-2"
-            id="chat-messages-container"
-            aria-live="polite"
-            aria-atomic="false"
-          >
-            {chatMessages.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                  <Bot className="text-gray-500" size={32} />
-                </div>
-                <p className="text-gray-600 font-medium">Nenhum refinamento em andamento</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Crie uma nova demanda para iniciar o processo
-                </p>
+        {/* Messages Container */}
+        <div
+          className="p-4 max-h-[500px] overflow-y-auto bg-[var(--background)]"
+          data-chat-area
+        >
+          {chatMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 border-2 border-[var(--border)] flex items-center justify-center mb-4">
+                <Bot className="w-8 h-8 text-[var(--foreground-muted)]" />
               </div>
-            ) : (
-              chatMessages.map((message) => {
-                // Determine category (default to 'answer' if not specified)
+              <p className="font-mono text-sm text-[var(--foreground-muted)]">NENHUM REFINAMENTO EM ANDAMENTO</p>
+              <p className="font-mono text-xs text-[var(--foreground-muted)] mt-1">
+                Crie uma nova demanda para iniciar
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 stagger-children">
+              {chatMessages.map((message) => {
+                const agent = agentConfig[message.agent] || { icon: "🤖", color: "var(--foreground-muted)", name: message.agent };
                 const category = message.category || 'answer';
-                const config = categoryConfig[category];
 
                 return (
                   <div
                     key={message.id}
-                    className={cn(
-                      "chat-message flex items-start space-x-4 p-4 rounded-xl transition-all duration-200",
-                      "bg-white dark:bg-gray-800 border-l-4 shadow-sm dark:shadow-md",
-                      config.borderColor,
-                      "hover:shadow-md dark:hover:shadow-lg"
-                    )}
-                    role="article"
-                    aria-label={`${config.ariaLabel} de ${agentNames[message.agent] || message.agent}`}
+                    className="chat-message from-agent"
+                    style={{ borderLeftColor: agent.color }}
                   >
-                    <div
-                      className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"
-                      aria-hidden="true"
-                    >
-                      <span className="text-base">{agentIcons[message.agent] || "🤖"}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2 flex-wrap gap-2">
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                          {agentNames[message.agent] || message.agent}
-                        </span>
-                        <MessageCategoryBadge category={category} />
-                        <span className="text-xs text-gray-500 font-medium dark:text-gray-400">
-                          {new Date(message.timestamp).toLocaleTimeString('pt-BR')}
-                        </span>
-                        {message.type === 'processing' && (
-                          <div className="flex items-center">
-                            <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
-                            <span className="ml-1 text-xs text-blue-600">Processando...</span>
+                    <div className="flex items-start gap-4 p-4 bg-[var(--muted)]">
+                      {/* Agent Avatar */}
+                      <div
+                        className="agent-avatar flex-shrink-0"
+                        style={{ borderColor: agent.color, color: agent.color }}
+                      >
+                        <span className="text-xl">{agent.icon}</span>
+                        {message.type === 'completed' && (
+                          <div
+                            className="absolute -bottom-1 -right-1 w-4 h-4 flex items-center justify-center"
+                            style={{ backgroundColor: 'var(--success)' }}
+                          >
+                            <CheckCircle className="w-3 h-3 text-[var(--background)]" />
                           </div>
                         )}
-                        {message.type === 'completed' && (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        )}
-                        {message.type === 'error' && (
-                          <XCircle className="w-4 h-4 text-red-600" />
-                        )}
                       </div>
-                      <div className="flex flex-col">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+
+                      {/* Message Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="font-mono text-sm font-bold" style={{ color: agent.color }}>
+                            {agent.name.toUpperCase()}
+                          </span>
+                          <MessageCategoryBadge category={category} />
+                          <span className="font-mono text-xs text-[var(--foreground-muted)]">
+                            {new Date(message.timestamp).toLocaleTimeString('pt-BR')}
+                          </span>
+                          {message.type === 'processing' && (
+                            <div className="typing-indicator">
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                            </div>
+                          )}
+                        </div>
+
+                        <p className="font-mono text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
                           {message.message}
                         </p>
-                        <div className="mt-3 flex gap-3">
-                          <button
-                            onClick={() => openRefinementDialog(message.agent, message.message)}
-                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium"
-                            aria-label="Ver refinamento completo"
-                          >
-                            Ver refinamento completo
-                          </button>
-                        </div>
+
+                        <button
+                          onClick={() => openRefinementDialog(message.agent, message.message)}
+                          className="mt-3 font-mono text-xs text-[var(--accent-cyan)] hover:underline"
+                        >
+                          [VER COMPLETO]
+                        </button>
                       </div>
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* Processing Status */}
+      {/* Processing Status Card */}
       {selectedDemand?.status === 'processing' && (
-        <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 mt-4">
-          <CardContent className="p-5">
-            <div className="flex items-center space-x-4">
-              <div className="processing-spinner w-8 h-8"></div>
+        <div className="neo-card mt-6 glow-border">
+          <div className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)] flex items-center justify-center">
+                <Cpu className="w-5 h-5 text-[var(--accent-cyan)] animate-pulse" />
+              </div>
               <div>
-                <p className="font-semibold text-gray-800 dark:text-white">Processando Demanda</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  A squad está analisando sua solicitação: "{selectedDemand.title}"
+                <p className="font-mono text-sm font-bold">PROCESSANDO DEMANDA</p>
+                <p className="font-mono text-xs text-[var(--foreground-muted)] truncate max-w-xs">
+                  {selectedDemand.title}
                 </p>
               </div>
             </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
-                <span className="font-medium">Progresso do Refinamento</span>
-                <span className="font-semibold">{Math.round(progress)}%</span>
+
+            <div className="space-y-2">
+              <div className="flex justify-between font-mono text-xs">
+                <span className="text-[var(--foreground-muted)]">PROGRESSO</span>
+                <span className="text-[var(--accent-cyan)]">{Math.round(progress)}%</span>
               </div>
-              <Progress value={progress} className="h-3 rounded-full overflow-hidden" />
+              <div className="progress-brutal">
+                <div
+                  className="progress-brutal-fill"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Completed Status with Document Viewers */}
+      {/* Completed Status with Documents */}
       {selectedDemand?.status === 'completed' && (
         <>
-          <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 mb-6 mt-4">
-            <CardContent className="p-5">
-              <div className="flex items-center space-x-4">
-                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800 dark:text-white">Refinamento Concluído</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Documentos PRD e Tasks foram gerados com sucesso
-                  </p>
-                </div>
+          <div className="neo-card mt-6 glow-border" style={{ borderColor: 'var(--success)' }}>
+            <div className="p-4 flex items-center gap-4">
+              <div className="w-10 h-10 bg-[var(--success)]/10 border border-[var(--success)] flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-[var(--success)]" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="font-mono text-sm font-bold text-[var(--success)]">REFINAMENTO COMPLETO</p>
+                <p className="font-mono text-xs text-[var(--foreground-muted)]">
+                  Documentos PRD e Tasks gerados com sucesso
+                </p>
+              </div>
+            </div>
+          </div>
 
-          {/* PRD Document Viewer */}
           {selectedDemand.prdUrl && (
-            <div className="mb-6">
+            <div className="mt-6">
               <DocumentViewer
                 demandId={selectedDemand.id}
                 documentType="prd"
                 pdfUrl={selectedDemand.prdUrl}
+                refinementType={selectedDemand.refinementType as 'technical' | 'business' | null}
+                typeAdherence={selectedDemand.typeAdherence as any}
+                documentState={selectedDemand.documentState as any}
+                reviewSnapshotId={selectedDemand.reviewSnapshotId as any}
+                snapshotHash={selectedDemand.approvedSnapshotHash as any}
+                approvalSessionId={selectedDemand.approvalSessionId as any}
               />
             </div>
           )}
 
-          {/* Tasks Document Viewer */}
           {selectedDemand.tasksUrl && (
-            <div className="mb-6">
+            <div className="mt-6">
               <DocumentViewer
                 demandId={selectedDemand.id}
                 documentType="tasks"
@@ -453,21 +408,19 @@ export function ChatArea({ selectedDemand: propSelectedDemand }: ChatAreaProps) 
 
       {/* Stopped Status */}
       {selectedDemand?.status === 'stopped' && (
-        <Card className="shadow-lg rounded-xl border-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 mt-4">
-          <CardContent className="p-5">
-            <div className="flex items-center space-x-4">
-              <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-full">
-                <XCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-800 dark:text-white">Refinamento Interrompido</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  O processo foi interrompido pelo usuário
-                </p>
-              </div>
+        <div className="neo-card mt-6" style={{ borderColor: 'var(--warning)' }}>
+          <div className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-[var(--warning)]/10 border border-[var(--warning)] flex items-center justify-center">
+              <StopCircle className="w-5 h-5 text-[var(--warning)]" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="font-mono text-sm font-bold text-[var(--warning)]">REFINAMENTO INTERROMPIDO</p>
+              <p className="font-mono text-xs text-[var(--foreground-muted)]">
+                O processo foi interrompido pelo usuário
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Refinement Dialog */}

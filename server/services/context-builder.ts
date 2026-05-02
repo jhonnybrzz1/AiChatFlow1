@@ -16,10 +16,14 @@ interface AgentInsight {
  */
 interface RealityConstraints {
   maturityLevel: string;
+  demandType?: string;
+  canonicalDemandType?: string;
   allowedTechnologies: string[];
   forbiddenTechnologies: string[];
   maxEffortDays: number;
   minROI: string;
+  outputType?: string;
+  typeRequirements?: string[];
 }
 
 /**
@@ -84,10 +88,13 @@ export class ContextBuilder {
     if (ctx.realityConstraints) {
       evolvedContext += `\n\n--- REALITY CONSTRAINTS (MANDATORY) ---
 Maturity Level: ${ctx.realityConstraints.maturityLevel}
+Demand Type: ${ctx.realityConstraints.demandType || 'not specified'}
+Expected Output: ${ctx.realityConstraints.outputType || 'standard refinement'}
 Allowed Technologies: ${ctx.realityConstraints.allowedTechnologies.join(', ')}
 Forbidden Technologies: ${ctx.realityConstraints.forbiddenTechnologies.join(', ')}
 Max Effort: ${ctx.realityConstraints.maxEffortDays} days
 Min ROI: ${ctx.realityConstraints.minROI}
+Type Requirements: ${(ctx.realityConstraints.typeRequirements || []).join(', ') || 'none'}
 
 IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
     }
@@ -134,9 +141,19 @@ IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
   }
 
   /**
+   * Gets all insights from a specific agent for a demand
+   */
+  getAgentInsights(demandId: number, agentName: string): string[] {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx) return [];
+
+    return ctx.agentInsights
+      .filter(insight => insight.agentName === agentName)
+      .map(insight => insight.insight);
+  }
+
+  /**
    * Sets reality constraints for a demand's context
-   * @param demandId - The demand ID
-   * @param constraints - Reality constraints from project analysis
    */
   setRealityConstraints(demandId: number, constraints: RealityConstraints): void {
     const ctx = this.evolvingContexts.get(demandId);
@@ -221,7 +238,7 @@ IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
 
     return summary;
   }
-  
+
   /**
    * Creates base context with project constraints and anti-overengineering rules
    */
@@ -283,23 +300,23 @@ Exemplo:
 **Esforço:** 3 dias
 **Prioridade:** Importante`;
   }
-  
+
   /**
    * Creates repository-specific context if available
    */
   private async createRepositoryContext(demand: Demand): Promise<string> {
     const description = demand.description;
     const repoMatch = description.match(/Repositório:\s*([^\/\s]+\/[^\s]+)/);
-    
+
     if (!repoMatch || !repoMatch[1]) {
       return "--- REPOSITORY CONTEXT ---\nNenhum repositório especificado na demanda.";
     }
-    
+
     const [owner, repoName] = repoMatch[1].split('/');
     if (!owner || !repoName) {
       return "--- REPOSITORY CONTEXT ---\nFormato de repositório inválido.";
     }
-    
+
     try {
       const repo = await repoService.getOrCreateRepo(owner, repoName);
       if (!repo) {
@@ -308,12 +325,12 @@ Exemplo:
 
       const briefing = repo.briefing ? `--- REPOSITORY BRIEFING ---\n${repo.briefing}\n\n` : "";
       const systemMap = repo.systemMap ? `--- SYSTEM MAP ---\n${repo.systemMap}\n\n` : "";
-      
+
       let specificFilesContext = "";
       const userOnlyDescription = description.split('---')[0].trim();
       const searchQuery = `${demand.title} ${userOnlyDescription}`.trim();
       const searchResults = await gitHubService.searchRepo(owner, repoName, searchQuery);
-      
+
       if (searchResults.length > 0) {
         const topFiles = searchResults.slice(0, 5);
         specificFilesContext += "--- DEMAND-SPECIFIC FILE CONTEXT ---\n";
@@ -330,14 +347,14 @@ Exemplo:
           }
         }
       }
-      
+
       return `${briefing}${systemMap}${specificFilesContext}`.trim();
     } catch (error) {
       console.error(`Error assembling repository context for ${owner}/${repoName}:`, error);
       return "--- REPOSITORY CONTEXT ---\nFalha ao carregar contexto do repositório. Prosseguindo com cuidado.";
     }
   }
-  
+
   /**
    * Validates agent response against anti-overengineering rules
    * @param response - Agent response to validate
@@ -346,38 +363,38 @@ Exemplo:
   validateResponse(response: string): { isValid: boolean; score: number; issues: string[] } {
     const issues: string[] = [];
     let score = 100;
-    
+
     // Check for specificity
     if (!response.includes("**Análise:**") || !response.includes("**Recomendação:**")) {
       issues.push("Formato de resposta incorreto - falta estrutura requerida");
       score -= 30;
     }
-    
+
     // Check for ROI mention
     if (!response.includes("**ROI:**") || !response.match(/\d+:\d+/)) {
       issues.push("ROI não especificado ou formato incorreto");
       score -= 20;
     }
-    
+
     // Check for effort estimation
     if (!response.includes("**Esforço:**") || !response.match(/\d+\s*(dia|semana)/i)) {
       issues.push("Esforço não estimado ou formato incorreto");
       score -= 20;
     }
-    
+
     // Check for priority
-    if (!response.includes("**Prioridade:**") || 
+    if (!response.includes("**Prioridade:**") ||
         !response.match(/(crítico|importante|desejável)/i)) {
       issues.push("Prioridade não especificada ou inválida");
       score -= 15;
     }
-    
+
     // Check for concrete data
     if (!response.match(/\d+\s*(linha|arquivo|módulo|serviço|componente)/i)) {
       issues.push("Falta referência a dados concretos do projeto");
       score -= 15;
     }
-    
+
     return {
       isValid: score >= 80,
       score,

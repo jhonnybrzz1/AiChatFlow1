@@ -1,13 +1,18 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { demandTypeSchema, prioritySchema, type DemandPriority, type DemandType } from "./demand-types";
+
+// Tipos de refinamento disponíveis
+export type RefinementType = 'technical' | 'business' | null;
 
 export const demands = sqliteTable("demands", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  type: text("type").notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'discovery', 'analise_exploratoria'
-  priority: text("priority").notNull(), // 'baixa', 'media', 'alta', 'critica'
+  type: text("type").$type<DemandType>().notNull(), // 'nova_funcionalidade', 'melhoria', 'bug', 'discovery', 'analise_exploratoria'
+  priority: text("priority").$type<DemandPriority>().notNull(), // 'baixa', 'media', 'alta', 'critica'
+  refinementType: text("refinement_type").$type<RefinementType>(), // 'technical', 'business', or null for legacy
   status: text("status").notNull().default('processing'), // 'processing', 'completed', 'error', 'stopped'
   progress: integer("progress").notNull().default(0), // Progress percentage 0-100
   chatMessages: text("chat_messages", { mode: "json" }).$type<ChatMessage[]>().default([]),
@@ -18,9 +23,70 @@ export const demands = sqliteTable("demands", {
   currentAgent: text("current_agent"), // Current agent being executed
   errorMessage: text("error_message"), // Error message if any
   validationNotes: text("validation_notes"), // Validation notes
+  typeAdherence: text("type_adherence", { mode: "json" }).$type<TypeAdherenceResult>(), // Type contract validation result
   completedAt: integer("completed_at", { mode: "timestamp" }), // When demand was completed
+
+  // Governance fields (Human Review)
+  requiresApproval: integer("requires_approval", { mode: "boolean" }).default(false),
+  documentState: text("document_state", {
+    enum: ["DRAFT", "APPROVAL_REQUIRED", "FINAL"]
+  }).default("DRAFT"),
+  reviewSnapshotId: text("review_snapshot_id"),
+  approvedSnapshotId: text("approved_snapshot_id"),
+  approvedSnapshotHash: text("approved_snapshot_hash"),
+  finalSnapshotId: text("final_snapshot_id"),
+  finalizedFromHash: text("finalized_from_hash"),
+  approvalSessionId: text("approval_session_id"),
+
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Document Snapshots - Immutable versions for review/approval
+export const documentSnapshots = sqliteTable("document_snapshots", {
+  snapshotId: text("snapshot_id").primaryKey(),
+  demandId: integer("demand_id").notNull().references(() => demands.id),
+  snapshotType: text("snapshot_type", { enum: ["REVIEW", "APPROVED"] }).notNull(),
+  payloadJson: text("payload_json").notNull(), // Immutable rendered content
+  snapshotHash: text("snapshot_hash").notNull(), // Deterministic hash
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
+// Approval Comments - Feedback linked to snapshots
+export const approvalComments = sqliteTable("approval_comments", {
+  commentId: integer("comment_id").primaryKey({ autoIncrement: true }),
+  demandId: integer("demand_id").notNull().references(() => demands.id),
+  reviewSnapshotId: text("review_snapshot_id"),
+  approvedSnapshotId: text("approved_snapshot_id"),
+  author: text("author"),
+  content: text("content").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
+// Document Lifecycle Events - Metrics and audit trail
+export const documentLifecycleEvents = sqliteTable("document_lifecycle_events", {
+  eventId: integer("event_id").primaryKey({ autoIncrement: true }),
+  demandId: integer("demand_id").notNull().references(() => demands.id),
+  requiresApproval: integer("requires_approval", { mode: "boolean" }).notNull(),
+  approvalSessionId: text("approval_session_id"),
+  eventType: text("event_type", {
+    enum: [
+      "DRAFT_TO_APPROVAL_REQUIRED",
+      "APPROVAL_REQUIRED_TO_APPROVED",
+      "APPROVED_TO_FINAL",
+      "APPROVE_ATTEMPT",
+      "FINALIZE_ATTEMPT",
+      "SNAPSHOT_OUTDATED",
+      "FINALIZE_PAYLOAD_REJECTED"
+    ]
+  }).notNull(),
+  reviewSnapshotId: text("review_snapshot_id"),
+  approvedSnapshotId: text("approved_snapshot_id"),
+  finalSnapshotId: text("final_snapshot_id"),
+  finalizedFromHash: text("finalized_from_hash"),
+  resultCode: text("result_code"), // SUCCESS, ERROR, REJECTED
+  errorMessage: text("error_message"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 
 export const repos = sqliteTable("repos", {
@@ -85,6 +151,61 @@ export const users = sqliteTable("users", {
 
 export type MessageCategory = 'question' | 'answer' | 'alert' | 'error' | 'system';
 
+// Contrato de tipo para refinamentos
+export interface TypeContract {
+  type: RefinementType;
+  requiredSections: string[];
+  minSectionsRequired: number;
+  description: string;
+}
+
+// Contratos de tipo definidos
+export const TYPE_CONTRACTS: Record<'technical' | 'business', TypeContract> = {
+  technical: {
+    type: 'technical',
+    requiredSections: [
+      'arquitetura',
+      'componentes',
+      'dependências',
+      'integrações',
+      'trade-offs',
+      'riscos técnicos',
+      'stack',
+      'implementação'
+    ],
+    minSectionsRequired: 2,
+    description: 'Refinamento técnico: foco em arquitetura, componentes, dependências e trade-offs'
+  },
+  business: {
+    type: 'business',
+    requiredSections: [
+      'objetivo',
+      'benefício',
+      'valor',
+      'impacto',
+      'prioridade',
+      'roi',
+      'métrica',
+      'usuário',
+      'problema',
+      'resultado'
+    ],
+    minSectionsRequired: 2,
+    description: 'Refinamento de negócios: foco em objetivo, valor, impacto e prioridade'
+  }
+};
+
+// Resultado da validação de aderência ao tipo
+export interface TypeAdherenceResult {
+  isAdherent: boolean;
+  type: RefinementType;
+  sectionsFound: string[];
+  sectionsRequired: number;
+  sectionsMet: number;
+  score: number; // 0-100
+  feedback: string;
+}
+
 export type ChatMessage = {
   id: string;
   agent: string;
@@ -95,15 +216,25 @@ export type ChatMessage = {
   progress?: number; // Progress percentage 0-100
 };
 
-export const insertDemandSchema = createInsertSchema(demands).omit({
+// Schema específico para criação de demanda via API
+// Só aceita campos que o cliente pode definir
+export const insertDemandSchema = createInsertSchema(demands).pick({
+  title: true,
+  description: true,
+  type: true,
+  priority: true,
+  refinementType: true,
+  requiresApproval: true,
+}).extend({
+  type: demandTypeSchema,
+  priority: prioritySchema,
+});
+
+// Schema interno completo (para uso no servidor)
+export const internalDemandSchema = createInsertSchema(demands).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  chatMessages: true,
-  prdUrl: true,
-  tasksUrl: true,
-  status: true,
-  progress: true,
 });
 
 export const insertFileSchema = createInsertSchema(files).omit({
