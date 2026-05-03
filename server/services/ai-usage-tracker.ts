@@ -39,13 +39,23 @@ export interface AIUsageSummary {
   recent: AIUsageRecord[];
 }
 
+// Pricing baseado nos modelos OpenAI documentados (maio 2026):
+// - gpt-5.4-nano: $0.20 input / $1.25 output per 1M tokens
+// - gpt-5.4-mini: $0.75 input / $4.50 output per 1M tokens
+// Ref: https://developers.openai.com/api/docs/models/gpt-5.4-nano
 const DEFAULT_MODEL_PRICING: Record<string, ModelPricing> = {
   'gpt-4o-mini': { inputUsdPer1M: 0.15, outputUsdPer1M: 0.6 },
   'gpt-4o': { inputUsdPer1M: 2.5, outputUsdPer1M: 10 },
   'gpt-4.1-mini': { inputUsdPer1M: 0.4, outputUsdPer1M: 1.6 },
   'gpt-4.1': { inputUsdPer1M: 2, outputUsdPer1M: 8 },
-  'gpt-5.4-nano': { inputUsdPer1M: 0, outputUsdPer1M: 0 },
-  'gpt-5.4-mini': { inputUsdPer1M: 0, outputUsdPer1M: 0 }
+  'gpt-5.4-nano': { inputUsdPer1M: 0.20, outputUsdPer1M: 1.25 },
+  'gpt-5.4-mini': { inputUsdPer1M: 0.75, outputUsdPer1M: 4.50 },
+  'gpt-5.4-nano-2026-03-17': { inputUsdPer1M: 0.20, outputUsdPer1M: 1.25 },
+  'gpt-5.4-mini-2026-03-17': { inputUsdPer1M: 0.75, outputUsdPer1M: 4.50 },
+  // Mistral Models
+  'mistral-medium-latest': { inputUsdPer1M: 2.75, outputUsdPer1M: 8.10 },
+  'mistral-small-latest': { inputUsdPer1M: 0.20, outputUsdPer1M: 0.60 },
+  'mistral-large-latest': { inputUsdPer1M: 4.00, outputUsdPer1M: 12.00 }
 };
 
 const parsePositiveNumber = (value: string | undefined): number | null => {
@@ -185,3 +195,80 @@ export class AIUsageTracker {
 }
 
 export const aiUsageTracker = new AIUsageTracker();
+
+
+
+/**
+ * Extended metrics for token optimization tracking
+ */
+export interface TokenOptimizationMetrics {
+  demandId: number;
+  stage: 'classification' | 'agent_execution' | 'summary' | 'document_generation';
+  agentName?: string;
+  tokensUsed: number;
+  tokensSaved: number;
+  savingsSource: 'classification' | 'context_contract' | 'summary' | 'cache';
+  timestamp: string;
+}
+
+export class OptimizationTracker {
+  private metrics: TokenOptimizationMetrics[] = [];
+  private readonly maxMetrics = 1000;
+
+  recordOptimization(metric: TokenOptimizationMetrics): void {
+    this.metrics.push(metric);
+
+    if (this.metrics.length > this.maxMetrics) {
+      this.metrics.splice(0, this.metrics.length - this.maxMetrics);
+    }
+
+    console.log(`[TOKEN OPT] Saved ${metric.tokensSaved} tokens via ${metric.savingsSource} at ${metric.stage}`);
+  }
+
+  getDemandOptimizations(demandId: number): TokenOptimizationMetrics[] {
+    return this.metrics.filter(m => m.demandId === demandId);
+  }
+
+  getTotalSavings(): {
+    totalSaved: number;
+    bySource: Record<string, number>;
+    byStage: Record<string, number>;
+  } {
+    const totalSaved = this.metrics.reduce((sum, m) => sum + m.tokensSaved, 0);
+    
+    const bySource: Record<string, number> = {};
+    const byStage: Record<string, number> = {};
+
+    for (const metric of this.metrics) {
+      bySource[metric.savingsSource] = (bySource[metric.savingsSource] || 0) + metric.tokensSaved;
+      byStage[metric.stage] = (byStage[metric.stage] || 0) + metric.tokensSaved;
+    }
+
+    return { totalSaved, bySource, byStage };
+  }
+
+  getOptimizationReport(): string {
+    const savings = this.getTotalSavings();
+    
+    let report = `## Token Optimization Report\n\n`;
+    report += `**Total Tokens Saved**: ${savings.totalSaved.toLocaleString()}\n\n`;
+    
+    report += `### Savings by Source\n`;
+    for (const [source, amount] of Object.entries(savings.bySource)) {
+      report += `- ${source}: ${amount.toLocaleString()} tokens\n`;
+    }
+    
+    report += `\n### Savings by Stage\n`;
+    for (const [stage, amount] of Object.entries(savings.byStage)) {
+      report += `- ${stage}: ${amount.toLocaleString()} tokens\n`;
+    }
+
+    return report;
+  }
+
+  reset(): void {
+    this.metrics.splice(0, this.metrics.length);
+  }
+}
+
+export const optimizationTracker = new OptimizationTracker();

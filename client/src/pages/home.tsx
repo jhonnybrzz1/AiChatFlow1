@@ -4,6 +4,7 @@ import { DemandForm } from "@/components/demand-form";
 import { ChatArea } from "@/components/chat-area";
 import { HistorySidebar } from "@/components/history-sidebar";
 import { SquadMembers } from "@/components/squad-members";
+import { PriorityMatrix } from "@/components/priority-matrix";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { type Demand } from "@shared/schema";
@@ -128,6 +129,11 @@ export default function Home() {
           {/* Main Column - Form & Chat */}
           <div className="lg:col-span-8 xl:col-span-9 space-y-6">
             <DemandForm />
+            <PriorityMatrix
+              demands={demands}
+              selectedDemand={selectedDemand}
+              onSelectDemand={handleSelectDemand}
+            />
             <ChatArea selectedDemand={selectedDemand} />
           </div>
 

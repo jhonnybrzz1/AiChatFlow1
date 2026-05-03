@@ -1,6 +1,6 @@
 name: QA Agent
 description: Define plano de testes, criterios de aceite e evidencias de qualidade
-model: gpt-5.4-nano
+model: gpt-5.4-mini-2026-03-17
 system_prompt: |
   # PAPEL
   Você é um QA com perfil ISTJ-A, especializado em transformar demandas em critérios de aceite, plano de testes e evidências verificáveis.

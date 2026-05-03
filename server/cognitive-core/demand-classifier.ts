@@ -34,6 +34,28 @@ export interface PersonalReadinessScore {
 }
 
 /**
+ * Extended Router Agent Classification Contract
+ * Used for hybrid model routing (GPT-5.4 nano/mini)
+ */
+export interface RouterClassificationContract {
+  tipo_demanda: 'bug' | 'feature' | 'melhoria' | 'debito_tecnico' | 'discovery' | 'documentacao' | 'analise_tecnica' | 'spike';
+  area_responsavel?: string;
+  complexidade: 'baixa' | 'media' | 'alta';
+  risco: 'baixo' | 'medio' | 'alto';
+  clareza_da_demanda: 'baixa' | 'media' | 'alta';
+  impacto_negocio: 'baixo' | 'medio' | 'alto' | 'critico';
+  necessita_codigo: boolean;
+  necessita_arquitetura: boolean;
+  necessita_ux: boolean;
+  necessita_qa: boolean;
+  necessita_prd: boolean;
+  necessita_dados: boolean;
+  modelo_recomendado: 'gpt-5.4-nano' | 'gpt-5.4-mini';
+  agentes_recomendados: string[];
+  justificativa: string;
+}
+
+/**
  * Classification result
  */
 export interface DemandClassification {
@@ -49,6 +71,8 @@ export interface DemandClassification {
     allowedTechnologies: string[];
     capabilities: any;
   };
+  /** Extended router contract for hybrid model routing */
+  routerContract?: RouterClassificationContract;
 }
 
 /**
@@ -82,13 +106,116 @@ export class DemandClassifier {
     const personalReadiness = this.calculatePersonalReadiness(demand, criteria);
     const notes = this.generateClassificationNotes(demand, criteria, category, personalReadiness);
 
+    // Generate router contract for hybrid model routing
+    const routerContract = this.generateRouterContract(demand, criteria, category, recommendedAgents);
+
     return {
       category,
       criteria,
       confidence,
       recommendedAgents,
       notes,
-      personalReadiness
+      personalReadiness,
+      routerContract
+    };
+  }
+
+  /**
+   * Generates Router Classification Contract for hybrid model routing
+   * Used to determine whether to use gpt-5.4-nano or gpt-5.4-mini
+   */
+  private generateRouterContract(
+    demand: Demand,
+    criteria: ClassificationCriteria,
+    category: DemandCategory,
+    recommendedAgents: string[]
+  ): RouterClassificationContract {
+    // Map demand type to tipo_demanda
+    const tipoMap: Record<string, RouterClassificationContract['tipo_demanda']> = {
+      'bug': 'bug',
+      'feature': 'feature',
+      'melhoria': 'melhoria',
+      'improvement': 'melhoria',
+      'discovery': 'discovery',
+      'spike': 'spike',
+      'debito': 'debito_tecnico',
+      'debt': 'debito_tecnico',
+      'doc': 'documentacao',
+      'documentation': 'documentacao',
+      'analysis': 'analise_tecnica'
+    };
+    const tipo_demanda = tipoMap[demand.type?.toLowerCase()] || 'feature';
+
+    // Map complexity to Portuguese
+    const complexidade: RouterClassificationContract['complexidade'] =
+      criteria.complexity >= 70 ? 'alta' :
+      criteria.complexity >= 40 ? 'media' : 'baixa';
+
+    // Map risk to Portuguese
+    const risco: RouterClassificationContract['risco'] =
+      criteria.interpretationRisk >= 70 ? 'alto' :
+      criteria.interpretationRisk >= 40 ? 'medio' : 'baixo';
+
+    // Map ambiguity to clarity (inverted)
+    const clareza_da_demanda: RouterClassificationContract['clareza_da_demanda'] =
+      criteria.ambiguity <= 30 ? 'alta' :
+      criteria.ambiguity <= 60 ? 'media' : 'baixa';
+
+    // Map urgency/priority to business impact
+    let impacto_negocio: RouterClassificationContract['impacto_negocio'] = 'medio';
+    if (demand.priority === 'critica' || criteria.urgency >= 90) {
+      impacto_negocio = 'critico';
+    } else if (demand.priority === 'alta' || criteria.urgency >= 70) {
+      impacto_negocio = 'alto';
+    } else if (demand.priority === 'baixa' && criteria.urgency < 40) {
+      impacto_negocio = 'baixo';
+    }
+
+    // Determine flags based on category and agents
+    const text = `${demand.title} ${demand.description}`.toLowerCase();
+    const necessita_codigo = !['discovery', 'documentacao'].includes(tipo_demanda);
+    const necessita_arquitetura = criteria.complexity >= 70 ||
+      text.includes('arquitetura') || text.includes('refatoração') ||
+      recommendedAgents.includes('tech_lead');
+    const necessita_ux = category === 'creative' ||
+      recommendedAgents.includes('ux_designer') ||
+      text.includes('usuário') || text.includes('interface') || text.includes('tela');
+    const necessita_qa = true; // Always need QA
+    const necessita_prd = tipo_demanda !== 'bug' || criteria.complexity >= 70;
+    const necessita_dados = category === 'analytical' ||
+      recommendedAgents.includes('analista_de_dados') ||
+      text.includes('dados') || text.includes('relatório') || text.includes('integração');
+
+    // Determine recommended model based on rules:
+    // - Simple demands (low complexity + low risk + high clarity): nano
+    // - Everything else: mini
+    const modelo_recomendado: RouterClassificationContract['modelo_recomendado'] =
+      (complexidade === 'baixa' && risco === 'baixo' && clareza_da_demanda === 'alta')
+        ? 'gpt-5.4-nano'
+        : 'gpt-5.4-mini';
+
+    // Build justificativa
+    const justificativa = `Classificado como ${tipo_demanda} com ${complexidade} complexidade, ${risco} risco, ${clareza_da_demanda} clareza. ` +
+      `Modelo ${modelo_recomendado} recomendado. ` +
+      (necessita_arquitetura ? 'Requer análise de arquitetura. ' : '') +
+      (necessita_ux ? 'Requer avaliação de UX. ' : '') +
+      (necessita_dados ? 'Requer análise de dados. ' : '');
+
+    return {
+      tipo_demanda,
+      complexidade,
+      risco,
+      clareza_da_demanda,
+      impacto_negocio,
+      necessita_codigo,
+      necessita_arquitetura,
+      necessita_ux,
+      necessita_qa,
+      necessita_prd,
+      necessita_dados,
+      modelo_recomendado,
+      agentes_recomendados: recommendedAgents,
+      justificativa: justificativa.trim()
     };
   }
 

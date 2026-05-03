@@ -1,11 +1,12 @@
 import { Demand } from '@shared/schema';
 import { repoService } from './repo-service';
 import { gitHubService } from './github';
+import { agentContextBuilder, type ContextSection } from './agent-context-contracts';
 
 /**
  * Agent insight for context evolution
  */
-interface AgentInsight {
+export interface AgentInsight {
   agentName: string;
   insight: string;
   timestamp: string;
@@ -238,6 +239,86 @@ IMPORTANTE: Todas as recomendações DEVEM respeitar estas constraints.`;
 
     return summary;
   }
+
+  /**
+   * Builds optimized context for a specific agent based on their contract
+   */
+  buildAgentSpecificContext(
+    demandId: number,
+    agentName: string,
+    demand: Demand
+  ): string {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx) {
+      return this.createBaseContext();
+    }
+
+    // Prepare available sections
+    const availableSections: Partial<Record<ContextSection, string>> = {
+      constraints: ctx.realityConstraints ? this.formatRealityConstraints(ctx.realityConstraints) : '',
+      repo_briefing: ctx.repoContext.includes('BRIEFING') ? ctx.repoContext : '',
+      repo_context: ctx.repoContext,
+      metrics: this.formatMetrics(),
+      quality_checklist: this.formatQualityChecklist()
+    };
+
+    // Get summary of previous insights
+    const previousInsightsSummary = this.getInsightsSummaryForAgent(demandId, agentName);
+
+    // Use agent context builder to create optimized context
+    return agentContextBuilder.buildAgentContext(
+      agentName,
+      demand,
+      availableSections,
+      previousInsightsSummary
+    );
+  }
+
+  private formatRealityConstraints(constraints: RealityConstraints): string {
+    return `--- REALITY CONSTRAINTS ---
+Maturity Level: ${constraints.maturityLevel}
+Allowed Technologies: ${constraints.allowedTechnologies.join(', ')}
+Forbidden Technologies: ${constraints.forbiddenTechnologies.join(', ')}
+Max Effort: ${constraints.maxEffortDays} days
+Min ROI: ${constraints.minROI}`;
+  }
+
+  private formatMetrics(): string {
+    return `--- PROJECT METRICS ---
+- Frontend: 15 componentes React principais
+- Backend: 8 serviços Node.js
+- Cognitive Core: 6 módulos de IA`;
+  }
+
+  private formatQualityChecklist(): string {
+    return `--- QUALITY CHECKLIST ---
+- [ ] Baseado em dados reais do projeto?
+- [ ] Alinhado com stack atual?
+- [ ] ROI > 3:1?
+- [ ] Esforço < 2 semanas?`;
+  }
+
+  private getInsightsSummaryForAgent(demandId: number, agentName: string): string {
+    const ctx = this.evolvingContexts.get(demandId);
+    if (!ctx || ctx.agentInsights.length === 0) {
+      return '';
+    }
+
+    // Get insights from agents that ran before this one
+    const previousInsights = ctx.agentInsights
+      .filter(insight => insight.agentName !== agentName)
+      .slice(-5); // Last 5 insights
+
+    if (previousInsights.length === 0) {
+      return '';
+    }
+
+    return previousInsights
+      .map(insight => `**${insight.agentName}**: ${this.extractKeyInsights(insight.insight)}`)
+      .join('\n\n');
+  }
+
+
 
   /**
    * Creates base context with project constraints and anti-overengineering rules

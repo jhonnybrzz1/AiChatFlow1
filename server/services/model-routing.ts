@@ -7,8 +7,8 @@ import { modelRoutingStageRuns, type Demand } from '@shared/schema';
 import type { DemandClassification } from '../cognitive-core/demand-classifier';
 
 export const MODEL_ROUTING_CONFIG_VERSION = 'model-routing-pilot-v1';
-export const MODEL_NANO = process.env.OPENAI_MODEL_NANO || process.env.OPENAI_MODEL_FAST || 'gpt-5.4-nano';
-export const MODEL_MINI = process.env.OPENAI_MODEL_MINI || process.env.OPENAI_MODEL_CAPABLE || 'gpt-5.4-mini';
+export const MODEL_NANO = process.env.OPENAI_MODEL_NANO || process.env.OPENAI_MODEL_FAST || 'gpt-5.4-nano-2026-03-17';
+export const MODEL_MINI = process.env.OPENAI_MODEL_MINI || process.env.OPENAI_MODEL_CAPABLE || 'gpt-5.4-mini-2026-03-17';
 
 export type ModelRoutingStageName = 'router' | 'template_validator' | 'qa' | `agent:${string}`;
 export type ModelRoutingStatus = 'processing' | 'completed' | 'failed' | 'fallback_triggered' | 'failed_after_retries';
@@ -39,6 +39,8 @@ export interface StageDecisionContext {
   demand: Pick<Demand, 'priority' | 'type'>;
   classification?: DemandClassification | null;
   stageName: ModelRoutingStageName;
+  /** Confidence score from Router Agent classification (0-1) */
+  classificationConfidence?: number;
 }
 
 export interface StageDecision {
@@ -49,6 +51,10 @@ export interface StageDecision {
   risk: number;
   clarity: number;
   criticality: number;
+  /** Whether fallback to mini was triggered due to low confidence */
+  confidenceFallback?: boolean;
+  /** Original confidence score if fallback was triggered */
+  originalConfidence?: number;
 }
 
 export interface RetryBudgetState {
@@ -93,16 +99,57 @@ export class ModelRoutingService {
   }
 
   classifyRouterModel(): string {
-    return MODEL_NANO;
+    // Classification now uses Mistral Medium when available
+    const useMistral = !!process.env.MISTRAL_API_KEY;
+    return useMistral ? 'mistral-medium-latest' : MODEL_NANO;
   }
+
+  /**
+   * Minimum confidence threshold for using nano model (scale 0-1)
+   * Below this, fallback to mini is triggered
+   */
+  private readonly CONFIDENCE_THRESHOLD = 0.7;
 
   decideStageModel(context: StageDecisionContext): StageDecision {
     const criteria = context.classification?.criteria;
-    const complexity = criteria?.complexity ?? this.defaultComplexity(context.demand.type);
-    const risk = Math.max(criteria?.interpretationRisk ?? 0, criteria?.urgency ?? 0);
-    const clarity = 100 - (criteria?.ambiguity ?? 35);
-    const criticality = this.priorityCriticality(context.demand.priority);
+    const routerContract = context.classification?.routerContract;
+
+    // Use router contract values if available, otherwise use criteria or defaults
+    const complexity = routerContract
+      ? this.complexidadeToNumber(routerContract.complexidade)
+      : (criteria?.complexity ?? this.defaultComplexity(context.demand.type));
+
+    const risk = routerContract
+      ? this.riscoToNumber(routerContract.risco)
+      : Math.max(criteria?.interpretationRisk ?? 0, criteria?.urgency ?? 0);
+
+    const clarity = routerContract
+      ? this.clarezaToNumber(routerContract.clareza_da_demanda)
+      : (100 - (criteria?.ambiguity ?? 35));
+
+    const criticality = routerContract
+      ? this.impactoToNumber(routerContract.impacto_negocio)
+      : this.priorityCriticality(context.demand.priority);
+
+    // Check for low confidence fallback
+    // Normalize confidence to 0-1 scale (cognitive-core uses 0-100, services use 0-1)
+    const rawConfidence = context.classificationConfidence ?? context.classification?.confidence ?? 100;
+    const normalizedConfidence = rawConfidence > 1 ? rawConfidence / 100 : rawConfidence;
+    const lowConfidenceFallback = normalizedConfidence < this.CONFIDENCE_THRESHOLD;
+
+    // Check if stage requires mini based on router contract flags
+    const requiresMiniByFlags = routerContract && (
+      (context.stageName.startsWith('agent:tech_lead') && routerContract.necessita_arquitetura) ||
+      (context.stageName.startsWith('agent:ux') && routerContract.necessita_ux) ||
+      (context.stageName.startsWith('agent:qa') && routerContract.necessita_qa) ||
+      (context.stageName.startsWith('agent:product_manager') && routerContract.necessita_prd) ||
+      (context.stageName.startsWith('agent:analista_de_dados') && routerContract.necessita_dados)
+    );
+
+    // Determine if mini is required
     const requiresMini =
+      lowConfidenceFallback ||
+      requiresMiniByFlags ||
       context.stageName === 'qa' ||
       context.stageName === 'template_validator' ||
       complexity >= 70 ||
@@ -110,15 +157,76 @@ export class ModelRoutingService {
       criticality >= 80 ||
       clarity <= 35;
 
+    // Build reason string
+    let reason = 'low_risk_operational_stage';
+    if (lowConfidenceFallback) {
+      reason = `confidence_fallback (${(normalizedConfidence * 100).toFixed(0)}% < ${(this.CONFIDENCE_THRESHOLD * 100).toFixed(0)}%)`;
+    } else if (requiresMiniByFlags) {
+      reason = 'router_contract_flag';
+    } else if (requiresMini) {
+      reason = 'critical_or_validation_stage';
+    }
+
     return {
       stageName: context.stageName,
       model: requiresMini ? MODEL_MINI : MODEL_NANO,
-      reason: requiresMini ? 'critical_or_validation_stage' : 'low_risk_operational_stage',
+      reason,
       complexity,
       risk,
       clarity,
       criticality,
+      confidenceFallback: lowConfidenceFallback,
+      originalConfidence: lowConfidenceFallback ? normalizedConfidence : undefined,
     };
+  }
+
+  /**
+   * Converts Portuguese complexidade to numeric score (0-100)
+   */
+  private complexidadeToNumber(complexidade: string): number {
+    switch (complexidade) {
+      case 'baixa': return 30;
+      case 'media': return 55;
+      case 'alta': return 80;
+      default: return 55;
+    }
+  }
+
+  /**
+   * Converts Portuguese risco to numeric score (0-100)
+   */
+  private riscoToNumber(risco: string): number {
+    switch (risco) {
+      case 'baixo': return 25;
+      case 'medio': return 50;
+      case 'alto': return 80;
+      default: return 50;
+    }
+  }
+
+  /**
+   * Converts Portuguese clareza to numeric score (0-100)
+   */
+  private clarezaToNumber(clareza: string): number {
+    switch (clareza) {
+      case 'baixa': return 30;
+      case 'media': return 60;
+      case 'alta': return 90;
+      default: return 60;
+    }
+  }
+
+  /**
+   * Converts Portuguese impacto_negocio to numeric criticality score (0-100)
+   */
+  private impactoToNumber(impacto: string): number {
+    switch (impacto) {
+      case 'baixo': return 25;
+      case 'medio': return 50;
+      case 'alto': return 75;
+      case 'critico': return 95;
+      default: return 50;
+    }
   }
 
   shouldFallback(input: {

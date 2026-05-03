@@ -247,10 +247,12 @@ Demanda: ${demand.description}`;
       demand,
       classification: demand.classification,
       stageName: `agent:${agentName}`,
+      classificationConfidence: demand.classification?.confidence,
     });
+    // Roteador tem prioridade sobre YAML - decisão híbrida deve prevalecer
     const modelRoutingMetadata = {
       stageName: `agent:${agentName}`,
-      modelUsed: agentConfig.model || modelDecision.model,
+      modelUsed: modelDecision.model,
       attemptIndex: 1,
       status: 'processing',
       decisionReason: modelDecision.reason,
@@ -258,6 +260,8 @@ Demanda: ${demand.description}`;
       risk: modelDecision.risk,
       clarity: modelDecision.clarity,
       criticality: modelDecision.criticality,
+      confidenceFallback: modelDecision.confidenceFallback,
+      originalConfidence: modelDecision.originalConfidence,
     };
     let stageRunStatus: 'completed' | 'failed' = 'completed';
 
@@ -284,7 +288,7 @@ Demanda: ${demand.description}`;
         {
           temperature: 0.8,
           maxTokens: 1500,
-          model: agentConfig.model || modelDecision.model,
+          model: modelDecision.model,
           taskType: 'analysis',
           operation: `agent_interaction:${agentName}`
         }

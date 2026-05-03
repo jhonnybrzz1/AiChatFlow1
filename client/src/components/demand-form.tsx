@@ -14,6 +14,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { GitHubImportModal } from "./github-import-modal";
 import { DEMAND_TYPES, type DemandType } from "@shared/demand-types";
+import {
+  evaluateDemandStartContract,
+  formatDemandStartContract,
+  getDemandStartContract,
+  type DemandContractFields,
+} from "@shared/demand-start-contract";
 
 const demandTypeIconMap = {
   Plus,
@@ -66,6 +72,8 @@ export function DemandForm() {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [contractFields, setContractFields] = useState<DemandContractFields>({});
+  const [acceptedTypeSuggestion, setAcceptedTypeSuggestion] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -81,12 +89,14 @@ export function DemandForm() {
   });
 
   const createDemandMutation = useMutation({
-    mutationFn: ({ demand, files, githubRepoOwner, githubRepoName, refinementType }: {
+    mutationFn: ({ demand, files, githubRepoOwner, githubRepoName, refinementType, demandStartContract, demandStartContractPayload }: {
       demand: InsertDemand,
       files?: FileList,
       githubRepoOwner?: string,
       githubRepoName?: string,
-      refinementType?: "technical" | "business"
+      refinementType?: "technical" | "business",
+      demandStartContract?: string,
+      demandStartContractPayload?: string
     }) => {
       const formData = new FormData();
       Object.entries(demand).forEach(([key, value]) => {
@@ -97,6 +107,12 @@ export function DemandForm() {
       // Usar set() para garantir que refinementType nunca seja duplicado
       if (refinementType) {
         formData.set('refinementType', refinementType);
+      }
+      if (demandStartContract) {
+        formData.set('demandStartContract', demandStartContract);
+      }
+      if (demandStartContractPayload) {
+        formData.set('demandStartContractPayload', demandStartContractPayload);
       }
       if (githubRepoOwner && githubRepoName) {
         formData.append('githubRepoOwner', githubRepoOwner);
@@ -120,6 +136,9 @@ export function DemandForm() {
       setSelectedRepo(null);
       setSelectedType("nova_funcionalidade");
       setSelectedRefinementType("business");
+      setContractFields({});
+      setAcceptedTypeSuggestion(false);
+      form.setValue("type", "nova_funcionalidade");
       form.setValue("domain", "padrao");
       setIsCollapsed(true);
       queryClient.invalidateQueries({ queryKey: ['/api/demands'] });
@@ -139,18 +158,51 @@ export function DemandForm() {
     },
   });
 
+  const watchedTitle = form.watch("title");
+  const watchedDescription = form.watch("description");
+  const selectedContract = getDemandStartContract(selectedType);
+  const readiness = evaluateDemandStartContract({
+    type: selectedType,
+    title: watchedTitle,
+    description: watchedDescription,
+    fields: contractFields,
+  });
+
   const onSubmit = (data: InsertDemand) => {
+    if (!readiness.isComplete) {
+      toast({
+        title: readiness.statusLabel,
+        description: "A demanda será enviada para refinamento com as lacunas registradas.",
+      });
+    }
+
     let githubRepoOwner: string | undefined;
     let githubRepoName: string | undefined;
     if (selectedRepo) {
       [githubRepoOwner, githubRepoName] = selectedRepo.split('/');
     }
+    const demandStartContract = formatDemandStartContract({
+      type: selectedType,
+      fields: contractFields,
+      readiness,
+      acceptedTypeSuggestion,
+    });
+    const demandStartContractPayload = JSON.stringify({
+      version: 1,
+      type: selectedType,
+      fields: contractFields,
+      readiness,
+      acceptedTypeSuggestion,
+      createdAt: new Date().toISOString(),
+    });
     createDemandMutation.mutate({
       demand: data,
       files: selectedFiles || undefined,
       githubRepoOwner,
       githubRepoName,
-      refinementType: selectedRefinementType
+      refinementType: selectedRefinementType,
+      demandStartContract,
+      demandStartContractPayload,
     });
   };
 
@@ -188,6 +240,19 @@ export function DemandForm() {
       case "violet": return "var(--accent-violet)";
       case "orange": return "var(--accent-orange)";
       default: return "var(--accent-cyan)";
+    }
+  };
+
+  const applyDemandType = (type: DemandType, onChange: (value: DemandType) => void, acceptedSuggestion = false) => {
+    setSelectedType(type);
+    onChange(type);
+    setAcceptedTypeSuggestion(acceptedSuggestion);
+
+    if (!form.getFieldState('priority').isDirty) {
+      form.setValue('priority', DEMAND_TYPES[type].suggestedPriority, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
     }
   };
 
@@ -274,16 +339,7 @@ export function DemandForm() {
 	                              key={type.value}
 	                              type="button"
 	                              onClick={() => {
-	                                setSelectedType(type.value);
-	                                field.onChange(type.value);
-
-	                                // Só atualiza a prioridade se ela não tiver sido alterada manualmente
-	                                if (!form.getFieldState('priority').isDirty) {
-	                                  form.setValue('priority', type.suggestedPriority, {
-	                                    shouldDirty: false, // Mantém como não dirty se for sugestão
-	                                    shouldValidate: true,
-	                                  });
-	                                }
+                                  applyDemandType(type.value, field.onChange);
 	                              }}
                               className={cn(
                                 "brutal-tab flex flex-col items-center gap-1 py-3",
@@ -345,6 +401,99 @@ export function DemandForm() {
                   </FormItem>
                 )}
               />
+
+              {/* Smart Start Contract */}
+              <div className="space-y-4 border-2 border-[var(--border)] bg-[var(--muted)] p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <Label className="font-mono text-xs text-[var(--foreground-muted)]">CONTRATO DE INÍCIO</Label>
+                    <p className="font-mono text-xs text-[var(--foreground-muted)] mt-1">
+                      Campos obrigatórios para {DEMAND_TYPES[selectedType].label}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-24 border border-[var(--border)] bg-[var(--background)]">
+                      <div
+                        className="h-full bg-[var(--accent-lime)]"
+                        style={{ width: `${readiness.score}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-xs font-bold">{readiness.score}%</span>
+                  </div>
+                </div>
+
+                {readiness.suggestedType && (
+                  <div className="flex flex-col gap-3 border-2 border-[var(--accent-orange)] bg-[var(--accent-orange)]/10 p-3 md:flex-row md:items-center md:justify-between">
+                    <div className="font-mono text-xs">
+                      <p className="font-bold text-[var(--foreground)]">POSSÍVEL TIPO INCORRETO</p>
+                      <p className="text-[var(--foreground-muted)]">
+                        {readiness.suggestedType.reason} Confiança: {readiness.suggestedType.confidence}%.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="cmd-button secondary whitespace-nowrap"
+                      onClick={() => {
+                        const nextType = readiness.suggestedType!.type;
+                        setSelectedType(nextType);
+                        form.setValue("type", nextType, { shouldDirty: true, shouldValidate: true });
+                        setAcceptedTypeSuggestion(true);
+                        if (!form.getFieldState('priority').isDirty) {
+                          form.setValue('priority', DEMAND_TYPES[nextType].suggestedPriority, {
+                            shouldDirty: false,
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                    >
+                      TROCAR PARA {readiness.suggestedType.label}
+                    </button>
+                  </div>
+                )}
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  {selectedContract.fields.map((contractField) => (
+                    <div key={contractField.id} className="space-y-2">
+                      <Label className="font-mono text-xs text-[var(--foreground-muted)]">
+                        {contractField.label.toUpperCase()}
+                      </Label>
+                      <Input
+                        value={contractFields[contractField.id] || ""}
+                        onChange={(event) => {
+                          setContractFields((current) => ({
+                            ...current,
+                            [contractField.id]: event.target.value,
+                          }));
+                        }}
+                        placeholder={contractField.placeholder}
+                        className="terminal-input"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className={cn(
+                    "border-2 p-3 font-mono text-xs",
+                    readiness.isComplete
+                      ? "border-[var(--success)] bg-[var(--success)]/5"
+                      : "border-[var(--accent-orange)] bg-[var(--accent-orange)]/10"
+                  )}
+                >
+                  <p className="font-bold">{readiness.statusLabel}</p>
+                  <p className="text-[var(--foreground-muted)] mt-1">{readiness.nextStep}</p>
+                  {readiness.missingFields.length > 0 && (
+                    <p className="text-[var(--foreground-muted)] mt-2">
+                      Faltando: {readiness.missingFields.map((field) => field.label).join(", ")}
+                    </p>
+                  )}
+                  {!readiness.isComplete && (
+                    <p className="mt-2 text-[var(--accent-cyan)]">
+                      Orientação não bloqueante: a squad pode refinar mesmo assim.
+                    </p>
+                  )}
+                </div>
+              </div>
 
               {/* Priority */}
               <FormField

@@ -8,6 +8,16 @@ export type RefinementType = 'technical' | 'business' | null;
 export const demandDomainSchema = z.enum(['padrao', 'fintech', 'healthtech', 'ecommerce']);
 export type DemandDomain = z.infer<typeof demandDomainSchema>;
 
+// Token optimization classification
+export interface TokenOptimizationClassification {
+  complexity: 'low' | 'medium' | 'high';
+  requiredAgents: string[];
+  estimatedInputTokens: number;
+  estimatedOutputTokens: number;
+  confidence: number;
+  reasoning: string;
+}
+
 export const demands = sqliteTable("demands", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
@@ -336,6 +346,7 @@ export type Demand = typeof demands.$inferSelect & {
   missingSections?: string[] | null;
   fallbackUsed?: boolean;
   fallbackReason?: string | null;
+  tokenOptimization?: TokenOptimizationClassification;
 };
 export type Repo = typeof repos.$inferSelect;
 export type RepoFile = typeof repoFiles.$inferSelect;

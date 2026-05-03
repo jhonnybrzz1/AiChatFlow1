@@ -30,6 +30,8 @@ import {
   modelRoutingService,
   type ModelRoutingFailureReason,
 } from './model-routing';
+import { demandClassifier, type DemandClassification } from './demand-classifier';
+import { summaryBuilder } from './structured-summary';
 
 // Adicionando interface para gerenciamento de SSE
 interface SSEConnection {
@@ -120,8 +122,8 @@ export class AISquadService {
     if (!fs.existsSync(agentsDir)) {
       console.warn('Agents directory not found, using default agents');
       // PM não está aqui - será chamado separadamente após refinamento
+      // Refinador removido - clarificação já é feita pelo PO e classificador
       this.agents = [
-        { name: "refinador", icon: "🧠", description: "Captando e reformulando a demanda para a squad..." },
         { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
         { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
         { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
@@ -159,14 +161,8 @@ export class AISquadService {
         });
       });
 
-      // Ensure refinador is always first
-      const refinadorIndex = this.agents.findIndex(a => a.name === 'refinador');
-      if (refinadorIndex > 0) {
-        const refinador = this.agents.splice(refinadorIndex, 1)[0];
-        this.agents.unshift(refinador);
-      } else if (refinadorIndex === -1) {
-        this.agents.unshift({ name: "refinador", icon: "🧠", description: "Captando e reformulando a demanda para a squad..." });
-      }
+      // Refinador removido do fluxo - não é mais necessário
+      // A clarificação é feita pelo classificador de demandas e pelo PO
 
       // PM não deve estar no loop de agentes - será chamado separadamente
       // Remover PM se foi adicionado via YAML
@@ -184,9 +180,8 @@ export class AISquadService {
 
     } catch (error) {
       console.error('Error loading agent configurations:', error);
-      // Fallback to default agents (sem PM)
+      // Fallback to default agents (sem PM e sem refinador)
       this.agents = [
-        { name: "refinador", icon: "🧠", description: "Captando e reformulando a demanda para a squad..." },
         { name: "scrum_master", icon: "🧝", description: "Analisando impacto no processo e definindo incrementos..." },
         { name: "qa", icon: "✅", description: "Identificando critérios de aceite e cenários de teste..." },
         { name: "ux", icon: "🎨", description: "Avaliando experiência do usuário e fluxo de interação..." },
@@ -411,6 +406,66 @@ export class AISquadService {
     const internalContext = await this.assembleInternalContext(demand);
 
     // Update status to processing
+
+
+    // === TOKEN OPTIMIZATION: DEMAND CLASSIFICATION ===
+    let classification: DemandClassification;
+    let activeAgents = this.agents;
+
+    try {
+      classification = await demandClassifier.classify(demand);
+      
+      console.log(`[TOKEN OPT] Demand ${demandId} classified:`, {
+        complexity: classification.complexity,
+        requiredAgents: classification.requiredAgents.length,
+        estimatedTokens: classification.estimatedInputTokens + classification.estimatedOutputTokens
+      });
+
+      // Filtrar agentes baseado na classificação
+      activeAgents = this.agents.filter(agent => 
+        classification.requiredAgents.includes(agent.name)
+      );
+
+      console.log(`[TOKEN OPT] Using ${activeAgents.length} of ${this.agents.length} agents`);
+
+      // Salvar classificação na demanda
+      await storage.updateDemand(demandId, {
+        tokenOptimization: {
+          complexity: classification.complexity,
+          requiredAgents: classification.requiredAgents,
+          estimatedInputTokens: classification.estimatedInputTokens,
+          estimatedOutputTokens: classification.estimatedOutputTokens,
+          confidence: classification.confidence,
+          reasoning: classification.reasoning
+        }
+      });
+
+      // Notificar progresso
+      if (onProgress) {
+        onProgress({
+          id: `${demandId}-classification`,
+          agent: 'classifier',
+          message: `✅ Classificação: ${classification.complexity} complexidade, ${classification.requiredAgents.length} agentes (${classification.requiredAgents.join(', ')})`,
+          timestamp: new Date().toISOString(),
+          type: 'completed',
+          progress: 8
+        });
+      }
+
+    } catch (error) {
+      console.error('[TOKEN OPT] Classification failed, using all agents:', error);
+      classification = {
+        type: demand.type,
+        complexity: 'medium',
+        requiredAgents: this.agents.map(a => a.name),
+        estimatedInputTokens: 50000,
+        estimatedOutputTokens: 15000,
+        confidence: 0.5,
+        reasoning: 'Fallback due to classification error'
+      };
+    }
+    // === END TOKEN OPTIMIZATION ===
+
     await storage.updateDemand(demandId, { status: 'processing' });
 
     // REALITY CHECK: Apply reality constraints BEFORE any agent processing
@@ -554,7 +609,14 @@ export class AISquadService {
     }
 
     // Perform multi-agent interaction for collaborative refinement
-    const agentConfigs = improvementConfig.configs; // Use loaded configs, specialized for improvement domains when applicable
+    // Filter agentConfigs to only include agents from classification (token optimization)
+    const fullAgentConfigs = improvementConfig.configs;
+    const activeAgentNames = new Set(activeAgents.map(a => a.name));
+    // Refinador removido - clarificação feita pelo classificador e PO
+    const agentConfigs = Object.fromEntries(
+      Object.entries(fullAgentConfigs).filter(([name]) => activeAgentNames.has(name))
+    );
+    console.log(`[TOKEN OPT] Filtered configs: ${Object.keys(agentConfigs).length} of ${Object.keys(fullAgentConfigs).length} agents (${Array.from(activeAgentNames).join(', ')})`);
     let messages: ChatMessage[] = []; // Initialize messages array
 
     // Progress: 10% after routing
@@ -642,9 +704,9 @@ export class AISquadService {
       messages = [];
 
       // Calculate progress per agent (85% for agents, 10% for document generation, 5% for routing)
-      const progressPerAgent = 85 / this.agents.length;
+      const progressPerAgent = 85 / activeAgents.length;
 
-      for (let i = 0; i < this.agents.length; i++) {
+      for (let i = 0; i < activeAgents.length; i++) {
         // Check if processing was stopped
         if (this.stopRequests.has(demandId)) {
           this.stopRequests.delete(demandId);
@@ -652,7 +714,7 @@ export class AISquadService {
           return;
         }
 
-        const agent = this.agents[i];
+        const agent = activeAgents[i];
         const message: ChatMessage = {
           id: `${demandId}-${i}`,
           agent: agent.name,
@@ -970,13 +1032,23 @@ export class AISquadService {
     agentName: string,
     demand: Demand,
     refinementLevels: number,
-    internalContext: string, // New parameter
+    internalContext: string, // Mantido para compatibilidade, mas não usado
   ): Promise<string> {
     const intensityLevel = this.getIntensityByType(demand.type);
     const agentConfig = this.agentConfigs[agentName];
 
-    // Prepend the internal context to the agent's system prompt
-    const systemPrompt = `${internalContext}
+    // === TOKEN OPTIMIZATION: USE AGENT-SPECIFIC CONTEXT ===
+    const optimizedContext = contextBuilder.buildAgentSpecificContext(
+      demand.id,
+      agentName,
+      demand
+    );
+
+    console.log(`[TOKEN OPT] Agent ${agentName}: using optimized context (${Math.ceil(optimizedContext.length / 4)} tokens vs ${Math.ceil(internalContext.length / 4)} original)`);
+    // === END TOKEN OPTIMIZATION ===
+
+    // Prepend the optimized context to the agent's system prompt
+    const systemPrompt = `${optimizedContext}
 
 ${agentConfig?.system_prompt
       ? `${agentConfig.system_prompt}
@@ -1335,10 +1407,20 @@ IMPORTANTE:
     refinementMessages: ChatMessage[],
     model?: string,
   ): Promise<string> {
-    const refinementSummary = refinementMessages
+    // === TOKEN OPTIMIZATION: USE STRUCTURED SUMMARY ===
+    const insights = refinementMessages
       .filter(msg => msg.type === 'completed')
-      .map(msg => `**${msg.agent}**: ${msg.message}`)
-      .join('\n\n');
+      .map(msg => ({
+        agentName: msg.agent,
+        insight: msg.message,
+        timestamp: msg.timestamp
+      }));
+
+    const summary = await summaryBuilder.buildStructuredSummary(insights, false);
+    const refinementSummary = summaryBuilder.formatAsMarkdown(summary);
+
+    console.log(`[TOKEN OPT] PRD summary: ${summary.metadata.compressionRatio.toFixed(1)}x compression (${summary.metadata.originalTokens} -> ${summary.metadata.compressedTokens} tokens)`);
+    // === END TOKEN OPTIMIZATION ===
 
     // Get insights from evolved context for richer PRD
     const insightsSummary = contextBuilder.getInsightsSummary(demand.id);

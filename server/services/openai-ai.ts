@@ -27,9 +27,9 @@ interface GenerateOptions<T = unknown> {
   schema?: ZodSchema<T>;
 }
 
-const DEFAULT_MODEL = process.env.OPENAI_MODEL_DEFAULT || 'gpt-5.4-nano';
+const DEFAULT_MODEL = process.env.OPENAI_MODEL_DEFAULT || 'gpt-5.4-nano-2026-03-17';
 const FAST_MODEL = process.env.OPENAI_MODEL_FAST || DEFAULT_MODEL;
-const CAPABLE_MODEL = process.env.OPENAI_MODEL_CAPABLE || 'gpt-5.4-mini';
+const CAPABLE_MODEL = process.env.OPENAI_MODEL_CAPABLE || 'gpt-5.4-mini-2026-03-17';
 
 const jsonObjectSchema = z.record(z.unknown());
 

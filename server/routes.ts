@@ -21,6 +21,11 @@ import path from "path";
 import fs from "fs";
 import governanceRoutes from './routes/governance-routes';
 import { modelRoutingService } from './services/model-routing';
+import {
+  evaluateDemandStartContract,
+  formatDemandStartContract,
+  type DemandContractFields,
+} from '@shared/demand-start-contract';
 
 // Validador de refinementType
 const refinementTypeSchema = z.enum(['technical', 'business']).nullable().optional();
@@ -29,6 +34,44 @@ const upload = multer({
   dest: 'uploads/',
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+
+function resolveDemandStartContract(body: Record<string, unknown>, demandData: { title: string; description: string; type: any }) {
+  const payloadRaw = body.demandStartContractPayload;
+  if (typeof payloadRaw !== 'string' || payloadRaw.trim().length === 0) {
+    return null;
+  }
+
+  let payload: any;
+  try {
+    payload = JSON.parse(payloadRaw);
+  } catch {
+    return null;
+  }
+
+  const fields = (payload.fields && typeof payload.fields === 'object')
+    ? payload.fields as Partial<DemandContractFields>
+    : {};
+  const readiness = evaluateDemandStartContract({
+    type: demandData.type,
+    title: demandData.title,
+    description: demandData.description,
+    fields,
+  });
+
+  const markdown = typeof body.demandStartContract === 'string' && body.demandStartContract.trim().length > 0
+    ? body.demandStartContract
+    : formatDemandStartContract({
+      type: demandData.type,
+      fields,
+      readiness,
+      acceptedTypeSuggestion: payload.acceptedTypeSuggestion === true,
+    });
+
+  return {
+    readiness,
+    markdown,
+  };
+}
 
 function sendValidationError(res: Response, error: unknown): void {
   if (error instanceof RefinementInputError) {
@@ -238,6 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const files = req.files as Express.Multer.File[] || [];
     try {
       const demandData = insertDemandSchema.parse(req.body);
+      const demandStartContract = resolveDemandStartContract(req.body, demandData);
 
       // Check if repository information is included in the request
       const { githubRepoOwner, githubRepoName, githubRepoDescription } = req.body;
@@ -264,6 +308,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Still include the basic repo info even if we can't fetch details
           updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
         }
+      }
+
+      if (demandStartContract?.markdown) {
+        updatedDescription = `${updatedDescription}\n\n${demandStartContract.markdown}`;
       }
 
       // Create demand with potentially updated description and refinement type
@@ -317,6 +365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const files = req.files as Express.Multer.File[] || [];
     try {
       const demandData = insertDemandSchema.parse(req.body);
+      const demandStartContract = resolveDemandStartContract(req.body, demandData);
 
       // Check if repository information is included in the request
       const { githubRepoOwner, githubRepoName, githubRepoDescription } = req.body;
@@ -344,6 +393,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Still include the basic repo info even if we can't fetch details
           updatedDescription = `${refinementInput.ideaText}\n\n---\n**Contexto do Repositório GitHub:**\nRepositório: ${githubRepoOwner}/${githubRepoName}\n`;
         }
+      }
+
+      if (demandStartContract?.markdown) {
+        updatedDescription = `${updatedDescription}\n\n${demandStartContract.markdown}`;
       }
 
       // Create demand with potentially updated description and refinement type
@@ -854,6 +907,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting system metrics:', error);
       res.status(500).json({ error: "Failed to get system metrics" });
+    }
+  });
+
+  // Get token optimization metrics
+  app.get("/api/optimization/metrics", async (req: Request, res: Response) => {
+    try {
+      const { optimizationTracker } = await import('./services/ai-usage-tracker');
+      const report = optimizationTracker.getOptimizationReport();
+      const usageSummary = aiUsageTracker.getSummary();
+      const savings = optimizationTracker.getTotalSavings();
+      
+      res.json({
+        optimization: {
+          report,
+          savings,
+          bySource: savings.bySource,
+          byStage: savings.byStage
+        },
+        usage: usageSummary
+      });
+    } catch (error) {
+      console.error('Error getting optimization metrics:', error);
+      res.status(500).json({ error: 'Failed to get optimization metrics' });
     }
   });
 
